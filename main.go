@@ -14,19 +14,17 @@ import (
     "database/sql"
     _ "github.com/mattn/go-sqlite3"
 
-    "github.com/mpdroog/invoiced/pdf"
+    //"github.com/mpdroog/invoiced/pdf"
 )
 
-func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	fmt.Fprintf(w, "Works!")
-}
-
-func Hello(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    fmt.Fprintf(w, "hello, %s!\n", ps.ByName("name"))
+func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+    http.Redirect(w, r, r.URL.String() + "/static/", 301)
 }
 
 func main() {
-    c := pdf.Content{
+    // TODO: Save invoices into out/invoices/YYYY/QN
+
+    /*c := pdf.Content{
         CompanyName: "RootDev",
         From: []string{
             "M.P. Droog",
@@ -61,11 +59,11 @@ func main() {
     res, e := pdf.Create(c)
     if e != nil {
         log.Fatal(e)        
-    }
-    if e := res.OutputFileAndClose("hello.pdf"); e != nil {
+    }*/
+    /*if e := res.OutputFileAndClose("hello.pdf"); e != nil {
         log.Fatal(e)
     }
-    return
+    return*/
 
     var wg sync.WaitGroup
 
@@ -93,7 +91,16 @@ func main() {
 
     router := httprouter.New()
     router.GET("/", Index)
-    router.GET("/api/invoice", invoice.List)
+    /*router.GET("/api/invoicelines", invoicelines.Pending)
+    router.DELETE("/api/invoicelines/:id", invoicelines.Delete)
+    router.POST("/api/invoicelines", invoicelines.Add)
+    router.PUT("/api/invoicelines/:id", invoicelines.Update)*/
+
+    router.GET("/api/invoices", invoice.List)
+    router.POST("/api/invoices", invoice.Create)
+    router.GET("/api/invoices/:id", invoice.Get)
+    router.POST("/api/invoice/:id/credit", invoice.Credit)
+
 	router.ServeFiles("/static/*filepath", http.Dir(folderPath + "/static"))
 
 	wg.Add(1)

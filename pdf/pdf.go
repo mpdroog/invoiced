@@ -54,7 +54,7 @@ func Create(c Content) (*gofpdf.Fpdf, error) {
 
 		lastY = 15
 		for _, from := range c.From {
-			pdf.SetXY(140, lastY)
+			pdf.SetXY(143, lastY)
 			pdf.Cell(10, 30, from)
 			lastY += 5
 		}

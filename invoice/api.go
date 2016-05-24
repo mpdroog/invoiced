@@ -97,6 +97,13 @@ import (
  - date_updated
 */
 
+func Get(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+}
+func Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+}
+func Credit(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+}
+
 func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	//
 }
