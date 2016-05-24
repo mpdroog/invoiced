@@ -1,0 +1,32 @@
+{
+  "name": "Members.Usenet.Farm",
+  "description": "Client-Side memberpage",
+  "author": "MP Droog <mark@itshosted.nl>",
+  "scripts": {
+    "dev": "./node_modules/.bin/webpack -d --watch",
+    "build": "./node_modules/webpack/bin/webpack.js",
+    "deploy": "./node_modules/webpack/bin/webpack.js -p"
+  },
+  "devDependencies": {
+    "babel-core": "^6.9.0",
+    "babel-loader": "^6.2.4",
+    "babel-plugin-transform-react-jsx": "^6.8.0",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-react": "^6.5.0",
+    "css-loader": "*",
+    "extract-text-webpack-plugin": "*",
+    "jshint": "^2.9.2",
+    "json-loader": "^0.5.2",
+    "react": "^0.13.3",
+    "react-redux": "^4.4.5",
+    "redux": "^3.5.2",
+    "style-loader": "*",
+    "superagent": "*",
+    "webpack": "*"
+  },
+  "private": true,
+  "license": "Closed",
+  "dependencies": {
+    "react": "^0.13.3"
+  }
+}
