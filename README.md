@@ -3,7 +3,6 @@ InvoiceD
 -- Accounting for fun and profit.
 Starting a company with ease!
 
-
 Why InvoiceD?
 - Send invoices in a few minutes!
 - Easily output a ZIP every last of the month
@@ -22,6 +21,7 @@ Important todo's:
 ===========
 - Aggressively undo/redo
 - Easy output for your accountant
+- Buy theme
 
 Future
 ===========
