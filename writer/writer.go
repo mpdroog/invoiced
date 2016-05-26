@@ -19,6 +19,7 @@ func Encode(w http.ResponseWriter, r *http.Request, d interface{}) error {
 		if e != nil {
 			log.Fatal(e)
 		}
+		w.Header().Set("Content-Type", accept)
 		w.Write([]byte(str))
 		return nil
 	}
@@ -27,6 +28,7 @@ func Encode(w http.ResponseWriter, r *http.Request, d interface{}) error {
 		if e != nil {
 			log.Fatal(e)
 		}
+		w.Header().Set("Content-Type", accept)
 		w.Write(b)
 		return nil
 	}

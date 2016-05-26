@@ -15,7 +15,7 @@ func Init(d *sql.DB) error {
 	return nil
 }
 
-func get(sql string) ([]map[string]*string, error) {
+func get(sql string, max int) ([]map[string]*string, error) {
 	var res []map[string]*string
 
 	rows, e := db.Query(sql)
@@ -28,6 +28,7 @@ func get(sql string) ([]map[string]*string, error) {
 		log.Fatal(e)
 	}
 
+	i := 0
 	for rows.Next() {
 		ptr := make([]interface{}, len(cols))
 		ctx := make([]*string, len(cols))
@@ -46,6 +47,11 @@ func get(sql string) ([]map[string]*string, error) {
 		}
 
 		res = append(res, m)
+		i++
+		if max > 0 && i == max {
+			// limit results
+			break
+		}
 	}
 	if e := rows.Err(); e != nil {
 		log.Fatal(e)
@@ -60,7 +66,7 @@ func GetRow(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		log.Fatal("Missing sql-arg")
 	}
 
-	res, e := get(sql)
+	res, e := get(sql, 1)
 	if e != nil {
 		log.Fatal(e)
 	}
@@ -81,7 +87,7 @@ func GetAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		log.Fatal("Missing sql-arg")
 	}
 
-	res, e := get(sql)
+	res, e := get(sql, 0)
 	if e != nil {
 		log.Fatal(e)
 	}
