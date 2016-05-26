@@ -8,9 +8,9 @@ import (
     "net/http"
     "github.com/julienschmidt/httprouter"
     "log"
-    "github.com/toqueteos/webbrowser"
+    //"github.com/toqueteos/webbrowser"
     //"github.com/boltdb/bolt"
-    "github.com/mpdroog/invoiced/invoice"
+    isql "github.com/mpdroog/invoiced/sql"
     "database/sql"
     _ "github.com/mattn/go-sqlite3"
 
@@ -83,11 +83,18 @@ func main() {
         log.Fatal(err)
     }
     defer db.Close()*/
-    db, err := sql.Open("sqlite3", home + "/billing.db")
+    log.Println(home + "/billing.sqlite")
+    db, err := sql.Open("sqlite3", home + "/billing.sqlite")
     if err != nil {
         log.Fatal(err)
     }
     defer db.Close()
+
+    if e := isql.Init(db); e != nil {
+        log.Fatal(err)
+    }
+
+    // TODO: Init db?
 
     router := httprouter.New()
     router.GET("/", Index)
@@ -96,10 +103,13 @@ func main() {
     router.POST("/api/invoicelines", invoicelines.Add)
     router.PUT("/api/invoicelines/:id", invoicelines.Update)*/
 
-    router.GET("/api/invoices", invoice.List)
+    /*router.GET("/api/invoices", invoice.List)
     router.POST("/api/invoices", invoice.Create)
     router.GET("/api/invoices/:id", invoice.Get)
-    router.POST("/api/invoice/:id/credit", invoice.Credit)
+    router.POST("/api/invoice/:id/credit", invoice.Credit)*/
+
+    router.GET("/api/sql/all", isql.GetAll)
+    router.GET("/api/sql/row", isql.GetRow)
 
 	router.ServeFiles("/static/*filepath", http.Dir(folderPath + "/static"))
 
@@ -111,9 +121,9 @@ func main() {
 	    	log.Fatal(e)
 	    }
     }()
-	if e := webbrowser.Open("http://localhost:9999"); e != nil {
-		log.Fatal(e)
-	}
+	//if e := webbrowser.Open("http://localhost:9999"); e != nil {
+	//	log.Fatal(e)
+	//}
 
 	wg.Wait()
 }
