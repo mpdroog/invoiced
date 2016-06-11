@@ -115,7 +115,9 @@ func main() {
 
 	wg.Add(1)
 	go func() {
-	    e := http.ListenAndServe("localhost:9999", router)
+        httpListen := "localhost:9999"
+        fmt.Println("Listening on " + httpListen)
+	    e := http.ListenAndServe(httpListen, router)
 	    wg.Done()
 	    if e != nil {
 	    	log.Fatal(e)
