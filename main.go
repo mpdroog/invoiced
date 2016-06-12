@@ -9,10 +9,10 @@ import (
     "github.com/julienschmidt/httprouter"
     "log"
     //"github.com/toqueteos/webbrowser"
-    //"github.com/boltdb/bolt"
-    isql "github.com/mpdroog/invoiced/sql"
-    "database/sql"
-    _ "github.com/mattn/go-sqlite3"
+    "github.com/boltdb/bolt"
+    //isql "github.com/mpdroog/invoiced/sql"
+    //"database/sql"
+    //_ "github.com/mattn/go-sqlite3"
 
     "github.com/mpdroog/invoiced/invoice"
 )
@@ -78,21 +78,22 @@ func main() {
         log.Fatal(e)    	
     }
 
-    /*db, err := bolt.Open(home + "/billing.db", 0600, nil)
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer db.Close()*/
-    log.Println(home + "/billing.sqlite")
-    db, err := sql.Open("sqlite3", home + "/billing.sqlite")
+    db, err := bolt.Open(home + "/billing.db", 0600, nil)
     if err != nil {
         log.Fatal(err)
     }
     defer db.Close()
 
-    if e := isql.Init(db); e != nil {
+    /*log.Println(home + "/billing.sqlite")
+    db, err := sql.Open("sqlite3", home + "/billing.sqlite")
+    if err != nil {
         log.Fatal(err)
     }
+    defer db.Close()*/
+
+    /*if e := isql.Init(db); e != nil {
+        log.Fatal(err)
+    }*/
 
     // TODO: Init db?
 
@@ -108,8 +109,8 @@ func main() {
     router.GET("/api/invoices/:id", invoice.Get)
     router.POST("/api/invoice/:id/credit", invoice.Credit)*/
 
-    router.GET("/api/sql/all", isql.GetAll)
-    router.GET("/api/sql/row", isql.GetRow)
+    //router.GET("/api/sql/all", isql.GetAll)
+    //router.GET("/api/sql/row", isql.GetRow)
 
     router.GET("/api/save", invoice.Save)
 
