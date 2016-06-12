@@ -14,7 +14,7 @@ import (
     "database/sql"
     _ "github.com/mattn/go-sqlite3"
 
-    //"github.com/mpdroog/invoiced/pdf"
+    "github.com/mpdroog/invoiced/invoice"
 )
 
 func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -110,6 +110,8 @@ func main() {
 
     router.GET("/api/sql/all", isql.GetAll)
     router.GET("/api/sql/row", isql.GetRow)
+
+    router.GET("/api/save", invoice.Save)
 
 	router.ServeFiles("/static/*filepath", http.Dir(folderPath + "/static"))
 
