@@ -20,9 +20,7 @@ module.exports = React.createClass({
 
     ajax: function(range) {
         var that = this;
-        var query = "select name FROM invoice ORDER BY id LIMIT " + this.state.pagination.from + "," + this.state.pagination.count;
-        console.log(query);
-        Request.get('/api/sql/all?sql=' + encodeURIComponent(query))
+        Request.get('/api/invoices')
         .set('Accept', 'application/json')
         .end(function(err, res) {
             if (err) {
@@ -42,7 +40,7 @@ module.exports = React.createClass({
 		    <div className="hpanel hblue">
           <div className="panel-heading hbuilt">
             <div className="panel-tools">
-              <a href="#invoice-add" className="showhide"><i className="fa fa-plus"></i></a>
+              <a href="#invoice-add" className="showhide"><i className="fa fa-plus"></i> New</a>
             </div>
             Invoices
           </div>
