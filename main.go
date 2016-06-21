@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/kardianos/osext"
-	"fmt"
 	"sync"
     "net/http"
     "github.com/julienschmidt/httprouter"
@@ -67,22 +66,27 @@ func main() {
 
     var wg sync.WaitGroup
 
-	folderPath, err := osext.ExecutableFolder()
-    if err != nil {
-        log.Fatal(err)
+	folderPath, e := osext.ExecutableFolder()
+    if e != nil {
+        log.Fatal(e)
     }
-    fmt.Println(folderPath)
+    log.Printf("Curdir=%s\n", folderPath)
 
     home, e := homedir.Dir()
     if e != nil {
         log.Fatal(e)    	
     }
 
-    db, err := bolt.Open(home + "/billing.db", 0600, nil)
-    if err != nil {
-        log.Fatal(err)
+    log.Printf("BoltDB=%s\n", home + "/billing.db")
+    db, e := bolt.Open(home + "/billing.db", 0600, nil)
+    if e != nil {
+        log.Fatal(e)
     }
     defer db.Close()
+
+    if e := invoice.Init(db); e != nil {
+        log.Fatal(e)
+    }
 
     /*log.Println(home + "/billing.sqlite")
     db, err := sql.Open("sqlite3", home + "/billing.sqlite")
@@ -112,14 +116,17 @@ func main() {
     //router.GET("/api/sql/all", isql.GetAll)
     //router.GET("/api/sql/row", isql.GetRow)
 
-    router.GET("/api/save", invoice.Save)
+    router.GET("/api/invoices", invoice.List)
+    router.POST("/api/invoice", invoice.Save)
+    router.GET("/api/invoice/:id", invoice.Load)
+    router.GET("/api/invoice/:id/pdf", invoice.Pdf)
 
 	router.ServeFiles("/static/*filepath", http.Dir(folderPath + "/static"))
 
 	wg.Add(1)
 	go func() {
         httpListen := "localhost:9999"
-        fmt.Println("Listening on " + httpListen)
+        log.Printf("Listening on %s\n", httpListen)
 	    e := http.ListenAndServe(httpListen, router)
 	    wg.Done()
 	    if e != nil {

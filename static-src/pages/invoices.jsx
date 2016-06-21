@@ -8,7 +8,8 @@ module.exports = React.createClass({
           "pagination": {
             "from": 0,
             "count": 50
-          }
+          },
+          "invoices": []
         };
     },
 
@@ -28,14 +29,23 @@ module.exports = React.createClass({
               return;
             }
             if (that.isMounted()) {
-              /*var body = res.body;
-              body.loading = false;
-              that.setState(body);*/
+              var body = res.body;
+              that.setState({invoices: body});
             }
         });
     },
 
 	render: function() {
+    var res = [];
+    console.log("invoices=",this.state.invoices);
+    if (this.state.invoices.length === 0) {
+      res.push(<tr><td colSpan="4">No invoices yet :)</td></tr>);
+    } else {
+      this.state.invoices.forEach(function(elem) {
+        res.push(<tr key={elem}><td>#</td><td><a href={"#invoice-add/"+elem}>{elem}</a></td><td></td><td></td></tr>);
+      });
+    }
+
 		return <div className="normalheader">
 		    <div className="hpanel hblue">
           <div className="panel-heading hbuilt">
@@ -47,7 +57,7 @@ module.exports = React.createClass({
           <div className="panel-body">
             <table className="table table-striped">
             	<thead><tr><th>#</th><th>Invoice</th><th>Customer</th><th>Amount</th></tr></thead>
-            	<tbody><tr><td colSpan="4">No invoices yet :)</td></tr></tbody>
+            	<tbody>{res}</tbody>
             </table>
 	        </div>
 		    </div>

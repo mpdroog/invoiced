@@ -8,10 +8,15 @@ window.onhashchange = function() {
 
 var page = document.location.hash || "#dashboard";
 try {
-	var Ctx = require('./pages/' + page.substr(1) + '.jsx');
+	var cmp = page.substr(1).split("/");
+	page = cmp[0];
+	var args = cmp.slice(1);
+
+	console.log("Open " + cmp[0] + " with args=", args);
+	var Ctx = require('./pages/' + cmp[0] + '.jsx');
 
 	React.render(
-	  <Ctx/>,
+	  <Ctx args={args} />,
 	  document.getElementById('root')
 	);
 } catch (e) {
