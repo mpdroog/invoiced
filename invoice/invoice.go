@@ -65,9 +65,9 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 			}
 
 			u.Meta.Invoiceid = fmt.Sprintf("%d%s-%04d", now.Year(), quarter, idx)
-			log.Printf("invoice.Save create invoiceId=%d", u.Meta.Invoiceid)
+			log.Printf("invoice.Save create invoiceId=%s", u.Meta.Invoiceid)
 		} else {
-			log.Printf("invoice.Save update invoiceId=%d", u.Meta.Invoiceid)
+			log.Printf("invoice.Save update invoiceId=%s", u.Meta.Invoiceid)
 		}
 
 	    if e := json.NewEncoder(buf).Encode(u); e != nil {
