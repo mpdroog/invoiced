@@ -134,13 +134,13 @@ func pdf(c *Invoice) (*gofpdf.Fpdf, error) {
 		pdf.Cell(10, 30, "Description")
 
 		pdf.SetXY(126, 80)
-		pdf.Cell(10, 30, "Quantity")
+		pdf.CellFormat(10, 30, "Qty", "", 1, "R", false, 0, "")
 
 		pdf.SetXY(150, 80)
-		pdf.Cell(10, 30, "Unit Price")
+		pdf.CellFormat(20, 30, "Unit Price", "", 1, "R", false, 0, "")
 
 		pdf.SetXY(170, 80)
-		pdf.Cell(10, 30, "Amount")
+		pdf.CellFormat(30, 30, "Amount", "", 1, "R", false, 0, "")
 
 		pdf.Line(20, 97, 200, 97)
 	}
@@ -154,13 +154,13 @@ func pdf(c *Invoice) (*gofpdf.Fpdf, error) {
 			pdf.Cell(10, 30, line.Description)
 
 			pdf.SetXY(126, lastY)
-			pdf.Cell(10, 30, line.Quantity)
+			pdf.CellFormat(10, 30, line.Quantity, "", 1, "R", false, 0, "")
 
 			pdf.SetXY(150, lastY)
-			pdf.Cell(10, 30, line.Price)
+			pdf.CellFormat(20, 30, line.Price, "", 1, "R", false, 0, "")
 
 			pdf.SetXY(170, lastY)
-			pdf.Cell(10, 30, line.Total)
+			pdf.CellFormat(30, 30, line.Total, "", 1, "R", false, 0, "")
 
 			lastY += 5
 		}
@@ -173,20 +173,20 @@ func pdf(c *Invoice) (*gofpdf.Fpdf, error) {
 		pdf.Cell(10, 30, "Subtotal")
 
 		pdf.SetXY(170, 100)
-		pdf.Cell(10, 30, c.Total.Ex)
+		pdf.CellFormat(30, 30, c.Total.Ex, "", 1, "R", false, 0, "")
 
 		pdf.SetXY(126, 105)
 		pdf.Cell(10, 30, "TAX (21%)")
 
 		pdf.SetXY(170, 105)
-		pdf.Cell(10, 30, c.Total.Tax)
+		pdf.CellFormat(30, 30, c.Total.Tax, "", 1, "R", false, 0, "")
 
 		pdf.SetXY(126, 120)
 		pdf.SetFont("Helvetica", "B", 14)
 		pdf.Cell(10, 30, "Amount Due")
 
-		pdf.SetXY(161, 120)
-		pdf.Cell(10, 30, string([]byte{byte(128)}) + c.Total.Total)
+		pdf.SetXY(170, 120)
+		pdf.CellFormat(30, 30, string([]byte{byte(128)}) + c.Total.Total, "0", 1, "R", false, 0, "")
 	}
 
 	// Notes
