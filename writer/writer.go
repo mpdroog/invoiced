@@ -1,10 +1,10 @@
 package writer
 
 import (
-	"log"
-	"net/http"
 	"encoding/json"
 	"gopkg.in/vmihailenco/msgpack.v2"
+	"log"
+	"net/http"
 )
 
 func Encode(w http.ResponseWriter, r *http.Request, d interface{}) error {
