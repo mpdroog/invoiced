@@ -50,7 +50,7 @@ module.exports = React.createClass({
         <div className="hpanel hblue">
           <div className="panel-heading hbuilt">
             <div className="panel-tools">
-              <a href="#hours-add" className="showhide"><i className="fa fa-plus"></i> New</a>
+              <a href="#hour-add" className="showhide"><i className="fa fa-plus"></i> New</a>
             </div>
             Hour registration
           </div>

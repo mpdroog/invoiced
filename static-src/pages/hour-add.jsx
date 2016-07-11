@@ -10,7 +10,8 @@ module.exports = React.createClass({
     return {
       start: null,
       stop: null,
-      description: "",
+      description: null,
+      day: null,
 
       Lines: [],
       Name: ""
@@ -53,17 +54,19 @@ module.exports = React.createClass({
     var sum = stop.subtract(start);
     console.log("Start=" + start + " Stop=" + stop + " to hours=" + sum.humanize());
 
-    this.state.lines.push({
+    this.state.Lines.push({
       Start: this.state.start,
       Stop: this.state.stop,
       Hours: sum.asHours(),
-      Description: this.state.description
+      Description: this.state.description,
+      Day: this.state.day
     });
     this.setState({
       start: null,
       stop: null,
       description: null,
-      Lines: this.state.lines
+      day: null,
+      Lines: this.state.Lines
     });
   },
 
@@ -85,6 +88,9 @@ module.exports = React.createClass({
     }
     if (e.target.id === "hour-name") {
       this.setState({Name: e.target.value});
+    }
+    if (e.target.id === "hour-day") {
+      this.setState({day: e.target.value});
     }
   },
   lineRemove: function(key) {
@@ -121,6 +127,7 @@ module.exports = React.createClass({
       sum = sum.plus(item.Hours);
       lines.push(<tr key={idx}>
         <td><a onClick={that.lineRemove.bind(null, idx)}><i className="fa fa-trash"></i></a></td>
+        <td>{item.Day}</td>
         <td>{item.Start}</td><td>{item.Stop}</td><td>{item.Hours}</td><td>{item.Description}</td></tr>);
     });
 
@@ -132,6 +139,9 @@ module.exports = React.createClass({
           </div>
           <div className="panel-body">
             <div className="col-sm-2">
+              <input type="text" id="hour-day" className="form-control" placeholder="YYYY-mm-dd" value={this.state.day} onChange={this.update}/>
+            </div>
+            <div className="col-sm-2">
               <input type="text" id="hour-start" className="form-control" placeholder="HH:mm" value={this.state.start} onChange={this.update}/>
             </div>
             <div className="col-sm-2">
@@ -140,7 +150,7 @@ module.exports = React.createClass({
             <div className="col-sm-5">
               <input type="text" id="hour-description" className="form-control" placeholder="Description" value={this.state.description} onChange={this.update}/>
             </div>
-            <div className="col-sm-2">            
+            <div className="col-sm-1">            
               <button onClick={this.recalc} className="btn btn-default">Add</button>
 	          </div>
           </div>
@@ -161,6 +171,7 @@ module.exports = React.createClass({
             <thead>
               <tr>
                 <th>#</th>
+                <th>Day</th>
                 <th>From</th>
                 <th>To</th>
                 <th>Hours</th>
