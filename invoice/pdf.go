@@ -1,51 +1,51 @@
 package invoice
 
 import (
-	"github.com/jung-kurt/gofpdf"
 	"fmt"
+	"github.com/jung-kurt/gofpdf"
 )
 
 /**
-        company: "RootDev",
-        entity: {
-          name: "M.P. Droog",
-          street1: "Dorpsstraat 236a",
-          street2: "Obdam, 1713HP, NL"
-        },
-        customer: {
-          name: "XSNews B.V.",
-          street1: "New Yorkstraat 9-13",
-          street2: "1175 RD Lijnden"
-        },
-        meta: {
-          invoiceid: "",
-          issuedate: "issuedate",
-          ponumber: "P/O",
-          duedate: "due"
-        },
-        lines: [{
-          description: "description",
-          quantity: 1,
-          price: "12.00",
-          total: "12.00"
-        }],
-        notes: "",
-        total: {
-          ex: "200",
-          tax: "1000",
-          total: "1200"
-        },
-        bank: {
-          vat: "VAT",
-          coc: "COC",
-          iban: "IBEN"
+  company: "RootDev",
+  entity: {
+    name: "M.P. Droog",
+    street1: "Dorpsstraat 236a",
+    street2: "Obdam, 1713HP, NL"
+  },
+  customer: {
+    name: "XSNews B.V.",
+    street1: "New Yorkstraat 9-13",
+    street2: "1175 RD Lijnden"
+  },
+  meta: {
+    invoiceid: "",
+    issuedate: "issuedate",
+    ponumber: "P/O",
+    duedate: "due"
+  },
+  lines: [{
+    description: "description",
+    quantity: 1,
+    price: "12.00",
+    total: "12.00"
+  }],
+  notes: "",
+  total: {
+    ex: "200",
+    tax: "1000",
+    total: "1200"
+  },
+  bank: {
+    vat: "VAT",
+    coc: "COC",
+    iban: "IBEN"
 */
 func pdf(c *Invoice) (*gofpdf.Fpdf, error) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.SetFooterFunc(func() {
 		pdf.SetY(-15)
 		pdf.SetFont("Arial", "I", 8)
-		pdf.SetTextColor(162, 162, 162);
+		pdf.SetTextColor(162, 162, 162)
 		pdf.CellFormat(0, 10, fmt.Sprintf("Page %d/{nb}", pdf.PageNo()),
 			"", 0, "C", false, 0, "")
 	})
@@ -186,7 +186,7 @@ func pdf(c *Invoice) (*gofpdf.Fpdf, error) {
 		pdf.Cell(10, 30, "Amount Due")
 
 		pdf.SetXY(170, 120)
-		pdf.CellFormat(30, 30, string([]byte{byte(128)}) + c.Total.Total, "0", 1, "R", false, 0, "")
+		pdf.CellFormat(30, 30, string([]byte{byte(128)})+c.Total.Total, "0", 1, "R", false, 0, "")
 	}
 
 	// Notes
