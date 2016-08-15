@@ -2,10 +2,10 @@ package sql
 
 import (
 	"database/sql"
-	"net/http"
 	"github.com/julienschmidt/httprouter"
-	"log"
 	"github.com/mpdroog/invoiced/writer"
+	"log"
+	"net/http"
 )
 
 var db *sql.DB
@@ -62,7 +62,7 @@ func get(sql string, max int) ([]map[string]*string, error) {
 
 func GetRow(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sql := r.URL.Query().Get("sql")
-	if (sql == "") {
+	if sql == "" {
 		log.Fatal("Missing sql-arg")
 	}
 
@@ -83,7 +83,7 @@ func GetRow(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 func GetAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sql := r.URL.Query().Get("sql")
-	if (sql == "") {
+	if sql == "" {
 		log.Fatal("Missing sql-arg")
 	}
 
