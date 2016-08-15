@@ -1,5 +1,6 @@
 'use strict';
 var React = require('react');
+var ReactDOM = require('react-dom');
 
 window.onhashchange = function() {
 	// TODO: Something more awesome?
@@ -15,7 +16,7 @@ try {
 	console.log("Open " + cmp[0] + " with args=", args);
 	var Ctx = require('./pages/' + cmp[0] + '.jsx');
 
-	React.render(
+	ReactDOM.render(
 	  <Ctx args={args} />,
 	  document.getElementById('root')
 	);
