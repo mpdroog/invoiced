@@ -19,6 +19,21 @@ func Init(d *bolt.DB) error {
 	})
 }
 
+func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	name := ps.ByName("id")
+	if name == "" {
+		http.Error(w, "Please supply a name to delete", 400)
+		return
+	}
+	if e := db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("hours"))
+		return b.Delete([]byte(name))
+	}); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Delete fail", http.StatusInternalServerError)
+	}
+}
+
 func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	if r.Body == nil {
 		http.Error(w, "Please send a request body", 400)

@@ -39,7 +39,7 @@ module.exports = React.createClass({
     var res = [];
     console.log("invoices=",this.state.invoices);
     if (this.state.invoices.length === 0) {
-      res.push(<tr><td colSpan="4">No invoices yet :)</td></tr>);
+      res.push(<tr key="empty"><td colSpan="4">No invoices yet :)</td></tr>);
     } else {
       this.state.invoices.forEach(function(elem) {
         res.push(<tr key={elem}><td>#</td><td><a href={"#invoice-add/"+elem}>{elem}</a></td><td></td><td></td></tr>);

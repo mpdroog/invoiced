@@ -65,7 +65,6 @@ module.exports = React.createClass({
       start: null,
       stop: null,
       description: null,
-      day: null,
       Lines: this.state.Lines
     });
   },
@@ -73,7 +72,7 @@ module.exports = React.createClass({
   update: function(e) {
     var valid = /^[0-9]{2}:[0-9]{2}$/;
 
-    if (e.target.value.match(valid)) {
+    //if (e.target.value.match(valid)) {
       console.log(e.target.value);
 
       if (e.target.id === "hour-start") {
@@ -82,7 +81,7 @@ module.exports = React.createClass({
       if (e.target.id === "hour-stop") {
         this.setState({stop: e.target.value});
       }
-    }
+    //}
     if (e.target.id === "hour-description") {
       this.setState({description: e.target.value});
     }

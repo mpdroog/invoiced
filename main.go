@@ -77,6 +77,7 @@ func main() {
 	router.GET("/api/hours", hour.List)
 	router.POST("/api/hour", hour.Save)
 	router.GET("/api/hour/:id", hour.Load)
+	router.DELETE("/api/hour/:id", hour.Delete)
 
 	router.ServeFiles("/static/*filepath", http.Dir(folderPath+"/static"))
 
