@@ -37,13 +37,13 @@ module.exports = React.createClass({
           return;
         }
         if (that.isMounted()) {
-          var body = res.body;
-          that.setState(body);
+          that.setState(res.body);
         }
     });
   },
 
   recalc: function(e) {
+    e.preventDefault();
     if (this.state.start === null || this.state.stop === null) {
       console.log("Empty state");
       return;
