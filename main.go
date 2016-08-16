@@ -15,6 +15,7 @@ import (
 
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
+	"github.com/mpdroog/invoiced/rules"
 )
 
 func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -46,6 +47,10 @@ func main() {
 		log.Fatal(e)
 	}
 	if e := hour.Init(db); e != nil {
+		log.Fatal(e)
+	}
+
+	if e := rules.Init(); e != nil {
 		log.Fatal(e)
 	}
 
