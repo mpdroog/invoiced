@@ -3,7 +3,9 @@ var React = require('react');
 var Request = require('superagent');
 var Big = require('big.js');
 var Moment = require('moment');
-require('./invoice.css');
+
+var DatePicker = require('react-datepicker');
+require('react-datepicker/dist/react-datepicker.css');
 
 module.exports = React.createClass({
   getInitialState: function() {
@@ -11,7 +13,7 @@ module.exports = React.createClass({
       start: null,
       stop: null,
       description: null,
-      day: null,
+      day: Moment(),
 
       Lines: [],
       Name: ""
@@ -20,7 +22,7 @@ module.exports = React.createClass({
 
   componentDidMount: function() {
     if (this.props.args.length > 0) {
-      console.log("Load invoice name=" + this.props.args[0]);
+      console.log("Load hour name=" + this.props.args[0]);
       this.ajax(this.props.args[0]);
     }
   },
@@ -59,7 +61,7 @@ module.exports = React.createClass({
       Stop: this.state.stop,
       Hours: sum.asHours(),
       Description: this.state.description,
-      Day: this.state.day
+      Day: this.state.day.format("YYYY-MM-DD")
     });
     this.setState({
       start: null,
@@ -67,6 +69,10 @@ module.exports = React.createClass({
       description: null,
       Lines: this.state.Lines
     });
+  },
+
+  updateDate: function(date) {
+    this.setState({day: date});
   },
 
   update: function(e) {
@@ -93,7 +99,7 @@ module.exports = React.createClass({
     }
   },
   lineRemove: function(key) {
-    console.log("Remove invoice line with key=" + key);
+    console.log("Remove hour line with key=" + key);
     console.log("Deleted idx ", this.state.Lines.splice(key, 1)[0]);
     this.setState({Lines: this.state.Lines});
   },
@@ -138,7 +144,12 @@ module.exports = React.createClass({
           </div>
           <div className="panel-body">
             <div className="col-sm-2">
-              <input type="text" id="hour-day" className="form-control" placeholder="YYYY-mm-dd" value={this.state.day} onChange={this.update}/>
+              <DatePicker
+                id="hour-day"
+                className="form-control"
+                dateFormat="YYYY-MM-DD"
+                selected={this.state.day}
+                onChange={this.updateDate} />
             </div>
             <div className="col-sm-2">
               <input type="text" id="hour-start" className="form-control" placeholder="HH:mm" value={this.state.start} onChange={this.update}/>
