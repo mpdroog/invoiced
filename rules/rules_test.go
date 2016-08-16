@@ -9,11 +9,11 @@ func TestSlug(t *testing.T) {
 		"hello",
 		"hel-lo",
 		"hel_lo",
+		"",
 	}
 	invalid := []string {
 		"HE LLO",
 		",HEL,LO",
-		"",
 		"±HI",
 	}
 
@@ -35,11 +35,11 @@ func TestDate(t *testing.T) {
 		"2016-12-01",
 		"1980-01-01",
 		"2099-12-31",
+		"",
 	}
 	invalid := []string {
 		"HE LLO",
 		"HELLO",
-		"",
 		"2016-02-HELLO",
 		"2016-12-1",
 		"2016-1-12",
@@ -67,11 +67,11 @@ func TestTime(t *testing.T) {
 		"01:00",
 		"12:59",
 		"23:59",
+		"",
 	}
 	invalid := []string {
 		"HE LLO",
 		"HELLO",
-		"",
 		"1:01",
 		"24:00",
 		"99:00",
@@ -96,11 +96,11 @@ func TestUint(t *testing.T) {
 		"0",
 		"99",
 		"9999999999999",
+		"",
 	}
 	invalid := []string {
 		"HE LLO",
 		"HELLO",
-		"",
 		"-10",
 		"-999",
 		"-0",

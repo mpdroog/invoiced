@@ -25,12 +25,17 @@ func init() {
     validator.SetValidationFunc("date", date)
     validator.SetValidationFunc("time", time)
     validator.SetValidationFunc("uint", uintFn)
+    validator.SetValidationFunc("iban", iban)
 }
 
 func strCheck(rule string, v interface{}, param string) error {
     st := reflect.ValueOf(v)
     if st.Kind() != reflect.String {
         return fmt.Errorf("%s only validates strings", rule)
+    }
+    if st.String() == "" {
+        // Support optional fields
+        return nil
     }
     if (! regex[rule].MatchString(st.String())) {
         return fmt.Errorf("%s did not match string", rule)
@@ -50,10 +55,12 @@ func time(v interface{}, param string) error {
     if e == nil {
         // Post-validate for > 23:59
         st := reflect.ValueOf(v)
-        var i int
-        i, e = strconv.Atoi(strings.Split(st.String(), ":")[0])
-        if i > 23 {
-            e = fmt.Errorf("date must be in [00-23] range")
+        if (st.String() != "") {
+            var i int
+            i, e = strconv.Atoi(strings.Split(st.String(), ":")[0])
+            if i > 23 {
+                e = fmt.Errorf("date must be in [00-23] range")
+            }
         }
     }
 
