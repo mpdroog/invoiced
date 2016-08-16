@@ -46,6 +46,7 @@ module.exports = React.createClass({
             //Fn.error(err.message);
             return;
           }
+          location.reload();
       });
     },
 
