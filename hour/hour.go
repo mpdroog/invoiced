@@ -7,6 +7,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
+	"gopkg.in/validator.v2"
+	"fmt"
 )
 
 var db *bolt.DB
@@ -45,8 +47,12 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		http.Error(w, "invoice.Save fail", http.StatusInternalServerError)
 		return
 	}
-	if u.Name == "" {
+	/*if u.Name == "" {
 		http.Error(w, "invoice.Save err, no Name given", http.StatusInternalServerError)
+		return
+	}*/
+	if e := validator.Validate(u); e != nil {
+		http.Error(w, fmt.Sprintf("invoice.Save err, failed validate=%s", e), http.StatusInternalServerError)
 		return
 	}
 

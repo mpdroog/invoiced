@@ -1,12 +1,12 @@
 package hour
 
 type Hour struct {
-	Name  string
+	Name  string `validate:"slug,nonzero"`
 	Lines []struct {
-		Day         string
-		Start       string
-		Stop        string
-		Hours       float64
+		Day         string `validate:"date,nonzero"`
+		Start       string `validate:"time,nonzero"`
+		Stop        string `validate:"time,nonzero"`
+		Hours       float64 `validate:"uint,nonzero"`
 		Description string
 	}
 }
