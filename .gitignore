@@ -1,6 +1,6 @@
 .DS_STORE
 invoiced
-hello.pdf
 static/assets/app.js
 static/assets/app.js.map
 node_modules
+static/assets/app.css
