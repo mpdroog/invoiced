@@ -3,16 +3,17 @@ package main
 import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/kardianos/osext"
-	"github.com/mitchellh/go-homedir"
 	"log"
 	"net/http"
 	"sync"
 	//"github.com/toqueteos/webbrowser"
 	"github.com/boltdb/bolt"
+	"flag"
 	//isql "github.com/mpdroog/invoiced/sql"
 	//"database/sql"
 	//_ "github.com/mattn/go-sqlite3"
 
+	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
 	"github.com/mpdroog/invoiced/rules"
@@ -24,20 +25,20 @@ func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 func main() {
 	var wg sync.WaitGroup
+	flag.BoolVar(&config.Verbose, "v", false, "Verbose-mode (log more)")
+	flag.StringVar(&config.DbPath, "d", "./billing.db", "Path to BoltDB database")
+	flag.StringVar(&config.HTTPListen, "h", "localhost:9999", "HTTP listening port")
+	flag.Parse()
 
 	folderPath, e := osext.ExecutableFolder()
 	if e != nil {
 		log.Fatal(e)
 	}
-	log.Printf("Curdir=%s\n", folderPath)
-
-	home, e := homedir.Dir()
-	if e != nil {
-		log.Fatal(e)
+	if config.Verbose {
+		log.Printf("Curdir=%s\n", folderPath)
+		log.Printf("BoltDB=%s\n", config.DbPath)
 	}
-
-	log.Printf("BoltDB=%s\n", home+"/billing.db")
-	db, e := bolt.Open(home+"/billing.db", 0600, nil)
+	db, e := bolt.Open(config.DbPath, 0600, nil)
 	if e != nil {
 		log.Fatal(e)
 	}
@@ -88,17 +89,14 @@ func main() {
 
 	wg.Add(1)
 	go func() {
-		httpListen := "localhost:9999"
-		log.Printf("Listening on %s\n", httpListen)
-		e := http.ListenAndServe(httpListen, router)
+		if config.Verbose {
+			log.Printf("Listening on %s\n", config.HTTPListen)
+		}
+		e := http.ListenAndServe(config.HTTPListen, router)
 		wg.Done()
 		if e != nil {
 			log.Fatal(e)
 		}
 	}()
-	//if e := webbrowser.Open("http://localhost:9999"); e != nil {
-	//	log.Fatal(e)
-	//}
-
 	wg.Wait()
 }
