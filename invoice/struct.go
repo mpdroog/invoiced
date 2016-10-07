@@ -39,38 +39,38 @@ package invoice
   };
 */
 type Invoice struct {
-	Company string
+	Company string `validate:"nonzero"`
 	Entity  struct {
-		Name    string
-		Street1 string
-		Street2 string
+		Name    string `validate:"nonzero"`
+		Street1 string `validate:"nonzero"`
+		Street2 string `validate:"nonzero"`
 	}
 	Customer struct {
-		Name    string
-		Street1 string
-		Street2 string
+		Name    string `validate:"nonzero"`
+		Street1 string `validate:"nonzero"`
+		Street2 string `validate:"nonzero"`
 	}
 	Meta struct {
-		Invoiceid string
-		Issuedate string
-		Ponumber  string
-		Duedate   string
+		Invoiceid string `validate:"nonzero,slug"`
+		Issuedate string `validate:"nonzero,date"`
+		Ponumber  string `validate:"slug"`
+		Duedate   string `validate:"nonzero,date"`
 	}
 	Lines []struct {
-		Description string
-		Quantity    string
-		Price       string
-		Total       string
+		Description string `validate:"nonzero"`
+		Quantity    string `validate:"nonzero,int"`
+		Price       string `validate:"nonzero,price"`
+		Total       string `validate:"nonzero,price"`
 	}
 	Notes string
 	Total struct {
-		Ex    string
-		Tax   string
-		Total string
+		Ex    string //`validate:"nonzero,price"`
+		Tax   string //`validate:"nonzero,price"`
+		Total string //`validate:"nonzero,price"`
 	}
 	Bank struct {
-		Vat  string
-		Coc  string
-		Iban string
+		Vat  string `validate:"nonzero"`
+		Coc  string `validate:"nonzero"`
+		Iban string `validate:"nonzero,iban"`
 	}
 }

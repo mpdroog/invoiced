@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"gopkg.in/validator.v2"
 )
 
 var db *bolt.DB
@@ -31,6 +32,10 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	if e := json.NewDecoder(r.Body).Decode(u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Save fail", http.StatusInternalServerError)
+		return
+	}
+	if e := validator.Validate(u); e != nil {
+		http.Error(w, fmt.Sprintf("invoice.Save err, failed validate=%s", e), http.StatusInternalServerError)
 		return
 	}
 
