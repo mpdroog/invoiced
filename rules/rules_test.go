@@ -10,6 +10,7 @@ func TestSlug(t *testing.T) {
 		"hel-lo",
 		"hel_lo",
 		"",
+		"2016Q3-0005",
 	}
 	invalid := []string {
 		"HE LLO",

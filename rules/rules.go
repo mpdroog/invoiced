@@ -16,7 +16,7 @@ var regex map[string]*regexp.Regexp
 // Pre-compile regexs
 func init() {
 	regex = make(map[string]*regexp.Regexp)
-	regex["slug"] = regexp.MustCompile(`^[a-z0-9_\-]+$`)
+	regex["slug"] = regexp.MustCompile(`^[A-Za-z0-9_\-]+$`)
     regex["date"] = regexp.MustCompile(`^(19|20)[0-9]{2}-(01|02|03|04|05|06|07|08|09|10|11|12)-(01|02|03|04|05|06|07|08|09|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31)$`)
     regex["time"] = regexp.MustCompile(`^([0-9]{2}|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$`)
     regex["uint"] = regexp.MustCompile(`^[0-9]+$`)
