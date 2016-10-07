@@ -21,7 +21,12 @@ import (
 )
 
 func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	http.Redirect(w, r, r.URL.String()+"/static/", 301)
+	prefix := "http://"
+	if config.HTTPSOnly {
+		prefix = "https://"
+	}
+
+	http.Redirect(w, r, prefix + config.HTTPListen + "/static/", 301)
 }
 
 func main() {
@@ -29,6 +34,7 @@ func main() {
 	flag.BoolVar(&config.Verbose, "v", false, "Verbose-mode (log more)")
 	flag.StringVar(&config.DbPath, "d", "./billing.db", "Path to BoltDB database")
 	flag.StringVar(&config.HTTPListen, "h", "localhost:9999", "HTTP listening port")
+	flag.BoolVar(&config.HTTPSOnly, "s", false, "HTTPS Only")
 	flag.Parse()
 
 	var e error
