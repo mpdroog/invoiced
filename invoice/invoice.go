@@ -39,32 +39,12 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		b := tx.Bucket([]byte("invoices"))
 		if u.Meta.Invoiceid == "" {
 			// Create one
-			now := time.Now()
-			var quarter string
-			switch now.Month() {
-			case time.January:
-			case time.February:
-			case time.March:
-				quarter = "Q1"
-			case time.April:
-			case time.May:
-			case time.June:
-				quarter = "Q2"
-			case time.July:
-			case time.August:
-			case time.September:
-				quarter = "Q3"
-			case time.October:
-			case time.November:
-			case time.December:
-				quarter = "Q4"
-			}
 			idx, e := b.NextSequence()
 			if e != nil {
 				return e
 			}
 
-			u.Meta.Invoiceid = fmt.Sprintf("%d%s-%04d", now.Year(), quarter, idx)
+			u.Meta.Invoiceid = createInvoiceId(time.Now(), idx)
 			log.Printf("invoice.Save create invoiceId=%s", u.Meta.Invoiceid)
 		} else {
 			log.Printf("invoice.Save update invoiceId=%s", u.Meta.Invoiceid)
