@@ -16,6 +16,10 @@
     padding-top: 15px;
 }
 
+.react-datepicker__input-container {
+	display: initial !important;
+}
+
 /*.invoice > div {
 }
 
