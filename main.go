@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"sync"
 	//"github.com/toqueteos/webbrowser"
-	"github.com/boltdb/bolt"
 	"flag"
+	"github.com/boltdb/bolt"
 	//isql "github.com/mpdroog/invoiced/sql"
 	//"database/sql"
 	//_ "github.com/mattn/go-sqlite3"
@@ -16,6 +16,7 @@ import (
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
+	"github.com/mpdroog/invoiced/middleware"
 	"github.com/mpdroog/invoiced/rules"
 )
 
@@ -90,10 +91,13 @@ func main() {
 
 	wg.Add(1)
 	go func() {
+		var e error
 		if config.Verbose {
 			log.Printf("Listening on %s\n", config.HTTPListen)
+			e = http.ListenAndServe(config.HTTPListen, middleware.HTTPLog(router))
+		} else {
+			e = http.ListenAndServe(config.HTTPListen, router)
 		}
-		e := http.ListenAndServe(config.HTTPListen, router)
 		wg.Done()
 		if e != nil {
 			log.Fatal(e)
