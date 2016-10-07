@@ -30,12 +30,13 @@ func main() {
 	flag.StringVar(&config.HTTPListen, "h", "localhost:9999", "HTTP listening port")
 	flag.Parse()
 
-	folderPath, e := osext.ExecutableFolder()
+	var e error
+	config.CurDir, e = osext.ExecutableFolder()
 	if e != nil {
 		log.Fatal(e)
 	}
 	if config.Verbose {
-		log.Printf("Curdir=%s\n", folderPath)
+		log.Printf("Curdir=%s\n", config.CurDir)
 		log.Printf("BoltDB=%s\n", config.DbPath)
 	}
 	db, e := bolt.Open(config.DbPath, 0600, nil)
@@ -85,7 +86,7 @@ func main() {
 	router.GET("/api/hour/:id", hour.Load)
 	router.DELETE("/api/hour/:id", hour.Delete)
 
-	router.ServeFiles("/static/*filepath", http.Dir(folderPath+"/static"))
+	router.ServeFiles("/static/*filepath", http.Dir(config.CurDir+"/static"))
 
 	wg.Add(1)
 	go func() {
