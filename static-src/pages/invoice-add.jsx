@@ -68,8 +68,8 @@ module.exports = React.createClass({
         }
         if (that.isMounted()) {
           var body = res.body;
-          body.Meta.Issuedate = Moment();
-          body.Meta.Duedate = Moment();
+          body.Meta.Issuedate = Moment(body.Meta.Issuedate);
+          body.Meta.Duedate = Moment(body.Meta.Duedate);
           that.setState(body);
         }
     });
@@ -118,15 +118,12 @@ module.exports = React.createClass({
     };
   },
 
-  handleChange: function(e) {
-    console.log("handleChange", e.target.dataset.key);
-    var indices = e.target.dataset.key.split('.');
-
+  triggerChange: function(indices, val) {
     var node = this.state;
     for (var i = 0; i < indices.length-1; i++) {
       node = node[ indices[i] ];
     }
-    node[indices[indices.length-1]] = e.target.value;
+    node[indices[indices.length-1]] = val;
 
     // Any post-processing
     if (indices[0] === "Lines") {
@@ -136,28 +133,29 @@ module.exports = React.createClass({
     this.setState(this.state);
   },
 
-  handleChangeDate: function(val) {
-    console.log("handleChangeDate", val);
-    var indices = e.id.split('.');
+  handleChange: function(e) {
+    console.log("handleChange", e.target.dataset.key);
+    var indices = e.target.dataset.key.split('.');
+    this.triggerChange(indices, e.target.value);
+  },
 
-    var node = this.state;
-    for (var i = 0; i < indices.length-1; i++) {
-      node = node[ indices[i] ];
-    }
-    node[indices[indices.length-1]] = e.target.value;
-
-    // Any post-processing
-    if (indices[0] === "Lines") {
-      this.state.Lines[indices[1]] = this.lineUpdate(this.state.Lines[indices[1]]);
-      this.state.Total = this.totalUpdate(this.state.Lines);
-    }
-    this.setState(this.state);
+  handleChangeDate: function(id) {
+    var indices = id.split('.');
+    var that = this;
+    return function(val) {
+      console.log("handleChangeDate", id, val);
+      that.triggerChange.call(that, indices, val);
+    };
   },
 
   save: function(e) {
     var that = this;
+    var req = this.state;
+    req.Meta.Issuedate = req.Meta.Issuedate.format('YYYY-MM-DD');
+    req.Meta.Duedate = req.Meta.Duedate.format('YYYY-MM-DD');
+
     Request.post('/api/invoice')
-    .send(this.state)
+    .send(req)
     .set('Accept', 'application/json')
     .end(function(err, res) {
         if (err) {
@@ -249,12 +247,11 @@ module.exports = React.createClass({
             <td>
               <div className="input-group">
                 <DatePicker
-                id="Meta.Issuedate"
                 className="form-control"
                 disabled={true}
                 dateFormat="YYYY-MM-DD"
                 selected={inv.Meta.Issuedate}
-                onChange={this.handleChangeDate} />
+                onChange={this.handleChangeDate('Meta.Issuedate')} />
                 <div className="input-group-addon"><a onClick={this.toggleLock}><i className="fa fa-lock"></i></a></div>
               </div>
             </td>
@@ -267,11 +264,10 @@ module.exports = React.createClass({
             <td className="text">Due Date</td>
             <td>
                 <DatePicker
-                id="Meta.Duedate"
                 className="form-control"
                 dateFormat="YYYY-MM-DD"
                 selected={inv.Meta.Duedate}
-                onChange={this.handleChangeDate} />
+                onChange={this.handleChangeDate('Meta.Duedate')} />
             </td>
           </tr>
         </tbody>
