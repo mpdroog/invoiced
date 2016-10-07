@@ -172,6 +172,10 @@ module.exports = React.createClass({
     });
   },
   pdf: function() {
+    if (! this.props.args[0]) {
+      alert("PDF only available when saved.");
+      return;
+    }
     location.href = '/api/invoice/'+this.props.args[0]+'/pdf';
   },
 
