@@ -5,4 +5,5 @@ var (
 	DbPath string
 	HTTPListen string
 	CurDir string
+	HTTPSOnly bool
 )
