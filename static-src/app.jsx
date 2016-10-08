@@ -17,9 +17,11 @@ try {
 	var Ctx = require('./pages/' + cmp[0] + '.jsx');
 
 	ReactDOM.render(
-	  <Ctx args={args} />,
+      <Ctx args={args} />,
 	  document.getElementById('root')
 	);
 } catch (e) {
 	console.log(e);
+	handleErr(e);
+	throw e;
 }
