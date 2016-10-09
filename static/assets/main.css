@@ -1,7 +1,25 @@
+/* textarea for error msg */
 #js-error-body {
 	width: 100%;
 	height: 150px;
 }
+/* loading icon */
 .loading {
 	padding: 30px;
+}
+
+.btn-hover-danger:hover {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+    color: #FFFFFF;
+}
+.btn-hover-warning:hover {
+    background-color: #ffb606;
+    border-color: #ffb606;
+    color: #FFFFFF;
+}
+.btn-hover-success:hover {
+    background-color: #62cb31;
+    border-color: #62cb31;
+    color: #FFFFFF;
 }
