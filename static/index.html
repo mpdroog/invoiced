@@ -71,7 +71,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" data-dismiss="modal" aria-label="Close" class="close">
-          <span aria-hidden="true">&times;</span>
+          <span class="js-modal-hide" aria-hidden="true">&times;</span>
         </button>
         <h4 class="modal-title">
           😱 Oops! Something went wrong...
@@ -82,12 +82,13 @@
         <textarea id="js-error-body"></textarea>
       </div>
       <div class="modal-footer">
-        <a data-dismiss="modal" class="btn btn-default">Ignore</a>
+        <a class="js-modal-hide btn btn-default">Ignore</a>
         <a style="float:right" href="trial-finish.html" class="btn btn-primary">Report</a>
       </div>
     </div>
   </div>
 </div>
+<div id="js-dialog-backdrop" class="hidden modal-backdrop fade in"></div>
 <script type="text/javascript" async>
   function handleErr(e) {
     var errorData = {
@@ -100,8 +101,19 @@
     };
     document.getElementById("js-error-body").value = JSON.stringify(errorData);
     document.getElementById("js-dialog-error").classList.add('modal-open');
-    document.getElementById("js-dialog-error").style.display = 'block'
+    document.getElementById("js-dialog-error").style.display = 'block';
+    document.getElementById("js-dialog-backdrop").classList.remove('hidden');
   }
+  /* Hide button */
+  var btns = document.getElementsByClassName("js-modal-hide");
+  Array.prototype.forEach.call(btns, function(m) {
+    m.onclick = function() {
+      document.getElementById("js-dialog-error").classList.remove("modal-open");
+      document.getElementById("js-dialog-error").style.display = 'none';
+      document.getElementById("js-dialog-backdrop").classList.add('hidden');
+    };
+  });
+
   console.log("JS_ONERR = ON");
 </script>
 <script src="/static/assets/app.js" async></script>
