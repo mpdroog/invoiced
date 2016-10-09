@@ -16,8 +16,6 @@ module.exports = React.createClass({
     componentDidMount: function() {
         this.ajax();
     },
-    componentWillUnmount: function() {
-    },
 
     ajax: function(range) {
         var that = this;
@@ -25,7 +23,7 @@ module.exports = React.createClass({
         .set('Accept', 'application/json')
         .end(function(err, res) {
             if (err) {
-              //Fn.error(err.message);
+              handleErr(err);
               return;
             }
             if (that.isMounted()) {
@@ -38,19 +36,21 @@ module.exports = React.createClass({
 	render: function() {
     var res = [];
     console.log("invoices=",this.state.invoices);
-    if (this.state.invoices.length === 0) {
-      res.push(<tr key="empty"><td colSpan="4">No invoices yet :)</td></tr>);
-    } else {
+    if (this.state.invoices && this.state.invoices.length > 0) {
       this.state.invoices.forEach(function(elem) {
-        res.push(<tr key={elem}><td>#</td><td><a href={"#invoice-add/"+elem}>{elem}</a></td><td></td><td></td></tr>);
+        res.push(<tr key={elem}><td><a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+elem}><i className="fa fa-pencil"></i></a></td><td>{elem}</td><td></td><td></td></tr>);
       });
+    } else {
+      res.push(<tr key="empty"><td colSpan="4">No invoices yet :)</td></tr>);
     }
 
 		return <div className="normalheader">
 		    <div className="hpanel hblue">
           <div className="panel-heading hbuilt">
             <div className="panel-tools">
-              <a href="#invoice-add" className="showhide"><i className="fa fa-plus"></i> New</a>
+              <div className="btn-group nm7">
+                <a href="#invoice-add" className="btn btn-default btn-hover-primary showhide"><i className="fa fa-plus"></i> New</a>
+              </div>
             </div>
             Invoices
           </div>

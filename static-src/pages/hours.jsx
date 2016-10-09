@@ -16,8 +16,6 @@ module.exports = React.createClass({
     componentDidMount: function() {
         this.ajax();
     },
-    componentWillUnmount: function() {
-    },
 
     ajax: function(range) {
         var that = this;
@@ -25,7 +23,7 @@ module.exports = React.createClass({
         .set('Accept', 'application/json')
         .end(function(err, res) {
             if (err) {
-              //Fn.error(err.message);
+              handleErr(err);
               return;
             }
             if (that.isMounted()) {
@@ -34,6 +32,7 @@ module.exports = React.createClass({
             }
         });
     },
+
     delete: function(e) {
       e.preventDefault()
       var id = e.target.dataset.target;
@@ -43,7 +42,7 @@ module.exports = React.createClass({
       .set('Accept', 'application/json')
       .end(function(err, res) {
           if (err) {
-            //Fn.error(err.message);
+            handleErr(err);
             return;
           }
           location.reload();
@@ -54,20 +53,26 @@ module.exports = React.createClass({
     var res = [];
     var that = this;
     console.log("hours=",this.state.hours);
-    if (this.state.hours.length === 0) {
-      res.push(<tr key="empty"><td colSpan="4">No hours yet :)</td></tr>);
-    } else {
+    if (this.state.hours && this.state.hours.length > 0) {
       this.state.hours.forEach(function(elem) {
-       // var key = elem.replace(/[^A-Za-z0-9_-]*/g, "");
-        res.push(<tr key={elem}><td><a href={"#hour-add/"+elem}>{elem}</a></td><td><a data-target={elem} onClick={that.delete}>Delete</a></td></tr>);
+        res.push(<tr key={elem}>
+          <td>{elem}</td>
+          <td>
+            <a className="btn btn-default btn-hover-primary" href={"#hour-add/"+elem}><i className="fa fa-pencil"></i></a>
+            <a className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={elem} onClick={that.delete}><i className="fa fa-trash faa-flash"></i></a>
+          </td></tr>);
       });
+    } else {
+      res.push(<tr key="empty"><td colSpan="4">No hours yet :)</td></tr>);
     }
 
     return <div className="normalheader">
         <div className="hpanel hblue">
           <div className="panel-heading hbuilt">
             <div className="panel-tools">
-              <a href="#hour-add" className="showhide"><i className="fa fa-plus"></i> New</a>
+              <div className="btn-group nm7">
+                <a href="#hour-add" className="btn btn-default btn-hover-primary showhide"><i className="fa fa-plus"></i> New</a>
+              </div>
             </div>
             Hour registration
           </div>

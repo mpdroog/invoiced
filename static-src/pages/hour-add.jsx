@@ -10,9 +10,9 @@ require('react-datepicker/dist/react-datepicker.css');
 module.exports = React.createClass({
   getInitialState: function() {
     return {
-      start: null,
-      stop: null,
-      description: null,
+      start: "",
+      stop: "",
+      description: "",
       day: Moment(),
 
       Lines: [],
@@ -26,8 +26,6 @@ module.exports = React.createClass({
       this.ajax(this.props.args[0]);
     }
   },
-  componentWillUnmount: function() {
-  },
 
   ajax: function(name) {
     var that = this;
@@ -35,7 +33,7 @@ module.exports = React.createClass({
     .set('Accept', 'application/json')
     .end(function(err, res) {
         if (err) {
-          //Fn.error(err.message);
+          handleErr(err);
           return;
         }
         if (that.isMounted()) {
@@ -46,7 +44,7 @@ module.exports = React.createClass({
 
   recalc: function(e) {
     e.preventDefault();
-    if (this.state.start === null || this.state.stop === null) {
+    if (this.state.start === "" || this.state.stop === "") {
       console.log("Empty state");
       return;
     }
@@ -64,9 +62,6 @@ module.exports = React.createClass({
       Day: this.state.day.format("YYYY-MM-DD")
     });
     this.setState({
-      start: null,
-      stop: null,
-      description: null,
       Lines: this.state.Lines
     });
   },
@@ -112,7 +107,7 @@ module.exports = React.createClass({
     .end(function(err, res) {
         if (err) {
           console.log(err);
-          //Fn.error(err.message);
+          handleErr(err);
           return;
         }
         if (that.isMounted()) {
@@ -131,9 +126,10 @@ module.exports = React.createClass({
     this.state.Lines.forEach(function(item, idx) {
       sum = sum.plus(item.Hours);
       lines.push(<tr key={idx}>
-        <td><a onClick={that.lineRemove.bind(null, idx)}><i className="fa fa-trash"></i></a></td>
+        <td><button className="btn btn-default btn-hover-danger faa-parent animated-hover" onClick={that.lineRemove.bind(null, idx)}><i className="fa fa-trash faa-flash"></i></button></td>
         <td>{item.Day}</td>
-        <td>{item.Start}</td><td>{item.Stop}</td><td>{item.Hours}</td><td>{item.Description}</td></tr>);
+        <td>{item.Start}</td><td>{item.Stop}</td><td>{item.Hours}</td><td>{item.Description}</td>
+      </tr>);
     });
 
 		return <form>
@@ -161,7 +157,10 @@ module.exports = React.createClass({
               <input type="text" id="hour-description" className="form-control" placeholder="Description" value={this.state.description} onChange={this.update}/>
             </div>
             <div className="col-sm-1">            
-              <button onClick={this.recalc} className="btn btn-default">Add</button>
+              <button onClick={this.recalc} className="btn btn-default btn-hover-success">
+                <i className="fa fa-plus"></i>
+                &nbsp;Add
+              </button>
 	          </div>
           </div>
 		    </div>
@@ -171,13 +170,15 @@ module.exports = React.createClass({
       <div className="hpanel hblue">
         <div className="panel-heading hbuilt">
           <div className="panel-tools">
-            <a onClick={this.save}><i className="fa fa-floppy-o"></i> Save</a>
+            <div className="btn-group nm7">
+              <button className="btn btn-default btn-hover-success" onClick={this.save}><i className="fa fa-floppy-o"></i>&nbsp;Save</button>
+            </div>
           </div>
           Sum ({sum.toString()} hours)
         </div>
         <div className="panel-body">
           <input type="text" id="hour-name" className="form-control" placeholder="Hour name" value={this.state.Name} onChange={this.update}/>
-          <table className="table">
+          <table className="table table-striped">
             <thead>
               <tr>
                 <th>#</th>
