@@ -33,12 +33,33 @@ module.exports = React.createClass({
         });
     },
 
+    delete: function(e) {
+      e.preventDefault()
+      var id = e.target.dataset.target;
+
+      var that = this;
+      Request.delete('/api/invoice/'+id)
+      .set('Accept', 'application/json')
+      .end(function(err, res) {
+          if (err) {
+            handleErr(err);
+            return;
+          }
+          location.reload();
+      });
+    },
+
 	render: function() {
     var res = [];
+    var that = this;
     console.log("invoices=",this.state.invoices);
     if (this.state.invoices && this.state.invoices.length > 0) {
       this.state.invoices.forEach(function(elem) {
-        res.push(<tr key={elem}><td><a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+elem}><i className="fa fa-pencil"></i></a></td><td>{elem}</td><td></td><td></td></tr>);
+        res.push(<tr key={elem}>
+          <td>
+            <a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+elem}><i className="fa fa-pencil"></i></a>
+            <a className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={elem} onClick={that.delete}><i className="fa fa-trash faa-flash"></i></a>
+          </td><td>{elem}</td><td></td><td></td></tr>);
       });
     } else {
       res.push(<tr key="empty"><td colSpan="4">No invoices yet :)</td></tr>);
