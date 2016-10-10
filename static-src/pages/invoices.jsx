@@ -53,14 +53,20 @@ module.exports = React.createClass({
     var res = [];
     var that = this;
     console.log("invoices=",this.state.invoices);
-    if (this.state.invoices && this.state.invoices.length > 0) {
-      this.state.invoices.forEach(function(elem) {
-        res.push(<tr key={elem}>
+    if (this.state.invoices) {
+      for (var key in this.state.invoices) {
+        if (! this.state.invoices.hasOwnProperty(key)) continue;
+        var inv = this.state.invoices[key];
+        res.push(<tr key={key}>
+          <td>{key}</td>
+          <td>{inv.Meta.Invoiceid}</td>
+          <td>{inv.Customer.Name}</td>
+          <td>{inv.Total.Total}</td>
           <td>
-            <a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+elem}><i className="fa fa-pencil"></i></a>
-            <a className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={elem} onClick={that.delete}><i className="fa fa-trash faa-flash"></i></a>
-          </td><td>{elem}</td><td></td><td></td></tr>);
-      });
+            <a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+key}><i className="fa fa-pencil"></i></a>
+            <a disabled={inv.Meta.Status !== 'FINAL' ? "" : "disabled"} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? "btn-hover-danger faa-parent animated-hover" : "")} data-target={key} onClick={that.delete}><i className="fa fa-trash faa-flash"></i></a>
+          </td></tr>);
+      }
     } else {
       res.push(<tr key="empty"><td colSpan="4">No invoices yet :)</td></tr>);
     }
@@ -77,7 +83,7 @@ module.exports = React.createClass({
           </div>
           <div className="panel-body">
             <table className="table table-striped">
-            	<thead><tr><th>#</th><th>Invoice</th><th>Customer</th><th>Amount</th></tr></thead>
+            	<thead><tr><th>#</th><th>Invoice</th><th>Customer</th><th>Amount</th><th>I/O</th></tr></thead>
             	<tbody>{res}</tbody>
             </table>
 	        </div>

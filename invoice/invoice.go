@@ -45,7 +45,32 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	if e := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("invoices"))
-		return b.Delete([]byte(name))
+		v := b.Get([]byte(name))
+		if v == nil {
+			http.Error(w, "invoice.Delete no such name", http.StatusNotFound)
+			return nil
+		}
+
+		buf := bytes.NewBuffer(v)
+		u := new(Invoice)
+		if e := json.NewDecoder(buf).Decode(u); e != nil {
+			return e
+		}
+		if u.Meta.Status == "FINAL" {
+			// Cannot delete finalized invoices
+			http.Error(w, "invoice.Delete cannot delete finalized invoice", 400)
+			return nil
+		}
+
+		if e := b.Delete([]byte(name)); e != nil {
+			return e
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if _, e := w.Write(buf.Bytes()); e != nil {
+			return e
+		}
+		return nil
 	}); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Delete fail", http.StatusInternalServerError)
@@ -175,9 +200,15 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		b := tx.Bucket([]byte("invoices"))
 		c := b.Cursor()
 
-		var keys []string
-		for k, _ := c.First(); k != nil; k, _ = c.Next() {
-			keys = append(keys, string(k))
+		keys := make(map[string]*Invoice)
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			//keys = append(keys, string(k))
+			u := new(Invoice)
+			if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
+				return e
+			}
+
+			keys[string(k)] = u
 		}
 		log.Printf("invoice.List count=%d", len(keys))
 
