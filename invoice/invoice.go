@@ -37,6 +37,73 @@ func Init(d *bolt.DB) error {
 	})
 }
 
+func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	name := ps.ByName("id")
+	if name == "" {
+		http.Error(w, "Please supply a name to delete", 400)
+		return
+	}
+	if e := db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("invoices"))
+		return b.Delete([]byte(name))
+	}); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Delete fail", http.StatusInternalServerError)
+	}
+}
+
+// Lock invoice for changes and set invoiceid
+func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	name := ps.ByName("id")
+	log.Printf("invoice.Finalize with conceptid=%s", name)
+	e := db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("invoices"))
+		v := b.Get([]byte(name))
+		if v == nil {
+			http.Error(w, "invoice.Finalize no such name", http.StatusNotFound)
+			return nil
+		}
+
+		u := new(Invoice)
+		if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
+			return e
+		}
+
+		if len(u.Meta.Issuedate) == 0 {
+			u.Meta.Issuedate = time.Now().Format("2006-01-02")
+		}
+
+		if u.Meta.Invoiceid == "" {
+			// Create invoiceid
+			idx, e := b.NextSequence()
+			if e != nil {
+				return e
+			}
+
+			u.Meta.Invoiceid = createInvoiceId(time.Now(), idx)
+			log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
+		}
+		u.Meta.Status = "FINAL"
+
+		// Save any changes..
+		buf := new(bytes.Buffer)
+		if e := json.NewEncoder(buf).Encode(u); e != nil {
+			return e
+		}
+		if e := b.Put([]byte(u.Meta.Conceptid), buf.Bytes()); e != nil {
+			return e
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, e := w.Write(buf.Bytes())
+		return e
+	})
+	if e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Finalize fail", http.StatusInternalServerError)
+	}
+}
+
 func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// IF POST create InvoiceID = 2016Q3-0001
 	if r.Body == nil {
@@ -46,35 +113,31 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	u := new(Invoice)
 	if e := json.NewDecoder(r.Body).Decode(u); e != nil {
 		log.Printf(e.Error())
-		http.Error(w, "invoice.Save fail", http.StatusInternalServerError)
+		http.Error(w, "invoice.Save failed to decode input", 400)
 		return
 	}
 	if e := validator.Validate(u); e != nil {
-		http.Error(w, fmt.Sprintf("invoice.Save err, failed validate=%s", e), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("invoice.Save failed validate=%s", e), 400)
 		return
 	}
 
 	buf := new(bytes.Buffer)
 	if e := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("invoices"))
-		if u.Meta.Invoiceid == "" {
-			// Create one
-			idx, e := b.NextSequence()
-			if e != nil {
-				return e
-			}
+		// TODO: Check if current entry is FINAL, if so prevent!
 
-			u.Meta.Invoiceid = createInvoiceId(time.Now(), idx)
-			log.Printf("invoice.Save create invoiceId=%s", u.Meta.Invoiceid)
+		if u.Meta.Conceptid == "" {
+			u.Meta.Conceptid = fmt.Sprintf("CONCEPT-%s", randStringBytesRmndr(6))
+			log.Printf("invoice.Save create conceptId=%s", u.Meta.Conceptid)
 		} else {
-			log.Printf("invoice.Save update invoiceId=%s", u.Meta.Invoiceid)
+			log.Printf("invoice.Save update conceptId=%s", u.Meta.Conceptid)			
 		}
+		u.Meta.Status = "CONCEPT"
 
 		if e := json.NewEncoder(buf).Encode(u); e != nil {
 			return e
 		}
-
-		return b.Put([]byte(u.Meta.Invoiceid), buf.Bytes())
+		return b.Put([]byte(u.Meta.Conceptid), buf.Bytes())
 	}); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Save fail", http.StatusInternalServerError)
@@ -88,7 +151,7 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
-	log.Printf("invoice.Load with id=%s", name)
+	log.Printf("invoice.Load with conceptid=%s", name)
 	e := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("invoices"))
 		v := b.Get([]byte(name))
@@ -144,11 +207,6 @@ func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
 			return e
 		}
-
-		//if len(u.Meta.Issuedate) == 0 {
-		u.Meta.Issuedate = time.Now().Format("2006-01-02")
-		//}
-		// TODO: Update in DB
 
 		f, e := pdf(u)
 		if e != nil {

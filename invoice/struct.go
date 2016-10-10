@@ -51,8 +51,10 @@ type Invoice struct {
 		Street2 string `validate:"nonzero"`
 	}
 	Meta struct {
-		Invoiceid string `validate:"nonzero,slug"`
-		Issuedate string `validate:"nonzero,date"`
+    Conceptid string `validate:"slug"`
+    Status    string `validate:"slug"`
+		Invoiceid string `validate:"slug"`
+		Issuedate string `validate:"date"`
 		Ponumber  string `validate:"slug"`
 		Duedate   string `validate:"nonzero,date"`
 	}
