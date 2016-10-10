@@ -200,15 +200,15 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		b := tx.Bucket([]byte("invoices"))
 		c := b.Cursor()
 
-		keys := make(map[string]*Invoice)
-		for k, v := c.First(); k != nil; k, v = c.Next() {
+		var keys []*Invoice
+		for k, v := c.Last(); k != nil; k, v = c.Prev() {
 			//keys = append(keys, string(k))
 			u := new(Invoice)
 			if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
 				return e
 			}
 
-			keys[string(k)] = u
+			keys = append(keys, u)
 		}
 		log.Printf("invoice.List count=%d", len(keys))
 
