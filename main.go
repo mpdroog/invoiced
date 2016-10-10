@@ -85,8 +85,10 @@ func main() {
 	router.GET("/api/invoices", invoice.List)
 	router.POST("/api/invoice", invoice.Save)
 	router.GET("/api/invoice/:id", invoice.Load)
+	router.GET("/api/invoice/:id/finalize", invoice.Finalize)
 	router.GET("/api/invoice/:id/pdf", invoice.Pdf)
 	router.GET("/api/invoice/:id/credit", invoice.Credit)
+	router.DELETE("/api/invoice/:id", invoice.Delete)
 
 	router.GET("/api/hours", hour.List)
 	router.POST("/api/hour", hour.Save)
