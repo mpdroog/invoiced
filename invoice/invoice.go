@@ -10,9 +10,24 @@ import (
 	"net/http"
 	"time"
 	"gopkg.in/validator.v2"
+	"math/rand"
 )
 
 var db *bolt.DB
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func init() {
+    rand.Seed(time.Now().UnixNano())
+}
+
+// http://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-golang
+func randStringBytesRmndr(n int) string {
+    b := make([]byte, n)
+    for i := range b {
+        b[i] = letterBytes[rand.Int63() % int64(len(letterBytes))]
+    }
+    return string(b)
+}
 
 func Init(d *bolt.DB) error {
 	db = d
