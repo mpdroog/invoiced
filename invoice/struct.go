@@ -64,9 +64,9 @@ type Invoice struct {
 	}
 	Notes string
 	Total struct {
-		Ex    string //`validate:"nonzero,price"`
-		Tax   string //`validate:"nonzero,price"`
-		Total string //`validate:"nonzero,price"`
+		Ex    string `validate:"nonzero,price"`
+		Tax   string `validate:"nonzero,price"`
+		Total string `validate:"nonzero,price"`
 	}
 	Bank struct {
 		Vat  string `validate:"nonzero"`
