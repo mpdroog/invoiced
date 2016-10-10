@@ -32,7 +32,7 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return b.Delete([]byte(name))
 	}); e != nil {
 		log.Printf(e.Error())
-		http.Error(w, "invoice.Delete fail", http.StatusInternalServerError)
+		http.Error(w, "hour.Delete fail", http.StatusInternalServerError)
 	}
 }
 
@@ -44,7 +44,7 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	u := new(Hour)
 	if e := json.NewDecoder(r.Body).Decode(u); e != nil {
 		log.Printf(e.Error())
-		http.Error(w, "invoice.Save fail", http.StatusInternalServerError)
+		http.Error(w, "invoice.Save failed decoding input", 400)
 		return
 	}
 	/*if u.Name == "" {
@@ -52,7 +52,7 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	}*/
 	if e := validator.Validate(u); e != nil {
-		http.Error(w, fmt.Sprintf("invoice.Save err, failed validate=%s", e), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("invoice.Save failed validate=%s", e), 400)
 		return
 	}
 
