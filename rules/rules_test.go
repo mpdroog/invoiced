@@ -118,3 +118,30 @@ func TestUint(t *testing.T) {
 		}
 	}
 }
+
+func TestPrice(t *testing.T) {
+	valid := []string {
+		"12.00",
+		"0.00",
+		"999.999",
+		"-999.999",
+		"1.1",
+	}
+	invalid := []string {
+		"HE LLO",
+		"HELLO",
+		"12a",
+		"1,1",
+	}
+
+	for _, str := range valid {
+		if e := price(str, ""); e != nil {
+			t.Errorf("match %s failed with e=%s", str, e)
+		}
+	}
+	for _, str := range invalid {
+		if e := price(str, ""); e == nil {
+			t.Errorf("str should fail but didn't, input=%s", str)
+		}
+	}
+}
