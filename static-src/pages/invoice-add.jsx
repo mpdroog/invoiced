@@ -24,9 +24,11 @@ module.exports = React.createClass({
           Street2: "1175 RD Lijnden"
         },
         Meta: {
+          Conceptid: "",
+          Status: "NEW",
           Invoiceid: "",
           InvoiceidL: true,
-          Issuedate: Moment(),
+          Issuedate: null,
           IssuedateL: true,
           Ponumber: "",
           Duedate: Moment().add(14, 'days')
@@ -68,15 +70,30 @@ module.exports = React.createClass({
           return;
         }
         if (that.isMounted()) {
-          var body = res.body;
-          body.Meta.Issuedate = Moment(body.Meta.Issuedate);
-          body.Meta.Duedate = Moment(body.Meta.Duedate);
-          that.setState(body);
+          that.parseInput.call(that, res.body);
         }
     });
   },
 
+  parseInput: function(data) {
+    console.log(data);
+    if (window.location.href != "?#invoice-add/" + data.Meta.Conceptid) {
+      // Update URL so refresh will keep the invoice open
+      history.replaceState({}, "", "?#invoice-add/" + data.Meta.Conceptid);
+      this.props.args.push(data.Meta.Conceptid);
+    }
+    data.Meta.Issuedate = data.Meta.Issuedate ? Moment(data.Meta.Issuedate) : null;
+    data.Meta.Duedate = data.Meta.Duedate ? Moment(data.Meta.Duedate) : null;
+    data.Meta.InvoiceidL = true;
+    data.Meta.IssuedateL = true;
+    this.setState(data);
+  },
+
   lineAdd: function() {
+    if (this.state.Meta.Status === 'FINAL') {
+      console.log("Finalized, not allowing changes!");
+      return;
+    }
     console.log("Add invoice line");
     this.state.Lines.push({
       Description: "",
@@ -87,6 +104,10 @@ module.exports = React.createClass({
     this.setState({Lines: this.state.Lines});
   },
   lineRemove: function(key) {
+    if (this.state.Meta.Status === 'FINAL') {
+      console.log("Finalized, not allowing changes!");
+      return;
+    }
     var line = this.state.Lines[key];
     var isEmpty = line.Description === ""
       && line.Quantity === "0"
@@ -123,6 +144,10 @@ module.exports = React.createClass({
   },
 
   triggerChange: function(indices, val) {
+    if (this.state.Meta.Status === 'FINAL') {
+      console.log("Finalized, not allowing changes!");
+      return;
+    }
     var node = this.state;
     for (var i = 0; i < indices.length-1; i++) {
       node = node[ indices[i] ];
@@ -165,8 +190,8 @@ module.exports = React.createClass({
   save: function(e) {
     var that = this;
     var req = JSON.parse(JSON.stringify(this.state)); // deepCopy
-    req.Meta.Issuedate = this.state.Meta.Issuedate.format('YYYY-MM-DD');
-    req.Meta.Duedate = this.state.Meta.Duedate.format('YYYY-MM-DD');
+    req.Meta.Issuedate = this.state.Meta.Issuedate ? this.state.Meta.Issuedate.format('YYYY-MM-DD') : "";
+    req.Meta.Duedate = this.state.Meta.Duedate ? this.state.Meta.Duedate.format('YYYY-MM-DD') : "";
     console.log(req);
 
     Request.post('/api/invoice')
@@ -179,18 +204,37 @@ module.exports = React.createClass({
           return;
         }
         if (that.isMounted()) {
-          console.log(res.body);
-          that.setState(res.body);
+          that.parseInput.call(that, res.body);
+        }
+    });
+  },
+
+  finalize: function(e) {
+    var that = this;
+
+    Request.get('/api/invoice/' + this.state.Meta.Conceptid + '/finalize')
+    .set('Accept', 'application/json')
+    .end(function(err, res) {
+        if (err) {
+          console.log(err);
+          handleErr(err);
+          return;
+        }
+        if (that.isMounted()) {
+          console.log("Finalized");
+          that.parseInput.call(that, res.body);
         }
     });
   },
 
   pdf: function() {
-    if (! this.props.args[0]) {
-      alert("PDF only available when saved.");
+    if (this.state.Meta.Status !== 'FINAL') {
+      console.log("PDF only available in finalized invoices");
       return;
     }
-    location.href = '/api/invoice/'+this.props.args[0]+'/pdf';
+    var url = '/api/invoice/'+this.props.args[0]+'/pdf';
+    console.log("Open PDF " + url);
+    location.assign(url);
   },
 
 	render: function() {
@@ -199,9 +243,10 @@ module.exports = React.createClass({
     var lines = [];
 
     inv.Lines.forEach(function(line, idx) {
+      console.log(inv.Meta.Status);
       lines.push(
         <tr key={"line"+idx}>
-          <td><button className="btn btn-default btn-hover-danger faa-parent animated-hover" onClick={that.lineRemove.bind(null, idx)}><i className="fa fa-trash faa-flash"></i></button></td>
+          <td><button disabled={inv.Meta.Status === 'FINAL' ? 'disabled': ''} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? 'btn-hover-danger faa-parent animated-hover' : '')} onClick={that.lineRemove.bind(null, idx)}><i className="fa fa-trash faa-flash"></i></button></td>
           <td><input className="form-control" type="text" data-key={"Lines."+idx+".Description"} onChange={that.handleChange} value={line.Description}/></td>
           <td><input className="form-control" type="text" data-key={"Lines."+idx+".Quantity"} onChange={that.handleChange} value={line.Quantity}/></td>
           <td><input className="form-control" type="text" data-key={"Lines."+idx+".Price"} onChange={that.handleChange} value={line.Price}/></td>
@@ -216,8 +261,8 @@ module.exports = React.createClass({
             <div className="panel-tools">
               <div className="btn-group nm7">
                 <button className="btn btn-default btn-hover-success" disabled={this.revisions.length > 0 ? '' : 'disabled'} onClick={this.save}><i className="fa fa-floppy-o"></i> Save</button>
-                <button className="btn btn-default btn-hover-danger" disabled="disabled" onClick={this.finalize}><i className="fa fa-lock"></i> Finalize</button>
-                <button className="btn btn-default" disabled="disabled" onClick={this.pdf}><i className="fa fa-file-pdf-o"></i> PDF</button>
+                <button className="btn btn-default btn-hover-danger" disabled={inv.Meta.Status === "CONCEPT" ? '' : 'disabled'} onClick={this.finalize}><i className="fa fa-lock"></i> Finalize</button>
+                <a className="btn btn-default btn-hover-success" disabled={inv.Meta.Status === "FINAL" ? '' : 'disabled'} onClick={this.pdf}><i className="fa fa-file-pdf-o"></i> PDF</a>
               </div>
 
             </div>
@@ -225,7 +270,7 @@ module.exports = React.createClass({
           </div>
           <div className="panel-body">
 
-<div className="invoice group">
+<div className={"invoice group " + (inv.Meta.Status === 'FINAL' ? 'o50' : '')}>
   <div className="row">
     <div className="company col-sm-4">
       <input className="form-control" type="text" data-key="Company" onChange={that.handleChange} value={inv.Company}/>
@@ -273,6 +318,7 @@ module.exports = React.createClass({
                 disabled={inv.Meta.IssuedateL}
                 dateFormat="YYYY-MM-DD"
                 selected={inv.Meta.Issuedate}
+                placeholderText="AUTOGENERATED"
                 onChange={this.handleChangeDate('Meta.Issuedate')} />
                 <div className="input-group-addon"><a className="" onClick={this.toggleChange('Meta.IssuedateL', inv.Meta.IssuedateL)}><i className={"fa " + (inv.Meta.IssuedateL?"fa-lock":"fa-unlock")}></i></a></div>
               </div>
@@ -311,7 +357,7 @@ module.exports = React.createClass({
     <tfoot>
       <tr>
         <td colSpan="3" className="text">
-          <button className="btn btn-default btn-hover-success faa-parent animated-hover" onClick={this.lineAdd}><i className="fa fa-plus faa-bounce"></i> Add row</button>
+          <button disabled={inv.Meta.Status === 'FINAL' ? 'disabled': ''} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? 'btn-hover-success faa-parent animated-hover' : '')} onClick={this.lineAdd}><i className="fa fa-plus faa-bounce"></i> Add row</button>
         </td>
         <td className="text">Total (ex tax)</td>
         <td><input className="form-control" disabled="disabled" type="text" data-key="Total.Ex" readOnly="readOnly" value={inv.Total.Ex}/></td>
