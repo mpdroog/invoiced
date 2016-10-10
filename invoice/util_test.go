@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func testYearQuarter(t *testing.T) {
+func TestYearQuarter(t *testing.T) {
 	tests := map[time.Time]int {
 		time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC): 1, /* Jan = Q1 */
 		time.Date(2016, 2, 1, 0, 0, 0, 0, time.UTC): 1,
@@ -27,7 +27,7 @@ func testYearQuarter(t *testing.T) {
 	}
 }
 
-func testCreateInvoiceId(t *testing.T) {
+func TestCreateInvoiceId(t *testing.T) {
 	expect := "2016Q1-0100"
 	res := createInvoiceId(time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC), 100)
 	if expect != res {

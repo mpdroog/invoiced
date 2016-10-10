@@ -8,19 +8,27 @@ import (
 func yearQuarter(now time.Time) int {
 	switch now.Month() {
 	case time.January:
+		fallthrough
 	case time.February:
+		fallthrough
 	case time.March:
 		return 1
 	case time.April:
+		fallthrough
 	case time.May:
+		fallthrough
 	case time.June:
 		return 2
 	case time.July:
+		fallthrough
 	case time.August:
+		fallthrough
 	case time.September:
 		return 3
 	case time.October:
+		fallthrough
 	case time.November:
+		fallthrough
 	case time.December:
 		return 4
 	}
