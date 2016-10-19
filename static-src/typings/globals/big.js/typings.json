@@ -1,0 +1,8 @@
+{
+  "resolution": "main",
+  "tree": {
+    "src": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/cd503bf98525afbe1f0dbe025b38b893cf19ad1c/big.js/big.js.d.ts",
+    "raw": "registry:dt/big.js#0.0.0+20160812205034",
+    "typings": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/cd503bf98525afbe1f0dbe025b38b893cf19ad1c/big.js/big.js.d.ts"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "resolution": "main",
+  "tree": {
+    "src": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/54b446166e62553ad923a42f8c6ec42f13cac69f/react-datepicker/react-datepicker.d.ts",
+    "raw": "registry:dt/react-datepicker#0.28.1+20160724064853",
+    "typings": "https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/54b446166e62553ad923a42f8c6ec42f13cac69f/react-datepicker/react-datepicker.d.ts"
+  }
+}
