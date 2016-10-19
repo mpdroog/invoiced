@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "outDir": "../static/assets",
+        "sourceMap": true,
+        "noImplicitAny": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "es5",
+        "jsx": "react"
+    },
+    "files": [
+        "./typings/index.d.ts",
+        "./pages/dashboard.tsx",
+        "./pages/hour-add.tsx",
+        "./pages/hours.tsx",
+        "./pages/invoice-add.tsx",
+        "./pages/invoices.tsx"
+    ]
+}
