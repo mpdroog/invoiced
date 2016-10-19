@@ -1,44 +1,53 @@
-// https://github.com/webpack/react-starter
 var webpack = require("webpack");
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
-//var StaticSiteGeneratorPlugin = require('static-site-generator-webpack-plugin');
-
+var extract = require("extract-text-webpack-plugin");
 module.exports = {
-	entry: "./app.jsx",
-	output: {
-		path: "../static/assets",
-		filename: "app.js",
-		libraryTarget: 'umd'
-	},
-	module: {
-		loaders: [
-			{
-				test: /\.jsx?$/,
-				exclude: /(node_modules|bower_components)/,
-				loader: 'babel', // 'babel-loader' is also a legal name to reference
-				query: {presets: ['es2015']}
-			},
-			{ test: /\.json$/, loader: "json-loader" },
-			{ test: /\.css$/, loader: ExtractTextPlugin.extract("css-loader") },
-            { test: /\.jpe?g$|\.gif$|\.png$|\.svg$|\.woff$|\.ttf$|\.wav$|\.mp3$/, loader: "file" }
-		],
-		/*preLoaders: [
-			{
-				test: /\.jsx$/,
-				loader: "jsxhint-loader"
-			}
-		]*/
-	},
+    entry: "./app.tsx",
+    output: {
+        filename: "../static/assets/app.js",
+    },
 
-	plugins: [
-		new ExtractTextPlugin("app.css", { allChunks: true }),
+    // Enable sourcemaps for debugging webpack's output.
+    devtool: "source-map",
 
-		//new StaticSiteGeneratorPlugin('members.js', [], []),
-		/*new webpack.optimize.UglifyJsPlugin({
-				compressor: {
-					warnings: false
-				}
-		}),*/
-		new webpack.optimize.DedupePlugin()
-	]
+    resolve: {
+        // Add '.ts' and '.tsx' as resolvable extensions.
+        extensions: ["", ".webpack.js", ".web.js", ".ts", ".tsx", ".js"]
+    },
+
+    module: {
+        loaders: [
+            // All files with jsx extension get sent to babel
+            {
+                test: /\.jsx?$/,
+                exclude: /(node_modules|bower_components)/,
+                loader: 'babel', // 'babel-loader' is also a legal name to reference
+                query: {presets: ['es2015']}
+            },
+
+            // All files with a '.ts' or '.tsx' extension will be handled by 'ts-loader'.
+            { test: /\.tsx?$/, loader: "ts-loader" },
+            // Create CSS from all included styling files.
+            { test: /\.css$/, loader: extract.extract("css-loader") }
+        ],
+
+        preLoaders: [
+            // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
+            { test: /\.js$/, loader: "source-map-loader" }
+        ]
+    },
+
+    // Minify the output!
+    plugins: [
+        new extract("app.css", { allChunks: true }),
+        new webpack.optimize.UglifyJsPlugin()
+    ],
+
+    // When importing a module whose path matches one of the following, just
+    // assume a corresponding global variable exists and use that instead.
+    // This is important because it allows us to avoid bundling all of our
+    // dependencies, which allows browsers to cache those libraries between builds.
+    externals: {
+        "react": "React",
+        "react-dom": "ReactDOM"
+    },
 };
