@@ -109,12 +109,12 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
 
   componentDidMount() {
     let params = this.props.params;
-    console.log("Load invoice name=" + params["id"]);
+    console.log(`Load invoice name=${params["id"]} from bucket=${params["bucket"]}`);
     this.ajax(params["bucket"], params["id"]);
   }
 
   private ajax(bucket: string, name: string) {
-    Axios.get('/api/invoice/'+name, {params: {bucket: bucket}})
+    Axios.get(`/api/invoice/${name}`, {params: {bucket: bucket}})
     .then(res => {
       this.parseInput.call(this, res.data);
     })
@@ -125,9 +125,9 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
 
   private parseInput(data: IInvoiceState) {
     console.log(data);
-    if (window.location.href != "?#invoice-add/" + data.Meta.Conceptid) {
+    if (window.location.href != `?#invoice-add/${data.Meta.Conceptid}`) {
       // Update URL so refresh will keep the invoice open
-      history.replaceState({}, "", "?#invoice-add/" + data.Meta.Conceptid);
+      history.replaceState({}, "", `?#invoice-add/${data.Meta.Conceptid}`);
       this.props.params["id"] = data.Meta.Conceptid;
     }
     data.Meta.Issuedate = data.Meta.Issuedate ? Moment(data.Meta.Issuedate) : null;
@@ -162,10 +162,10 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       && line.Quantity === "0"
       && line.Price === "0.00"
       && line.Total === "0.00";
-    let isOk = !isEmpty && confirm("Are you sure you want to remove the invoiceline with description '" + line.Description + "'?");
+    let isOk = !isEmpty && confirm(`Are you sure you want to remove the invoiceline with description '${line.Description}'?`);
 
     if (isEmpty || isOk) {
-      console.log("Remove invoice line with key=" + key);
+      console.log(`Remove invoice line with key=${key}`);
       console.log("Deleted idx ", this.state.Lines.splice(key, 1)[0]);
       this.setState({Lines: this.state.Lines});
     }
@@ -256,7 +256,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
   }
 
   private finalize() {
-    Axios.post('/api/invoice/' + this.state.Meta.Conceptid + '/finalize', {})
+    Axios.post(`/api/invoice/${this.state.Meta.Conceptid}/finalize`, {})
     .then(res => {
       this.parseInput.call(this, res.data);
     })
@@ -270,8 +270,8 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       console.log("PDF only available in finalized invoices");
       return;
     }
-    let url = '/api/invoice/'+this.props.params["id"]+'/pdf';
-    console.log("Open PDF " + url);
+    let url = `/api/invoice/${this.props.params["id"]}/pdf`;
+    console.log(`Open PDF ${url}`);
     location.assign(url);
   }
 
@@ -284,10 +284,10 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       console.log(inv.Meta.Status);
       lines.push(
         <tr key={"line"+idx}>
-          <td><button disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? 'btn-hover-danger faa-parent animated-hover' : '')} onClick={that.lineRemove.bind(null, idx)}><i className="fa fa-trash faa-flash"></i></button></td>
-          <td><input className="form-control" type="text" data-key={"Lines."+idx+".Description"} onChange={that.handleChange.bind(this)} value={line.Description}/></td>
-          <td><input className="form-control" type="text" data-key={"Lines."+idx+".Quantity"} onChange={that.handleChange.bind(this)} value={line.Quantity}/></td>
-          <td><input className="form-control" type="text" data-key={"Lines."+idx+".Price"} onChange={that.handleChange.bind(this)} value={line.Price}/></td>
+          <td><button disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? 'btn-hover-danger faa-parent animated-hover' : '')} onClick={that.lineRemove.bind(that, idx)}><i className="fa fa-trash faa-flash"></i></button></td>
+          <td><input className="form-control" type="text" data-key={"Lines."+idx+".Description"} onChange={that.handleChange.bind(that)} value={line.Description}/></td>
+          <td><input className="form-control" type="text" data-key={"Lines."+idx+".Quantity"} onChange={that.handleChange.bind(that)} value={line.Quantity}/></td>
+          <td><input className="form-control" type="text" data-key={"Lines."+idx+".Price"} onChange={that.handleChange.bind(that)} value={line.Price}/></td>
           <td><input className="form-control" readOnly={true} disabled={true} type="text" data-key={"Lines."+idx+".Total"} value={line.Total}/></td>
         </tr>
       );

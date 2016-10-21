@@ -40,7 +40,7 @@ export default class Hours extends React.Component<{}, IHourState> {
     e.preventDefault()
     let id = e.target.dataset["target"];
 
-    Axios.delete('/api/hour/'+id)
+    Axios.delete(`/api/hour/${id}`)
     .then(res => {
       location.reload();
     })

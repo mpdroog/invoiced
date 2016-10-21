@@ -43,7 +43,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
   }
 
   private ajax(name: string) {
-    Axios.get('/api/hour/'+name)
+    Axios.get(`/api/hour/${name}`)
     .then(res => {
       this.setState(res.data);
     })
@@ -102,7 +102,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
   }
 
   private lineRemove(key: number) {
-    console.log("Remove hour line with key=" + key);
+    console.log(`Remove hour line with key=${key}`);
     console.log("Deleted idx ", this.state.Lines.splice(key, 1)[0]);
     this.setState({Lines: this.state.Lines});
   }
