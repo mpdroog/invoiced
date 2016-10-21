@@ -38,7 +38,7 @@ export default class Hours extends React.Component<{}, IHourState> {
 
   private delete(e: BrowserEvent) {
     e.preventDefault()
-    var id = e.target.dataset["target"];
+    let id = e.target.dataset["target"];
 
     Axios.delete('/api/hour/'+id)
     .then(res => {
@@ -50,8 +50,8 @@ export default class Hours extends React.Component<{}, IHourState> {
   }
 
   render() {
-    var res:JSX.Element[] = [];
-    var that = this;
+    let res:JSX.Element[] = [];
+    let that = this;
     console.log("hours=",this.state.hours);
     if (this.state.hours && this.state.hours.length > 0) {
       this.state.hours.forEach(function(elem) {

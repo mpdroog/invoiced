@@ -59,9 +59,9 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
       return;
     }
 
-    var start = Moment.duration(this.state.start);
-    var stop = Moment.duration(this.state.stop);
-    var sum = stop.subtract(start);
+    let start = Moment.duration(this.state.start);
+    let stop = Moment.duration(this.state.stop);
+    let sum = stop.subtract(start);
     console.log("Start=" + start + " Stop=" + stop + " to hours=" + sum.humanize());
 
     this.state.Lines.push({
@@ -82,7 +82,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
 
   private update(e: InputEvent) {
     console.log(e.target.value);
-    var elem = e.target as any;
+    let elem = e.target as any;
 
     if (elem.id === "hour-start") {
       this.setState({start: e.target.value});
@@ -118,9 +118,9 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
   }
 
 	render() {
-    var lines: JSX.Element[] = [];
-    var that = this;
-    var sum = new Big("0.00");
+    let lines: JSX.Element[] = [];
+    let that = this;
+    let sum = new Big("0.00");
     this.state.Lines.forEach(function(item:IHourLineState, idx:number) {
       sum = sum.plus(item.Hours);
       lines.push(<tr key={idx}>

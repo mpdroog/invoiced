@@ -108,7 +108,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
   }
 
   componentDidMount() {
-    var params = this.props.params;
+    let params = this.props.params;
     console.log("Load invoice name=" + params["id"]);
     this.ajax(params["bucket"], params["id"]);
   }
@@ -157,12 +157,12 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       console.log("Finalized, not allowing changes!");
       return;
     }
-    var line: IInvoiceLine = this.state.Lines[key];
-    var isEmpty = line.Description === ""
+    let line: IInvoiceLine = this.state.Lines[key];
+    let isEmpty = line.Description === ""
       && line.Quantity === "0"
       && line.Price === "0.00"
       && line.Total === "0.00";
-    var isOk = !isEmpty && confirm("Are you sure you want to remove the invoiceline with description '" + line.Description + "'?");
+    let isOk = !isEmpty && confirm("Are you sure you want to remove the invoiceline with description '" + line.Description + "'?");
 
     if (isEmpty || isOk) {
       console.log("Remove invoice line with key=" + key);
@@ -177,14 +177,14 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
   }
 
   private totalUpdate(lines: IInvoiceLine[]) {
-    var ex = new Big(0);
+    let ex = new Big(0);
     lines.forEach(function(val: IInvoiceLine) {
       console.log("Add", val.Total);
       ex = ex.plus(val.Total);
     });
     // TODO: Hardcoded to 21%
-    var tax = ex.div("100").times("21");
-    var total = ex.plus(tax);
+    let tax = ex.div("100").times("21");
+    let total = ex.plus(tax);
     console.log("totals (ex,tax,total)", ex.toString(), tax.toString(), total.toString());
 
     return {
@@ -199,15 +199,15 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       console.log("Finalized, not allowing changes!");
       return;
     }
-    var node: any = this.state;
-    for (var i = 0; i < indices.length-1; i++) {
+    let node: any = this.state;
+    for (let i = 0; i < indices.length-1; i++) {
       node = node[ indices[i] ];
     }
     node[indices[indices.length-1]] = val;
 
     // Any post-processing
     if (indices[0] === "Lines") {
-      var idx = indices[1] as any;
+      let idx = indices[1] as any;
       this.state.Lines[idx] = this.lineUpdate(this.state.Lines[idx]);
       this.state.Total = this.totalUpdate(this.state.Lines);
     }
@@ -217,13 +217,13 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
 
   private handleChange(e: InputEvent) {
     console.log("handleChange", e.target.dataset["key"]);
-    var indices = e.target.dataset["key"].split('.');
+    let indices = e.target.dataset["key"].split('.');
     this.triggerChange(indices, e.target.value);
   }
 
   private handleChangeDate(id: string) {
-    var indices = id.split('.');
-    var that = this;
+    let indices = id.split('.');
+    let that = this;
     return function(val: string) {
       console.log("handleChangeDate", id, val);
       that.triggerChange.call(that, indices, val);
@@ -231,8 +231,8 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
   }
 
   private toggleChange(id: string, val: boolean) {
-    var indices = id.split('.');
-    var that = this;
+    let indices = id.split('.');
+    let that = this;
     val = !val; // Invert value
     return function() {
       console.log("toggleChange", id, val);
@@ -241,7 +241,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
   }
 
   private save() {
-    var req = JSON.parse(JSON.stringify(this.state)); // deepCopy
+    let req = JSON.parse(JSON.stringify(this.state)); // deepCopy
     req.Meta.Issuedate = this.state.Meta.Issuedate ? this.state.Meta.Issuedate.format('YYYY-MM-DD') : "";
     req.Meta.Duedate = this.state.Meta.Duedate ? this.state.Meta.Duedate.format('YYYY-MM-DD') : "";
     console.log(req);
@@ -270,15 +270,15 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       console.log("PDF only available in finalized invoices");
       return;
     }
-    var url = '/api/invoice/'+this.props.params["id"]+'/pdf';
+    let url = '/api/invoice/'+this.props.params["id"]+'/pdf';
     console.log("Open PDF " + url);
     location.assign(url);
   }
 
 	render() {
-    var inv = this.state;
-    var that = this;
-    var lines: JSX.Element[] = [];
+    let inv = this.state;
+    let that = this;
+    let lines: JSX.Element[] = [];
 
     inv.Lines.forEach(function(line: IInvoiceLine, idx: number) {
       console.log(inv.Meta.Status);

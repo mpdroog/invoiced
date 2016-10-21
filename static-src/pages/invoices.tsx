@@ -49,7 +49,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
 
   private delete(e: BrowserEvent) {
     e.preventDefault()
-    var id = e.target.dataset['target'];
+    let id = e.target.dataset['target'];
 
     Axios.delete('/api/invoice/'+id)
     .then(res => {
@@ -61,12 +61,12 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
   }
 
 	render() {
-    var res:JSX.Element[] = [];
-    var that = this;
+    let res:JSX.Element[] = [];
+    let that = this;
     console.log("invoices=", this.state.invoices);
     if (this.state.invoices && this.state.invoices.length > 0) {
       this.state.invoices.forEach(function(inv) {
-        var key: string = inv.Meta.Conceptid;
+        let key: string = inv.Meta.Conceptid;
         res.push(<tr key={key}>
           <td>{key}</td>
           <td>{inv.Meta.Invoiceid}</td>
