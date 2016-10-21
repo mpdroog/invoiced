@@ -125,9 +125,9 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
 
   private parseInput(data: IInvoiceState) {
     console.log(data);
-    if (window.location.href != `?#invoice-add/${data.Meta.Conceptid}`) {
+    if (window.location.href != `?#invoice-add/${this.props.params["bucket"]}/${data.Meta.Conceptid}`) {
       // Update URL so refresh will keep the invoice open
-      history.replaceState({}, "", `?#invoice-add/${data.Meta.Conceptid}`);
+      history.replaceState({}, "", `?#invoice-add/${this.props.params["bucket"]}/${data.Meta.Conceptid}`);
       this.props.params["id"] = data.Meta.Conceptid;
     }
     data.Meta.Issuedate = data.Meta.Issuedate ? Moment(data.Meta.Issuedate) : null;
