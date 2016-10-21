@@ -6,7 +6,7 @@ import Dashboard from "./pages/dashboard";
 import HourEdit from "./pages/hour-add";
 import Hours from "./pages/hours";
 import InvoiceEdit from "./pages/invoice-add";
-import Invoices from "./pages/invoices";
+import Invoices from "./pages/invoicespage";
 
 try {
 	ReactDOM.render(
@@ -15,8 +15,8 @@ try {
       	<Route path="/hour-add/:id" component={HourEdit} />
       	<Route path="/hours" component={Hours} />
 
-      	<Route path="/invoice-add/:id" component={InvoiceEdit} />
-      	<Route path="/invoices" component={Invoices} />
+      	<Route path="/invoice-add/:bucket/:id" component={InvoiceEdit} />
+            <Route component={Invoices} path="/invoices"/>
       </Router>,
 	  document.getElementById('root')
 	);

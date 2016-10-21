@@ -11,6 +11,7 @@ import (
 	"time"
 	"gopkg.in/validator.v2"
 	"math/rand"
+	"strings"
 )
 
 var db *bolt.DB
@@ -175,10 +176,19 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	args := r.URL.Query()
+	bucket := args.Get("bucket")
+	if bucket == "" {
+		bucket = "invoices"
+	}
+	if !strings.HasPrefix(bucket, "invoices") {
+		http.Error(w, "invoice.Load invalid bucket-name", 400)
+		return nil
+	}
 	name := ps.ByName("id")
 	log.Printf("invoice.Load with conceptid=%s", name)
 	e := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("invoices"))
+		b := tx.Bucket([]byte(bucket))
 		v := b.Get([]byte(name))
 		if v == nil {
 			http.Error(w, "invoice.Load no such name", http.StatusNotFound)
@@ -196,19 +206,58 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	e := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("invoices"))
+	args := r.URL.Query()
+	bucket := args.Get("bucket")
+	if bucket == "" {
+		bucket = "invoices"
+	}
+	if !strings.HasPrefix(bucket, "invoices") {
+		http.Error(w, "invoice.Load invalid bucket-name", 400)
+		return nil
+	}
+	from := args.Get("from")
+	count, e := strconv.Atoi(args.Get("count"))
+	if e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.List fail", http.StatusInternalServerError)
+	}
+
+	e = db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucket))
+		if b == nil {
+			// Empty bucket
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(nil)
+			return nil
+		}
 		c := b.Cursor()
 
 		var keys []*Invoice
-		for k, v := c.Last(); k != nil; k, v = c.Prev() {
-			//keys = append(keys, string(k))
-			u := new(Invoice)
-			if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
-				return e
-			}
+		i := 0
+		if from == "" {
+			// Start from last
+			for k, v := c.Last(); k != nil && i < count; k, v = c.Prev() {
+				//keys = append(keys, string(k))
+				u := new(Invoice)
+				if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
+					return e
+				}
 
-			keys = append(keys, u)
+				keys = append(keys, u)
+				i++
+			}
+		} else {
+			// Start from key
+			for k, v := c.Seek([]byte(from)); k != nil && i < count; k, v = c.Prev() {
+				//keys = append(keys, string(k))
+				u := new(Invoice)
+				if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
+					return e
+				}
+
+				keys = append(keys, u)
+				i++
+			}
 		}
 		log.Printf("invoice.List count=%d", len(keys))
 
@@ -220,15 +269,25 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	})
 	if e != nil {
 		log.Printf(e.Error())
-		http.Error(w, "invoice.Save fail", http.StatusInternalServerError)
+		http.Error(w, "invoice.List fail", http.StatusInternalServerError)
 	}
 }
 
 func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
+	args := r.URL.Query()
+	bucket := args.Get("bucket")
+	if bucket == "" {
+		bucket = "invoices"
+	}
+	if !strings.HasPrefix(bucket, "invoices") {
+		http.Error(w, "invoice.Load invalid bucket-name", 400)
+		return nil
+	}
+
 	log.Printf("invoice.Pdf with id=%s", name)
 	e := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("invoices"))
+		b := tx.Bucket([]byte(bucket))
 		v := b.Get([]byte(name))
 		if v == nil {
 			return fmt.Errorf("No such invoice name")
@@ -255,9 +314,19 @@ func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 func Credit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
+	args := r.URL.Query()
+	bucket := args.Get("bucket")
+	if bucket == "" {
+		bucket = "invoices"
+	}
+	if !strings.HasPrefix(bucket, "invoices") {
+		http.Error(w, "invoice.Load invalid bucket-name", 400)
+		return nil
+	}
+
 	log.Printf("invoice.Credit with id=%s", name)
 	e := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("invoices"))
+		b := tx.Bucket([]byte(bucket))
 		v := b.Get([]byte(name))
 		if v == nil {
 			return fmt.Errorf("No such invoice name")

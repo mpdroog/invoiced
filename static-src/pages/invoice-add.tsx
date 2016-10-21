@@ -108,12 +108,13 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
   }
 
   componentDidMount() {
-    console.log("Load hour name=" + this.props.params["id"]);
-    this.ajax(this.props.params["id"]);
+    var params = this.props.params;
+    console.log("Load invoice name=" + params["id"]);
+    this.ajax(params["bucket"], params["id"]);
   }
 
-  private ajax(name: string) {
-    Axios.get('/api/invoice/'+name)
+  private ajax(bucket: string, name: string) {
+    Axios.get('/api/invoice/'+name, {params: {bucket: bucket}})
     .then(res => {
       this.parseInput.call(this, res.data);
     })

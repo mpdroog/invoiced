@@ -2,7 +2,7 @@ import * as React from "react";
 import Axios from "axios";
 
 interface IHourPagination {
-  from?: number
+  from?: string
   count?: number
 }
 interface IHourState {
@@ -15,7 +15,7 @@ export default class Hours extends React.Component<{}, IHourState> {
     super();
     this.state = {
       "pagination": {
-        "from": 0,
+        "from": "",
         "count": 50
       },
       "hours": null
@@ -27,7 +27,7 @@ export default class Hours extends React.Component<{}, IHourState> {
   }
 
   private ajax() {
-    Axios.get('/api/hours')
+    Axios.get('/api/hours', {params: this.state.pagination})
     .then(res => {
       this.setState({hours: res.data});
     })

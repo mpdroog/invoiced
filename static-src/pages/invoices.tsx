@@ -1,9 +1,10 @@
 import * as React from "react";
 import Axios from "axios";
 import {IInvoiceState} from "./invoice-add";
+import {IInjectedProps} from "react-router";
 
 interface IInvoicePagination {
-  from?: number
+  from?: string
   count?: number
 }
 interface IInvoiceListState {
@@ -11,10 +12,21 @@ interface IInvoiceListState {
   invoices?: IInvoiceState[]
 }
 
-export default class Hours extends React.Component<{}, IInvoiceListState> {
-  constructor() {
-      super();
-      this.state = { pagination: {from:0, count:50}, invoices: null };
+interface IInvoiceListProps {
+  bucket: string
+  title: string
+}
+
+export default class Invoices extends React.Component<IInvoiceListProps, IInvoiceListState> {
+  constructor(props: IInvoiceListProps) {
+      super(props);
+      this.state = {
+        "pagination": {
+          "from": "",
+          "count": 50
+        },
+        "invoices": null
+      };
   }
 
   componentDidMount() {
@@ -22,7 +34,11 @@ export default class Hours extends React.Component<{}, IInvoiceListState> {
   }
 
   private ajax() {
-    Axios.get('/api/invoices')
+    Axios.get('/api/invoices', {params: {
+      from: this.state.pagination.from,
+      count: this.state.pagination.count,
+      bucket: this.props.bucket
+    }})
     .then(res => {
       this.setState({invoices: res.data});
     })
@@ -62,7 +78,7 @@ export default class Hours extends React.Component<{}, IInvoiceListState> {
           </td></tr>);
       });
     } else {
-      res.push(<tr key="empty"><td colSpan={4}>No invoices yet :)</td></tr>);
+      res.push(<tr key="empty"><td colSpan={5}>No invoices yet :)</td></tr>);
     }
 
 		return <div className="normalheader">
@@ -73,7 +89,7 @@ export default class Hours extends React.Component<{}, IInvoiceListState> {
                 <a href="#invoice-add" className="btn btn-default btn-hover-primary showhide"><i className="fa fa-plus"></i> New</a>
               </div>
             </div>
-            Invoices
+            {this.props.title}
           </div>
           <div className="panel-body">
             <table className="table table-striped">
