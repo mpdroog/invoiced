@@ -44,7 +44,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
   }
 
   private ajax(name: string) {
-    Axios.get(`/api/hour/${name}`)
+    Axios.get(`/api/v1/hour/${name}`)
     .then(res => {
       this.setState(res.data);
     })
@@ -110,7 +110,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
 
   private save(e: BrowserEvent) {
     e.preventDefault();
-    Axios.post('/api/hour', this.state)
+    Axios.post('/api/v1/hour', this.state)
     .then(res => {
       console.log(res.data);
       this.props.params["id"] = res.data.Name;

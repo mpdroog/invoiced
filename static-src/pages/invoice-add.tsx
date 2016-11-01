@@ -117,7 +117,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
   }
 
   private ajax(bucket: string, name: string) {
-    Axios.get(`/api/invoice/${name}`, {params: {bucket: bucket}})
+    Axios.get(`/api/v1/invoice/${name}`, {params: {bucket: bucket}})
     .then(res => {
       this.parseInput.call(this, res.data);
     })
@@ -252,7 +252,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
     req.Meta.Duedate = this.state.Meta.Duedate ? this.state.Meta.Duedate.format('YYYY-MM-DD') : "";
     console.log(req);
 
-    Axios.post('/api/invoice', req)
+    Axios.post('/api/v1/invoice', req)
     .then(res => {
       this.parseInput.call(this, res.data);
     })
@@ -263,7 +263,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
 
   private reset(e: BrowserEvent) {
     e.preventDefault();
-    Axios.post(`/api/invoice/${this.state.Meta.Conceptid}/reset`, {})
+    Axios.post(`/api/v1/invoice/${this.state.Meta.Conceptid}/reset`, {})
     .then(res => {
       this.parseInput.call(this, res.data);
     })
@@ -274,7 +274,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
 
   private finalize(e: BrowserEvent) {
     e.preventDefault();
-    Axios.post(`/api/invoice/${this.state.Meta.Conceptid}/finalize`, {})
+    Axios.post(`/api/v1/invoice/${this.state.Meta.Conceptid}/finalize`, {})
     .then(res => {
       this.parseInput.call(this, res.data);
     })
@@ -288,7 +288,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       console.log("PDF only available in finalized invoices");
       return;
     }
-    let url = `/api/invoice/${this.props.params["id"]}/pdf`;
+    let url = `/api/v1/invoice/${this.props.params["id"]}/pdf`;
     console.log(`Open PDF ${url}`);
     location.assign(url);
   }

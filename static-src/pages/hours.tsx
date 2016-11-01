@@ -28,7 +28,7 @@ export default class Hours extends React.Component<{}, IHourState> {
   }
 
   private ajax() {
-    Axios.get('/api/hours', {params: this.state.pagination})
+    Axios.get('/api/v1/hours', {params: this.state.pagination})
     .then(res => {
       this.setState({hours: res.data});
     })
@@ -41,7 +41,7 @@ export default class Hours extends React.Component<{}, IHourState> {
     e.preventDefault();
     let id = DOM.eventFilter(e, "A").dataset["target"];
 
-    Axios.delete(`/api/hour/${id}`)
+    Axios.delete(`/api/v1/hour/${id}`)
     .then(res => {
       location.reload();
     })

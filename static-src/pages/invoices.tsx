@@ -35,7 +35,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
   }
 
   private ajax() {
-    Axios.get('/api/invoices', {params: {
+    Axios.get('/api/v1/invoices', {params: {
       from: this.state.pagination.from,
       count: this.state.pagination.count,
       bucket: this.props.bucket
@@ -57,7 +57,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       return;
     }
 
-    Axios.delete(`/api/invoice/${id}?bucket=${this.props.bucket}`)
+    Axios.delete(`/api/v1/invoice/${id}?bucket=${this.props.bucket}`)
     .then(res => {
       location.reload();
     })
@@ -67,7 +67,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
   }
 
   private setPaid(id: string) {
-    Axios.post('/api/invoice/'+id+'/paid', {params: {
+    Axios.post('/api/v1/invoice/'+id+'/paid', {params: {
       bucket: this.props.bucket
     }})
     .then(res => {
