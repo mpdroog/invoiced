@@ -1,5 +1,6 @@
 import * as React from "react";
 import Axios from "axios";
+import {DOM} from "../lib/dom";
 
 interface IHourPagination {
   from?: string
@@ -37,8 +38,8 @@ export default class Hours extends React.Component<{}, IHourState> {
   }
 
   private delete(e: BrowserEvent) {
-    e.preventDefault()
-    let id = e.target.dataset["target"];
+    e.preventDefault();
+    let id = DOM.eventFilter(e, "A").dataset["target"];
 
     Axios.delete(`/api/hour/${id}`)
     .then(res => {
