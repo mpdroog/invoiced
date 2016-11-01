@@ -2,6 +2,7 @@ import * as React from "react";
 import Axios from "axios";
 import {IInvoiceState} from "./invoice-add";
 import {IInjectedProps} from "react-router";
+import {DOM} from "../lib/dom";
 
 interface IInvoicePagination {
   from?: string
@@ -48,8 +49,8 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
   }
 
   private delete(e: BrowserEvent) {
-    e.preventDefault()
-    let id = e.target.dataset['target'];
+    e.preventDefault();
+    let id = DOM.eventFilter(e, "A").dataset["target"];
 
     Axios.delete(`/api/invoice/${id}?bucket=${this.props.bucket}`)
     .then(res => {
