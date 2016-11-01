@@ -66,24 +66,65 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     });
   }
 
+  private setPaid(id: string) {
+    Axios.post('/api/invoice/'+id+'/paid', {params: {
+      bucket: this.props.bucket
+    }})
+    .then(res => {
+      location.reload();
+    })
+    .catch(err => {
+      handleErr(err);
+    });
+  }
+
+  private conceptLine(key: string, inv: IInvoiceState): JSX.Element {
+    return <tr key={key}>
+      <td>{key}</td>
+      <td>{inv.Meta.Invoiceid}</td>
+      <td>{inv.Customer.Name}</td>
+      <td>{inv.Total.Total}</td>
+      <td>
+        <a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+this.props.bucket+"/"+key}><i className="fa fa-pencil"></i></a>
+        <a disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? "btn-hover-danger faa-parent animated-hover" : "")} data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this, key)}><i className="fa fa-trash faa-flash"></i></a>
+        <a className="btn btn-default btn-hover-primary" onClick={this.setPaid.bind(this, key)}><i className="fa fa-check"></i></a>
+      </td>
+    </tr>;
+  }
+
+  private finishedLine(key: string, inv: IInvoiceState): JSX.Element {
+    return <tr key={key}>
+      <td>{key}</td>
+      <td>{inv.Meta.Invoiceid}</td>
+      <td>{inv.Customer.Name}</td>
+      <td>{inv.Total.Total}</td>
+      <td>
+        <a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+this.props.bucket+"/"+key}><i className="fa fa-pencil"></i></a>
+      </td>
+    </tr>;
+  }
+
 	render() {
     let res:JSX.Element[] = [];
     console.log("invoices=", this.state.invoices);
     if (this.state.invoices && this.state.invoices.length > 0) {
       this.state.invoices.forEach((inv) => {
         let key: string = inv.Meta.Conceptid;
-        res.push(<tr key={key}>
-          <td>{key}</td>
-          <td>{inv.Meta.Invoiceid}</td>
-          <td>{inv.Customer.Name}</td>
-          <td>{inv.Total.Total}</td>
-          <td>
-            <a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+this.props.bucket+"/"+key}><i className="fa fa-pencil"></i></a>
-            <a disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? "btn-hover-danger faa-parent animated-hover" : "")} data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
-          </td></tr>);
+        if (this.props.bucket === "invoices") {
+          res.push(this.conceptLine(key, inv));
+        } else {
+          res.push(this.finishedLine(key, inv));
+        }
       });
     } else {
       res.push(<tr key="empty"><td colSpan={5}>No invoices yet :)</td></tr>);
+    }
+
+    var headerButtons = <div/>;
+    if (this.props.bucket === "invoices") {
+      headerButtons = <a href={"#invoice-add/"+this.props.bucket} className="btn btn-default btn-hover-primary showhide">
+        <i className="fa fa-plus"></i> New
+      </a>;
     }
 
 		return <div className="normalheader">
@@ -91,7 +132,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
           <div className="panel-heading hbuilt">
             <div className="panel-tools">
               <div className="btn-group nm7">
-                <a href={"#invoice-add/"+this.props.bucket} className="btn btn-default btn-hover-primary showhide"><i className="fa fa-plus"></i> New</a>
+                {headerButtons}
               </div>
             </div>
             {this.props.title}

@@ -182,6 +182,55 @@ func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 }
 
+// Mark invoice as paid
+func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	name := ps.ByName("id")
+	log.Printf("invoice.Paid with conceptid=%s", name)
+	e := db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("invoices"))
+		v := b.Get([]byte(name))
+		if v == nil {
+			http.Error(w, "invoice.Paid no such name", http.StatusNotFound)
+			return nil
+		}
+		if e := b.Delete([]byte(name)); e != nil {
+			return e
+		}
+
+		u := new(Invoice)
+		if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
+			return e
+		}
+
+		if (u.Meta.Status != "FINAL") {
+			http.Error(w, "invoice.Paid can only set paid on FINAL-invoices", http.StatusNotFound)
+			return nil
+		}
+		u.Meta.Paydate = time.Now().Format("2006-01-02")
+
+		// Save any changes..
+		buf := new(bytes.Buffer)
+		if e := json.NewEncoder(buf).Encode(u); e != nil {
+			return e
+		}
+		b, e := tx.CreateBucketIfNotExists([]byte("invoices-paid"))
+		if e != nil {
+			return e
+		}
+		if e := b.Put([]byte(u.Meta.Conceptid), buf.Bytes()); e != nil {
+			return e
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, e = w.Write(buf.Bytes())
+		return e
+	})
+	if e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Paid fail", http.StatusInternalServerError)
+	}
+}
+
 func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// IF POST create InvoiceID = 2016Q3-0001
 	if r.Body == nil {
