@@ -5,7 +5,6 @@ import * as Big from "big.js";
 import * as Moment from "moment";
 import * as DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-//require('react-datepicker/dist/react-datepicker.css');
 
 interface IHourLineState {
   Hours: number
@@ -109,12 +108,13 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
     this.setState({Lines: this.state.Lines});
   }
 
-  private save() {
+  private save(e: BrowserEvent) {
+    e.preventDefault();
     Axios.post('/api/hour', this.state)
     .then(res => {
       console.log(res.data);
       this.props.params["id"] = res.data.Name;
-      history.replaceState({}, "", `?#hour-add/${res.data.Name}`);
+      history.replaceState({}, "", `#/hour-add/${res.data.Name}`);
     })
     .catch(err => {
       handleErr(err);
