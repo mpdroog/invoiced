@@ -34,6 +34,7 @@ func conv0(tx *bolt.Tx) error {
 		if len(u.Meta.Conceptid) == 0 {
 			u.Meta.Conceptid = fmt.Sprintf("CONCEPT-%d", idx)
 		}
+		u.Meta.Status = "FINAL"
 
 		// Save any changes..
 		buf := new(bytes.Buffer)
@@ -52,6 +53,9 @@ func conv0(tx *bolt.Tx) error {
     }
     b, e = tx.CreateBucketIfNotExists([]byte("invoices"))
     if e != nil {
+    	return e
+    }
+    if e := b.SetSequence(uint64(idx)); e != nil {
     	return e
     }
 
