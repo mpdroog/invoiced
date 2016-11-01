@@ -303,6 +303,7 @@ func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return e
 		}
 
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.pdf"`, u.Meta.Invoiceid));
 		w.Header().Set("Content-Type", "application/pdf")
 		return f.Output(w)
 	})
