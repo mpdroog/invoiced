@@ -7,11 +7,10 @@ import * as DatePicker from "react-datepicker";
 
 import "./invoice.css";
 import "react-datepicker/dist/react-datepicker.css";
-//require('react-datepicker/dist/react-datepicker.css');
 
 type IInvoiceStatus = "NEW" | "CONCEPT" | "FINAL";
 interface IInvoiceProps extends React.Props<InvoiceEdit> {
-  id : string
+  id? : string
 }
 interface IInvoiceEntity {
   Name: string
@@ -109,8 +108,10 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
 
   componentDidMount() {
     let params = this.props.params;
-    console.log(`Load invoice name=${params["id"]} from bucket=${params["bucket"]}`);
-    this.ajax(params["bucket"], params["id"]);
+    if (params["id"]) {
+      console.log(`Load invoice name=${params["id"]} from bucket=${params["bucket"]}`);
+      this.ajax(params["bucket"], params["id"]);
+    }
   }
 
   private ajax(bucket: string, name: string) {
@@ -298,7 +299,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
           <div className="panel-heading hbuilt">
             <div className="panel-tools">
               <div className="btn-group nm7">
-                <button className="btn btn-default btn-hover-success" disabled={this.revisions.length === 0 || inv.Meta.Status !== "FINAL"} onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i> Save</button>
+                <button className="btn btn-default btn-hover-success" disabled={this.revisions.length === 0 || inv.Meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i> Save</button>
                 <button className="btn btn-default btn-hover-danger" disabled={inv.Meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fa fa-lock"></i> Finalize</button>
                 <a className="btn btn-default btn-hover-success" disabled={inv.Meta.Status !== "FINAL"} onClick={this.pdf.bind(this)}><i className="fa fa-file-pdf-o"></i> PDF</a>
               </div>

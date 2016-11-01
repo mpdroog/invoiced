@@ -15,7 +15,8 @@ try {
       	<Route path="/hour-add/:id" component={HourEdit} />
       	<Route path="/hours" component={Hours} />
 
-      	<Route path="/invoice-add/:bucket/:id" component={InvoiceEdit} />
+      	<Route path="/invoice-add/:bucket" component={InvoiceEdit} />
+            <Route path="/invoice-add/:bucket/:id" component={InvoiceEdit} />
             <Route component={Invoices} path="/invoices"/>
       </Router>,
 	  document.getElementById('root')

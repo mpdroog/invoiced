@@ -85,7 +85,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
           <div className="panel-heading hbuilt">
             <div className="panel-tools">
               <div className="btn-group nm7">
-                <a href="#invoice-add" className="btn btn-default btn-hover-primary showhide"><i className="fa fa-plus"></i> New</a>
+                <a href={"#invoice-add/"+this.props.bucket} className="btn btn-default btn-hover-primary showhide"><i className="fa fa-plus"></i> New</a>
               </div>
             </div>
             {this.props.title}
