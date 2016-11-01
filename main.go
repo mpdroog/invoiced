@@ -18,6 +18,7 @@ import (
 	"github.com/mpdroog/invoiced/invoice"
 	"github.com/mpdroog/invoiced/middleware"
 	"github.com/mpdroog/invoiced/rules"
+	"github.com/mpdroog/invoiced/migrate"
 )
 
 func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -51,6 +52,10 @@ func main() {
 		log.Fatal(e)
 	}
 	defer db.Close()
+
+	if e := migrate.Convert(db); e != nil {
+		log.Fatal(e)
+	}
 
 	if e := invoice.Init(db); e != nil {
 		log.Fatal(e)
