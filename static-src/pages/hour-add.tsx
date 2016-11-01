@@ -38,8 +38,10 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
 
   componentDidMount() {
     console.log("componentDidMount", this.props);
-    console.log("Load hour name=" + this.props.params["id"]);
-    this.ajax(this.props.params["id"]);
+    if (this.props.params["id"]) {
+      console.log("Load hour name=" + this.props.params["id"]);
+      this.ajax(this.props.params["id"]);
+    }
   }
 
   private ajax(name: string) {
@@ -111,6 +113,8 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
     Axios.post('/api/hour', this.state)
     .then(res => {
       console.log(res.data);
+      this.props.params["id"] = res.data.Name;
+      history.replaceState({}, "", `?#hour-add/${res.data.Name}`);
     })
     .catch(err => {
       handleErr(err);
@@ -124,7 +128,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
     this.state.Lines.forEach(function(item:IHourLineState, idx:number) {
       sum = sum.plus(item.Hours);
       lines.push(<tr key={idx}>
-        <td><button className="btn btn-default btn-hover-danger faa-parent animated-hover" onClick={that.lineRemove.bind(null, idx)}><i className="fa fa-trash faa-flash"></i></button></td>
+        <td><button className="btn btn-default btn-hover-danger faa-parent animated-hover" onClick={that.lineRemove.bind(that, idx)}><i className="fa fa-trash faa-flash"></i></button></td>
         <td>{item.Day}</td>
         <td>{item.Start}</td><td>{item.Stop}</td><td>{item.Hours}</td><td>{item.Description}</td>
       </tr>);
