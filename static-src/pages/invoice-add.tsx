@@ -128,9 +128,9 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
 
   private parseInput(data: IInvoiceState) {
     console.log(data);
-    if (window.location.href != `?#invoice-add/${this.props.params["bucket"]}/${data.Meta.Conceptid}`) {
+    if (window.location.href != `#/invoice-add/${this.props.params["bucket"]}/${data.Meta.Conceptid}`) {
       // Update URL so refresh will keep the invoice open
-      history.replaceState({}, "", `?#invoice-add/${this.props.params["bucket"]}/${data.Meta.Conceptid}`);
+      history.replaceState({}, "", `#/invoice-add/${this.props.params["bucket"]}/${data.Meta.Conceptid}`);
       this.props.params["id"] = data.Meta.Conceptid;
     }
     data.Meta.Issuedate = data.Meta.Issuedate ? Moment(data.Meta.Issuedate) : null;
@@ -245,7 +245,8 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
     };
   }
 
-  private save() {
+  private save(e: BrowserEvent) {
+    e.preventDefault();
     let req = JSON.parse(JSON.stringify(this.state)); // deepCopy
     req.Meta.Issuedate = this.state.Meta.Issuedate ? this.state.Meta.Issuedate.format('YYYY-MM-DD') : "";
     req.Meta.Duedate = this.state.Meta.Duedate ? this.state.Meta.Duedate.format('YYYY-MM-DD') : "";
@@ -260,7 +261,8 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
     });
   }
 
-  private finalize() {
+  private finalize(e: BrowserEvent) {
+    e.preventDefault();
     Axios.post(`/api/invoice/${this.state.Meta.Conceptid}/finalize`, {})
     .then(res => {
       this.parseInput.call(this, res.data);
