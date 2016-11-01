@@ -91,6 +91,7 @@ func main() {
 	router.POST("/api/invoice", invoice.Save)
 	router.GET("/api/invoice/:id", invoice.Load)
 	router.POST("/api/invoice/:id/finalize", invoice.Finalize)
+	router.POST("/api/invoice/:id/reset", invoice.Reset)
 	router.GET("/api/invoice/:id/pdf", invoice.Pdf)
 	router.GET("/api/invoice/:id/credit", invoice.Credit)
 	router.DELETE("/api/invoice/:id", invoice.Delete)
