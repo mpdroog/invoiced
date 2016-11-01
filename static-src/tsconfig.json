@@ -1,12 +1,14 @@
 {
     "compilerOptions": {
         "outDir": "../static/assets",
-        "sourceMap": true,
+        //"sourceMap": true,
         "noImplicitAny": true,
+        "removeComments": true,
         "module": "commonjs",
         "moduleResolution": "node",
         "target": "es5",
-        "jsx": "react"
+        "jsx": "react",
+        "typeRoots" : ["./typings"]
     },
     "files": [
         "./typings/index.d.ts",
@@ -15,5 +17,8 @@
         "./pages/hours.tsx",
         "./pages/invoice-add.tsx",
         "./pages/invoices.tsx"
+    ],
+    "exclude": [
+        "node_modules"
     ]
 }
