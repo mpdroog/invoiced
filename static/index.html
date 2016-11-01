@@ -114,6 +114,23 @@
     };
   });
 
+  /* Catch #-URLS against dev-errs refreshing the page in React */
+  window.addEventListener("click", function(e) {
+    if (e.target) {
+      var node = e.target;
+      while(node !== window && node !== null) {
+        if (node.nodeName === "A") {
+          if (node.href.substr(-1) === "#") {
+            console.log("JS mismatch", node);
+            e.preventDefault();
+          }
+          break;
+        }
+        node = node.parentNode;
+      }
+    }
+  });
+
   console.log("JS_ONERR = ON");
 </script>
 <script src="/static/assets/vendor.dll.js"></script>
