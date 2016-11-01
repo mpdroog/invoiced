@@ -183,7 +183,7 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	if !strings.HasPrefix(bucket, "invoices") {
 		http.Error(w, "invoice.Load invalid bucket-name", 400)
-		return nil
+		return
 	}
 	name := ps.ByName("id")
 	log.Printf("invoice.Load with conceptid=%s", name)
@@ -213,7 +213,7 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 	if !strings.HasPrefix(bucket, "invoices") {
 		http.Error(w, "invoice.Load invalid bucket-name", 400)
-		return nil
+		return
 	}
 	from := args.Get("from")
 	count, e := strconv.Atoi(args.Get("count"))
@@ -282,7 +282,7 @@ func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	if !strings.HasPrefix(bucket, "invoices") {
 		http.Error(w, "invoice.Load invalid bucket-name", 400)
-		return nil
+		return
 	}
 
 	log.Printf("invoice.Pdf with id=%s", name)
@@ -321,7 +321,7 @@ func Credit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	if !strings.HasPrefix(bucket, "invoices") {
 		http.Error(w, "invoice.Load invalid bucket-name", 400)
-		return nil
+		return
 	}
 
 	log.Printf("invoice.Credit with id=%s", name)
@@ -338,15 +338,21 @@ func Credit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 
 		u.Meta.Issuedate = time.Now().Format("2006-01-02")
-		// TODO: Update in DB
+		u.Meta.Duedate = ""
+		u.Meta.Conceptid = fmt.Sprintf("CREDIT-%d", randStringBytesRmndr(6))
 
-		f, e := pdf(u)
-		if e != nil {
+		b = tx.Bucket([]byte("invoices"))
+		buf := new(bytes.Buffer)
+		if e := json.NewEncoder(buf).Encode(u); e != nil {
 			return e
 		}
+		return b.Put([]byte(u.Meta.Conceptid), buf.Bytes())
 
-		w.Header().Set("Content-Type", "application/pdf")
-		return f.Output(w)
+		w.Header().Set("Content-Type", "application/json")
+		if e := json.NewEncoder(w).Encode(u); e != nil {
+			return e
+		}
+		return nil
 	})
 	if e != nil {
 		log.Printf(e.Error())

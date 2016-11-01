@@ -31,6 +31,7 @@ interface IInvoiceMeta {
   IssuedateL: boolean
   Ponumber: string
   Duedate?: moment.Moment
+  Paydate?: moment.Moment
 }
 interface IInvoiceLine {
   Description: string
@@ -84,7 +85,8 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
         Issuedate: null,
         IssuedateL: true,
         Ponumber: "",
-        Duedate: Moment().add(14, 'days')
+        Duedate: Moment().add(14, 'days'),
+        Paydate: null
       },
       Lines: [{
         Description: "",
@@ -133,6 +135,8 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
     }
     data.Meta.Issuedate = data.Meta.Issuedate ? Moment(data.Meta.Issuedate) : null;
     data.Meta.Duedate = data.Meta.Duedate ? Moment(data.Meta.Duedate) : null;
+    data.Meta.Paydate = data.Meta.Paydate ? Moment(data.Meta.Paydate) : null;
+
     data.Meta.InvoiceidL = true;
     data.Meta.IssuedateL = true;
     this.setState(data);
