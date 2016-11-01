@@ -11,6 +11,7 @@ import (
 	"time"
 	"gopkg.in/validator.v2"
 	"math/rand"
+	"strconv"
 	"strings"
 )
 
@@ -127,6 +128,57 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Finalize fail", http.StatusInternalServerError)
+	}
+}
+
+func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	name := ps.ByName("id")
+	log.Printf("invoice.Reset with conceptid=%s", name)
+	e := db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("invoices"))
+		v := b.Get([]byte(name))
+		if v == nil {
+			http.Error(w, "invoice.Reset no such name", http.StatusNotFound)
+			return nil
+		}
+
+		u := new(Invoice)
+		if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
+			return e
+		}
+
+		if len(u.Meta.Issuedate) == 0 {
+			u.Meta.Issuedate = time.Now().Format("2006-01-02")
+		}
+
+		if u.Meta.Invoiceid == "" {
+			// Create invoiceid
+			idx, e := b.NextSequence()
+			if e != nil {
+				return e
+			}
+
+			u.Meta.Invoiceid = createInvoiceId(time.Now(), idx)
+			log.Printf("invoice.Reset create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
+		}
+		u.Meta.Status = "CONCEPT"
+
+		// Save any changes..
+		buf := new(bytes.Buffer)
+		if e := json.NewEncoder(buf).Encode(u); e != nil {
+			return e
+		}
+		if e := b.Put([]byte(u.Meta.Conceptid), buf.Bytes()); e != nil {
+			return e
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, e := w.Write(buf.Bytes())
+		return e
+	})
+	if e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Reset fail", http.StatusInternalServerError)
 	}
 }
 

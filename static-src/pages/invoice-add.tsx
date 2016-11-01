@@ -261,6 +261,17 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
     });
   }
 
+  private reset(e: BrowserEvent) {
+    e.preventDefault();
+    Axios.post(`/api/invoice/${this.state.Meta.Conceptid}/reset`, {})
+    .then(res => {
+      this.parseInput.call(this, res.data);
+    })
+    .catch(err => {
+      handleErr(err);
+    });
+  }
+
   private finalize(e: BrowserEvent) {
     e.preventDefault();
     Axios.post(`/api/invoice/${this.state.Meta.Conceptid}/finalize`, {})
@@ -308,6 +319,9 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
                 <button className="btn btn-default btn-hover-success" disabled={this.revisions.length === 0 || inv.Meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i> Save</button>
                 <button className="btn btn-default btn-hover-danger" disabled={inv.Meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fa fa-lock"></i> Finalize</button>
                 <a className="btn btn-default btn-hover-success" disabled={inv.Meta.Status !== "FINAL"} onClick={this.pdf.bind(this)}><i className="fa fa-file-pdf-o"></i> PDF</a>
+
+                <button className="btn btn-default btn-hover-danger" disabled={inv.Meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fa fa-unlock"></i> Reset</button>
+
               </div>
 
             </div>
