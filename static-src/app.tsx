@@ -12,6 +12,7 @@ try {
 	ReactDOM.render(
       <Router history={hashHistory}>
       	<Route path="/" component={Dashboard} />
+            <Route path="/hour-add" component={HourEdit} />
       	<Route path="/hour-add/:id" component={HourEdit} />
       	<Route path="/hours" component={Hours} />
 
