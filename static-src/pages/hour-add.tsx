@@ -121,6 +121,17 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
     });
   }
 
+  private shortHand(d: number): string {
+    var date = new Date(1000*60*60*d);
+    var str = '';
+    //str += date.getUTCDate()-1 + "d";
+    str += date.getUTCHours() + "h";
+    str += date.getUTCMinutes() + "m";
+    //str += date.getUTCSeconds() + "s";
+    //str += date.getUTCMilliseconds() + " millis";
+    return str;
+  }
+
 	render() {
     let lines: JSX.Element[] = [];
     let that = this;
@@ -130,7 +141,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
       lines.push(<tr key={idx}>
         <td><button className="btn btn-default btn-hover-danger faa-parent animated-hover" onClick={that.lineRemove.bind(that, idx)}><i className="fa fa-trash faa-flash"></i></button></td>
         <td>{item.Day}</td>
-        <td>{item.Start}</td><td>{item.Stop}</td><td>{item.Hours}</td><td>{item.Description}</td>
+        <td>{item.Start}</td><td>{item.Stop}</td><td>{that.shortHand(item.Hours)}</td><td>{item.Description}</td>
       </tr>);
     });
 
