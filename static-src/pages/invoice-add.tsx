@@ -32,6 +32,7 @@ interface IInvoiceMeta {
   Ponumber: string
   Duedate?: moment.Moment
   Paydate?: moment.Moment
+  Freefield?: string
 }
 interface IInvoiceLine {
   Description: string
