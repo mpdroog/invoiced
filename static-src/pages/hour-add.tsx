@@ -124,11 +124,11 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
   private shortHand(d: number): string {
     var date = new Date(1000*60*60*d);
     var str = '';
-    //str += date.getUTCDate()-1 + "d";
+    if (date.getUTCDate()-1 > 0) {
+      str += date.getUTCDate()-1 + "d";
+    }
     str += date.getUTCHours() + "h";
     str += date.getUTCMinutes() + "m";
-    //str += date.getUTCSeconds() + "s";
-    //str += date.getUTCMilliseconds() + " millis";
     return str;
   }
 
@@ -187,7 +187,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
               <button className="btn btn-default btn-hover-success" onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i>&nbsp;Save</button>
             </div>
           </div>
-          Sum ({sum.toString()} hours)
+          Sum ({sum.toFixed(2).toString()} hours)
         </div>
         <div className="panel-body">
           <input type="text" id="hour-name" className="form-control" placeholder="Hour name" value={this.state.Name} onChange={this.update.bind(this)}/>
