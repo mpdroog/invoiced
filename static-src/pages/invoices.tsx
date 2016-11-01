@@ -83,7 +83,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td>{key}</td>
       <td>{inv.Meta.Invoiceid}</td>
       <td>{inv.Customer.Name}</td>
-      <td>{inv.Total.Total}</td>
+      <td>&euro; {inv.Total.Total}</td>
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+this.props.bucket+"/"+key}><i className="fa fa-pencil"></i></a>
         <a disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? "btn-hover-danger faa-parent animated-hover" : "")} data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this, key)}><i className="fa fa-trash faa-flash"></i></a>
@@ -97,7 +97,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td>{key}</td>
       <td>{inv.Meta.Invoiceid}</td>
       <td>{inv.Customer.Name}</td>
-      <td>{inv.Total.Total}</td>
+      <td>&euro; {inv.Total.Total}</td>
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+this.props.bucket+"/"+key}><i className="fa fa-pencil"></i></a>
       </td>
