@@ -50,7 +50,12 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
 
   private delete(e: BrowserEvent) {
     e.preventDefault();
-    let id = DOM.eventFilter(e, "A").dataset["target"];
+    let node = DOM.eventFilter(e, "A");
+    let id = node.dataset["target"];
+    if (node.dataset["status"] === 'FINAL') {
+      console.log("Cannot delete finalized invoices.");
+      return;
+    }
 
     Axios.delete(`/api/invoice/${id}?bucket=${this.props.bucket}`)
     .then(res => {
@@ -74,7 +79,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
           <td>{inv.Total.Total}</td>
           <td>
             <a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+this.props.bucket+"/"+key}><i className="fa fa-pencil"></i></a>
-            <a disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? "btn-hover-danger faa-parent animated-hover" : "")} data-target={key} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
+            <a disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? "btn-hover-danger faa-parent animated-hover" : "")} data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
           </td></tr>);
       });
     } else {
