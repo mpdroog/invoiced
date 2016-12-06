@@ -90,6 +90,17 @@ func pdf(c *Invoice) (*gofpdf.Fpdf, error) {
 
 		pdf.SetXY(40, 60)
 		pdf.Cell(10, 30, c.Customer.Street2)
+
+		last := 65.0
+		if len(c.Customer.Vat) > 0 {
+			pdf.SetXY(40, last)
+			pdf.Cell(10, 30, c.Customer.Vat)
+			last = last +5
+		}
+		if len(c.Customer.Coc) > 0 {
+			pdf.SetXY(40, last)
+			pdf.Cell(10, 30, c.Customer.Coc)
+		}
 	}
 
 	// Meta

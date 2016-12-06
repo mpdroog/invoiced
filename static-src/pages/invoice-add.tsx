@@ -21,6 +21,8 @@ interface IInvoiceCustomer {
   Name: string
   Street1: string
   Street2: string
+  Vat: string
+  Coc: string
 }
 interface IInvoiceMeta {
   Conceptid: string
@@ -76,7 +78,9 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       Customer: {
         Name: "XSNews B.V.",
         Street1: "New Yorkstraat 9-13",
-        Street2: "1175 RD Lijnden"
+        Street2: "1175 RD Lijnden",
+        Vat: "",
+        Coc: ""
       },
       Meta: {
         Conceptid: "",
@@ -354,6 +358,10 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       <input className="form-control" type="text" data-key="Customer.Name" onChange={that.handleChange.bind(this)} value={inv.Customer.Name}/>
       <input className="form-control" type="text" data-key="Customer.Street1" onChange={that.handleChange.bind(this)} value={inv.Customer.Street1}/>
       <input className="form-control" type="text" data-key="Customer.Street2" onChange={that.handleChange.bind(this)} value={inv.Customer.Street2}/>
+
+      <input className="form-control" type="text" data-key="Customer.Vat" onChange={that.handleChange.bind(this)} value={inv.Customer.Vat} placeholder="VAT-number"/>
+      <input className="form-control" type="text" data-key="Customer.Coc" onChange={that.handleChange.bind(this)} value={inv.Customer.Coc} placeholder="Chamber Of Commerce (CoC)"/>
+
     </div>
     <div className="meta col-sm-offset-3 col-sm-5">
       <table className="table">
