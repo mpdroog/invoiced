@@ -192,8 +192,15 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       console.log("Add", val.Total);
       ex = ex.plus(val.Total);
     });
-    // TODO: Hardcoded to 21%
+
     let tax = ex.div("100").times("21");
+    if (this.state.Customer.Vat.length > 0) {
+      var country = this.state.Customer.Vat.substr(0, 2).toUpperCase();
+      console.log("Country " + country);
+      if (country !== "NL") {
+        tax = new Big(0);
+      }
+    }
     let total = ex.plus(tax);
     console.log("totals (ex,tax,total)", ex.toString(), tax.toString(), total.toString());
 
