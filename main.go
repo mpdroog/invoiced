@@ -17,8 +17,8 @@ import (
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
 	"github.com/mpdroog/invoiced/middleware"
-	"github.com/mpdroog/invoiced/rules"
 	"github.com/mpdroog/invoiced/migrate"
+	"github.com/mpdroog/invoiced/rules"
 )
 
 func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -27,7 +27,7 @@ func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		prefix = "https://"
 	}
 
-	http.Redirect(w, r, prefix + config.HTTPListen + "/static/", 301)
+	http.Redirect(w, r, prefix+config.HTTPListen+"/static/", 301)
 }
 
 func main() {

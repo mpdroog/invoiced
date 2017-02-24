@@ -3,11 +3,11 @@ package migrate
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/boltdb/bolt"
 	"fmt"
+	"github.com/boltdb/bolt"
 	"github.com/mpdroog/invoiced/invoice"
-	"strconv"
 	"log"
+	"strconv"
 )
 
 const LATEST = 1
@@ -23,7 +23,7 @@ func conv0(tx *bolt.Tx) error {
 	idx := 0
 	c := b.Cursor()
 	for k, v := c.First(); k != nil; k, v = c.Next() {
-        fmt.Printf("key=%s, value=%s\n", k, v)
+		fmt.Printf("key=%s, value=%s\n", k, v)
 
 		u := new(invoice.Invoice)
 		if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
@@ -45,21 +45,21 @@ func conv0(tx *bolt.Tx) error {
 		if e := tmp.Put([]byte(u.Meta.Conceptid), buf.Bytes()); e != nil {
 			return e
 		}
-    }
+	}
 
-    // 2) Re-create invoices-bucket
-    if e := tx.DeleteBucket([]byte("invoices")); e != nil {
-    	return e
-    }
-    b, e = tx.CreateBucketIfNotExists([]byte("invoices"))
-    if e != nil {
-    	return e
-    }
-    if e := b.SetSequence(uint64(idx)); e != nil {
-    	return e
-    }
+	// 2) Re-create invoices-bucket
+	if e := tx.DeleteBucket([]byte("invoices")); e != nil {
+		return e
+	}
+	b, e = tx.CreateBucketIfNotExists([]byte("invoices"))
+	if e != nil {
+		return e
+	}
+	if e := b.SetSequence(uint64(idx)); e != nil {
+		return e
+	}
 
-    // 3) Convert from -tmp bucket to default bucket
+	// 3) Convert from -tmp bucket to default bucket
 	c = tmp.Cursor()
 	for k, v := c.First(); k != nil; k, v = c.Next() {
 		if e := b.Put(k, v); e != nil {

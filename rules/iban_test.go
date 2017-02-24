@@ -5,7 +5,7 @@ import (
 )
 
 func TestIban(t *testing.T) {
-	valid := []string {
+	valid := []string{
 		"AL47212110090000000235698741",
 		"AZ21NABZ00000000137010001944",
 		"AT611904300234573201",
@@ -14,7 +14,7 @@ func TestIban(t *testing.T) {
 		"FR1420041010050500013M02606",
 		"NL91ABNA0417164300",
 	}
-	invalid := []string {
+	invalid := []string{
 		"HE LLO",
 		"HELLO",
 		"NL1234",

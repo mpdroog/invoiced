@@ -95,7 +95,7 @@ func pdf(c *Invoice) (*gofpdf.Fpdf, error) {
 		if len(c.Customer.Vat) > 0 {
 			pdf.SetXY(40, last)
 			pdf.Cell(10, 30, c.Customer.Vat)
-			last = last +5
+			last = last + 5
 		}
 		if len(c.Customer.Coc) > 0 {
 			pdf.SetXY(40, last)

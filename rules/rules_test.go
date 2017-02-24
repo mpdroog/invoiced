@@ -5,14 +5,14 @@ import (
 )
 
 func TestSlug(t *testing.T) {
-	valid := []string {
+	valid := []string{
 		"hello",
 		"hel-lo",
 		"hel_lo",
 		"",
 		"2016Q3-0005",
 	}
-	invalid := []string {
+	invalid := []string{
 		"HE LLO",
 		",HEL,LO",
 		"±HI",
@@ -25,20 +25,20 @@ func TestSlug(t *testing.T) {
 	}
 	for _, str := range invalid {
 		if e := slug(str, ""); e == nil {
-			t.Errorf("str should fail but didn't, input="+str)
+			t.Errorf("str should fail but didn't, input=" + str)
 		}
 	}
 }
 
 func TestDate(t *testing.T) {
-	valid := []string {
+	valid := []string{
 		"2016-01-01",
 		"2016-12-01",
 		"1980-01-01",
 		"2099-12-31",
 		"",
 	}
-	invalid := []string {
+	invalid := []string{
 		"HE LLO",
 		"HELLO",
 		"2016-02-HELLO",
@@ -63,14 +63,14 @@ func TestDate(t *testing.T) {
 }
 
 func TestTime(t *testing.T) {
-	valid := []string {
+	valid := []string{
 		"00:00",
 		"01:00",
 		"12:59",
 		"23:59",
 		"",
 	}
-	invalid := []string {
+	invalid := []string{
 		"HE LLO",
 		"HELLO",
 		"1:01",
@@ -92,14 +92,14 @@ func TestTime(t *testing.T) {
 }
 
 func TestUint(t *testing.T) {
-	valid := []string {
+	valid := []string{
 		"12",
 		"0",
 		"99",
 		"9999999999999",
 		"",
 	}
-	invalid := []string {
+	invalid := []string{
 		"HE LLO",
 		"HELLO",
 		"-10",
@@ -120,14 +120,14 @@ func TestUint(t *testing.T) {
 }
 
 func TestPrice(t *testing.T) {
-	valid := []string {
+	valid := []string{
 		"12.00",
 		"0.00",
 		"999.999",
 		"-999.999",
 		"1.1",
 	}
-	invalid := []string {
+	invalid := []string{
 		"HE LLO",
 		"HELLO",
 		"12a",

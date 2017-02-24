@@ -11,8 +11,8 @@ type Invoice struct {
 		Name    string `validate:"nonzero"`
 		Street1 string `validate:"nonzero"`
 		Street2 string `validate:"nonzero"`
-		Vat string
-		Coc string
+		Vat     string
+		Coc     string
 	}
 	Meta struct {
 		Conceptid string `validate:"slug"`

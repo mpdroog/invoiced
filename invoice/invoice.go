@@ -6,29 +6,30 @@ import (
 	"fmt"
 	"github.com/boltdb/bolt"
 	"github.com/julienschmidt/httprouter"
-	"log"
-	"net/http"
-	"time"
 	"gopkg.in/validator.v2"
+	"log"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var db *bolt.DB
+
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func init() {
-    rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().UnixNano())
 }
 
 // http://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-golang
 func randStringBytesRmndr(n int) string {
-    b := make([]byte, n)
-    for i := range b {
-        b[i] = letterBytes[rand.Int63() % int64(len(letterBytes))]
-    }
-    return string(b)
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
+	}
+	return string(b)
 }
 
 func Init(d *bolt.DB) error {
@@ -202,7 +203,7 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return e
 		}
 
-		if (u.Meta.Status != "FINAL") {
+		if u.Meta.Status != "FINAL" {
 			http.Error(w, "invoice.Paid can only set paid on FINAL-invoices", http.StatusNotFound)
 			return nil
 		}
@@ -257,7 +258,7 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 			u.Meta.Conceptid = fmt.Sprintf("CONCEPT-%s", randStringBytesRmndr(6))
 			log.Printf("invoice.Save create conceptId=%s", u.Meta.Conceptid)
 		} else {
-			log.Printf("invoice.Save update conceptId=%s", u.Meta.Conceptid)			
+			log.Printf("invoice.Save update conceptId=%s", u.Meta.Conceptid)
 		}
 		u.Meta.Status = "CONCEPT"
 
@@ -404,7 +405,7 @@ func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return e
 		}
 
-		w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.pdf"`, u.Meta.Invoiceid));
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.pdf"`, u.Meta.Invoiceid))
 		w.Header().Set("Content-Type", "application/pdf")
 		return f.Output(w)
 	})

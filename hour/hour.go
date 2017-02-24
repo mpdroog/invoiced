@@ -3,12 +3,12 @@ package hour
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/boltdb/bolt"
 	"github.com/julienschmidt/httprouter"
+	"gopkg.in/validator.v2"
 	"log"
 	"net/http"
-	"gopkg.in/validator.v2"
-	"fmt"
 )
 
 var db *bolt.DB
