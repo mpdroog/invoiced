@@ -440,12 +440,12 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       <tr>
         <td colSpan={3}></td>
         <td className="text">Tax (21%)</td>
-        <td><input className="form-control" disabled={true} type="text" data-key="Total.Tax" readOnly={true} value={inv.Total.Tax}/></td>
+        <td><input className="form-control" onChange={this.handleChange.bind(this)} disabled={true} type="text" data-key="Total.Tax" readOnly={true} value={inv.Total.Tax}/></td>
       </tr>
       <tr>
         <td colSpan={3}>&nbsp;</td>
         <td className="text">Total</td>
-        <td><input className="form-control" disabled={true} type="text" data-key="Total.Total" readOnly={true} value={inv.Total.Total}/></td>
+        <td><input className="form-control" onChange={this.handleChange.bind(this)} disabled={true} type="text" data-key="Total.Total" readOnly={true} value={inv.Total.Total}/></td>
       </tr>
     </tfoot>
   </table>
