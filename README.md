@@ -1,28 +1,28 @@
 InvoiceD
 ===========
--- Accounting for fun and profit.
-Starting a company with ease!
+Simple hour registration + invoice generator.
 
-Why InvoiceD?
-- Send invoices in a few minutes!
-- Easily output a ZIP every last of the month
- with your accounting data for the accountant!
-More motivations:
-- Run it on your own PC (no cloud)
-- Free (open-source)
-- In-browser (sharing with others if wanted)
-- Fast
-
-How we earn our bread?
-- Offer backup 1EUR/month
-- Every payment-link earns us 10EURcent.
-
-Important todo's:
+Technical background
 ===========
-- Aggressively undo/redo
-- Easy output for your accountant
-- Buy theme
+- The backend is written in Golang, the used DB is BoltDB
+- The frontend is ReactJS/TypeScript/Webpack
 
-Future
+How to build
 ===========
-* Encrypt database
+Frontend
+```
+# Install NodeJS
+cd static-src
+npm install
+npm install-dev
+npm run dev
+```
+
+Backend
+```
+# Install go
+go get github.com/mpdroog/invoiced
+cd $GOPATH/src/github.com/mpdroog/invoiced
+go build
+# Webserver runnable with ./invoiced -v
+```
