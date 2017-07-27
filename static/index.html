@@ -27,29 +27,24 @@
 
         <form role="search" class="navbar-form-custom" method="post" action="#">
             <div class="form-group">
-                <input type="text" placeholder="Search something special" class="form-control" name="search">
+                <input type="text" placeholder="Search something special" class="form-control" name="search" id="js-search">
             </div>
         </form>
         <div class="navbar-right">
             <ul class="nav navbar-nav no-borders">
                 <li>
-                    <a href="/">
+                    <a href="/" id="js-dashboard">
                         <i class="fa fa-dashboard"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="#invoices" id="sidebar" class="right-sidebar-toggle">
+                    <a href="#invoices" id="js-invoices">
                         <i class="fa fa-money"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="#hours">
+                    <a href="#hours" id="js-hours">
                         <i class="fa fa-hourglass"></i>
-                    </a>
-                </li>
-                <li>
-                    <a href="login.html">
-                        <i class="fa fa-power-off"></i>
                     </a>
                 </li>
             </ul>
@@ -175,6 +170,53 @@
   });
 
   console.log("JS_ONERR = ON");
+</script>
+<script async>
+    document.addEventListener("keyup", function(e) {
+      var node = e.path[0].nodeName;
+      if (node === "INPUT" || node === "TEXTAREA") {
+        // only use shortcuts when not focussed on user input-fields
+        return;
+      }
+
+      var key = e.code;
+      var page = location.hash.substr(2, location.hash.indexOf("?")-2);
+      //var shift = e.shiftKey;
+      //var ctrl = e.ctrlKey;
+
+      // Global navigation
+      if (key === 'KeyD') {
+          console.log("D Dashboard");
+          document.getElementById("js-dashboard").click();
+      }
+      if (key === 'KeyI') {
+          console.log("I Invoices");
+          document.getElementById("js-invoices").click();
+      }
+      if (key === 'KeyH') {
+          console.log("H Hours");
+          document.getElementById("js-hours").click();
+      }
+      if (key === 'Slash') {
+        console.log("/ search");
+        document.getElementById("js-search").focus()
+      }
+
+      // Page specific
+      if (page === "hours" && key === "KeyN") {
+        console.log("Hours New");
+        location.href = "#hour-add";
+      }
+      if (page === "hour-add" && key === "KeyN") {
+        console.log("Hour-add New Entry");
+        document.getElementById("hour-day").focus();
+      }
+      if (page === "invoices" && key === "KeyN") {
+        console.log("Invoices New");
+        location.href = "#invoice-add/invoices";
+      }
+
+    }, false);
 </script>
 <script src="/static/assets/vendor.dll.js"></script>
 <script src="/static/assets/app.js" async></script>
