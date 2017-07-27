@@ -13,8 +13,8 @@ Frontend
 ```
 # Install NodeJS
 cd static-src
-npm install
-npm install-dev
+brew install
+npm run dll
 npm run dev
 ```
 
@@ -24,7 +24,6 @@ Backend
 go get github.com/mpdroog/invoiced
 cd $GOPATH/src/github.com/mpdroog/invoiced
 go build
-# Webserver runnable with ./invoiced -v
 ```
 
 Run
