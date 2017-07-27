@@ -37,12 +37,12 @@
     "babel-preset-es2015": "^6.13.2",
     "babel-preset-react": "^6.11.1",
     "big.js": "*",
-    "chartist": "^0.11.0",
     "moment": "^2.14.1",
     "react": "^15.3.2",
     "react-datepicker": "*",
     "react-dom": "^15.3.2",
     "react-router": "^2.8.1",
+    "recharts": "^1.0.0-alpha.2",
     "superagent": "^2.2.0"
   }
 }
