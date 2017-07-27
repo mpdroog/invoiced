@@ -128,6 +128,14 @@
 </div>
 <div id="js-dialog-backdrop" class="hidden modal-backdrop fade in"></div>
 <script type="text/javascript" async>
+  window.onerror = function(msg, url, lineNo, columnNo, error) {
+    handleErr({
+      name: "window.onerror",
+      line: msg,
+      e: error
+    });
+  };
+
   function handleErr(e) {
     var errorData = {
       error: e.name, // e.g. ReferenceError
