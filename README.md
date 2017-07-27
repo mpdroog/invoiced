@@ -26,3 +26,11 @@ cd $GOPATH/src/github.com/mpdroog/invoiced
 go build
 # Webserver runnable with ./invoiced -v
 ```
+
+Run
+```
+./invoiced -v
+open "http://localhost:9999/static"
+```
+
+
