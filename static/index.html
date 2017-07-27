@@ -16,8 +16,48 @@
 <body class="fixed-navbar fixed-sidebar">
 <!-- Header -->
 <div class="color-line"></div>
+<div id="header">
+    <div class="color-line">
+    </div>
+    <div id="logo" class="light-version">
+        <img src="/static/assets/logo.png" class="m-b" alt="logo">
+    </div>
+    <nav role="navigation">
+        <div style="margin-right: 15px; float: left">&nbsp;</div>
 
-<!-- Navigation -->
+        <form role="search" class="navbar-form-custom" method="post" action="#">
+            <div class="form-group">
+                <input type="text" placeholder="Search something special" class="form-control" name="search">
+            </div>
+        </form>
+        <div class="navbar-right">
+            <ul class="nav navbar-nav no-borders">
+                <li>
+                    <a href="/">
+                        <i class="fa fa-dashboard"></i>
+                    </a>
+                </li>
+                <li>
+                    <a href="#invoices" id="sidebar" class="right-sidebar-toggle">
+                        <i class="fa fa-money"></i>
+                    </a>
+                </li>
+                <li>
+                    <a href="#hours">
+                        <i class="fa fa-hourglass"></i>
+                    </a>
+                </li>
+                <li>
+                    <a href="login.html">
+                        <i class="fa fa-power-off"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</div>
+
+<!-- Navigation
 <aside id="menu">
     <div id="navigation">
         <div class="profile-picture">
@@ -45,11 +85,14 @@
                 <a href="#hours"> <span class="nav-label">Hours</span></a>
             </li>
             <li>
+                <a href="#entities"> <span class="nav-label">Entities</span></a>
+            </li>
+            <li>
                 <a href="#invoices"> <span class="nav-label">Invoices</span></a>
             </li>
         </ul>
     </div>
-</aside>
+</aside -->
 
 <!-- Main Wrapper -->
 <div id="wrapper">

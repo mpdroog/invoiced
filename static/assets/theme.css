@@ -1504,7 +1504,8 @@ html {
 }
 body {
   font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  background-color: #fff;
+  background: #f1f3f6;
+
   font-size: 13px;
   color: #6a6c6f;
   margin: 0;
@@ -1529,13 +1530,10 @@ body {
   transition: all 0.4s ease 0s;
 }
 #wrapper {
-  margin: 0 0 0 180px;
   padding: 0;
-  background: #f1f3f6;
   border-left: 1px solid #e4e5e7;
   transition: all 0.4s ease 0s;
   position: relative;
-  min-height: 100%;
 }
 .content {
   padding: 25px 40px 40px 40px;
@@ -1578,7 +1576,6 @@ body {
 }
 .fixed-navbar #header {
   width: 100%;
-  position: fixed;
   z-index: 1000;
 }
 .fixed-navbar #wrapper {
