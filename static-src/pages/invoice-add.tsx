@@ -300,7 +300,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       console.log("PDF only available in finalized invoices");
       return;
     }
-    let url = `/api/v1/invoice/${this.props.params["id"]}/pdf`;
+    let url = `/api/v1/invoice/${this.props.params["id"]}/pdf?bucket=${this.props.params["bucket"]}`;
     console.log(`Open PDF ${url}`);
     location.assign(url);
   }
