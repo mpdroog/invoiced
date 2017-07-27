@@ -19,6 +19,7 @@ import (
 	"github.com/mpdroog/invoiced/middleware"
 	"github.com/mpdroog/invoiced/migrate"
 	"github.com/mpdroog/invoiced/rules"
+	"github.com/mpdroog/invoiced/metrics"
 )
 
 func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -63,6 +64,9 @@ func main() {
 	if e := hour.Init(db); e != nil {
 		log.Fatal(e)
 	}
+	if e := metrics.Init(db); e != nil {
+		log.Fatal(e)
+	}
 
 	if e := rules.Init(); e != nil {
 		log.Fatal(e)
@@ -86,6 +90,8 @@ func main() {
 
 	//router.GET("/api/sql/all", isql.GetAll)
 	//router.GET("/api/sql/row", isql.GetRow)
+
+	router.GET("/api/v1/metrics", metrics.Dashboard)
 
 	router.GET("/api/v1/invoices", invoice.List)
 	router.POST("/api/v1/invoice", invoice.Save)
