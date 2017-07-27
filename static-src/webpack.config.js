@@ -5,7 +5,7 @@ module.exports = {
     cache: true,
     entry: "./app.tsx",
     output: {
-        path: "../static/assets",
+        path: __dirname + "/../static/assets",
         filename: "app.js"
     },
 
@@ -13,11 +13,7 @@ module.exports = {
     devtool: "eval",
 
     resolve: {
-        modulesDirectories: [
-            "node_modules"
-        ],
-        // Add '.ts' and '.tsx' as resolvable extensions.
-        extensions: ["", ".webpack.js", ".web.js", ".ts", ".tsx", ".js"]
+        extensions: [".ts", ".tsx", ".js", ".jsx"]
     },
 
     module: {
@@ -37,11 +33,6 @@ module.exports = {
             // Create CSS from all included styling files.
             { test: /\.css$/, loader: extract.extract("css-loader") }
         ],
-
-        preLoaders: [
-            // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
-            //{ test: /\.js$/, loader: "source-map-loader" }
-        ]
     },
 
     // Minify the output!

@@ -11,7 +11,7 @@ module.exports = {
         ]
     },
     output: {
-        path: "../static/assets",
+        path: __dirname + "/../static/assets",
         filename: "[name].dll.js",
         library: "[name]"
     },
@@ -20,11 +20,6 @@ module.exports = {
             path: "[name].json",
             name: "[name]"
         }),
-        new webpack.optimize.OccurenceOrderPlugin(),
         new webpack.optimize.UglifyJsPlugin()
-    ],
-    resolve: {
-        root: path.resolve(__dirname),
-        modulesDirectories: ["node_modules"]
-    }
+    ]
 };
