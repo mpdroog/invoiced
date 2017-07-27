@@ -40,10 +40,8 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			items.push(<tr key={key}><td>{key}</td><td>&euro; {revenue}</td><td style={change}>&euro; {delta}</td></tr>);
 
 			pref = revenue;
-			console.log(revenue*100);
 			years[ key.substr(0, key.indexOf("-")) ] += revenue*100;
 		}
-		console.log(years);
 
 		var stats = [];
 		for (var i = 0; i < sorted.length; i++) {
