@@ -28,6 +28,7 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 		let sorted:string[] = Object.keys(this.state.metrics).sort();
 
 		var pref = "0.00";
+		var years = {"2016": 0, "2017": 0};
 		for (var i = 0; i < sorted.length; i++) {
 			var key = sorted[i];
 			var revenue = this.state.metrics[key].RevenueEx;
@@ -39,7 +40,10 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			items.push(<tr key={key}><td>{key}</td><td>&euro; {revenue}</td><td style={change}>&euro; {delta}</td></tr>);
 
 			pref = revenue;
+			console.log(revenue*100);
+			years[ key.substr(0, key.indexOf("-")) ] += revenue*100;
 		}
+		console.log(years);
 
 		var stats = [];
 		for (var i = 0; i < sorted.length; i++) {
@@ -50,6 +54,13 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			stats.push(vals);
 		}
 
+		var smallHead = {
+			fontSize: "12px",
+			float: "right",
+			border: "1px solid gray",
+			padding: "10px",
+			marginLeft: "5px"
+		};
 		return <div>
 			<div className="normalheader col-md-6">
 			    <div className="hpanel">
@@ -57,6 +68,8 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			            <h2 className="font-light m-b-xs">
 			                <i className="fa fa-bank"></i>
 			                Revenue
+			                <span style={smallHead}>2017: &euro; {years[2017]/100}</span>
+			                <span style={smallHead}>2016: &euro; {years[2016]/100}</span>
 			            </h2>
 			            <table className="table">
 			            	<thead>
