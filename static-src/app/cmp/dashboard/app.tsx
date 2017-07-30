@@ -1,6 +1,6 @@
 import * as React from "react";
 import Axios from "axios";
-import {DOM} from "../lib/dom";
+//import {DOM} from "../lib/dom";
 import { LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 
 interface IDictionary {
@@ -24,7 +24,7 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
   }
 
 	render() {
-	    let items:JSX.Element[] = [];
+	    let items:React.JSX.Element[] = [];
 		let sorted:string[] = Object.keys(this.state.metrics).sort();
 
 		let pref:string = "0.00";
@@ -32,7 +32,7 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 		for (var i = 0; i < sorted.length; i++) {
 			let key:string = sorted[i];
 			let revenue:number = this.state.metrics[key].RevenueEx;
-			let delta:number = (((revenue*100) - (pref*100)) / 100).toFixed(0);
+			let delta:number = (((+revenue*100) - (+pref*100)) / 100).toFixed(0);
 			var change = {};
 			if (delta > 0) {
 				change = {backgroundColor: "green", color: "white"};

@@ -15,3 +15,4 @@ interface InputEvent extends BrowserEvent {
 }
 
 declare function handleErr(err: Error): void;
+

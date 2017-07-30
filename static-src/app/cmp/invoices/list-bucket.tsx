@@ -2,7 +2,7 @@ import * as React from "react";
 import Axios from "axios";
 import {IInvoiceState} from "./invoice-add";
 import {IInjectedProps} from "react-router";
-import {DOM} from "../lib/dom";
+import {DOM} from "../../lib/dom";
 
 interface IInvoicePagination {
   from?: string
@@ -78,7 +78,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     });
   }
 
-  private conceptLine(key: string, inv: IInvoiceState): JSX.Element {
+  private conceptLine(key: string, inv: IInvoiceState): React.JSX.Element {
     return <tr key={key}>
       <td>{key}</td>
       <td>{inv.Meta.Invoiceid}</td>
@@ -92,7 +92,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     </tr>;
   }
 
-  private finishedLine(key: string, inv: IInvoiceState): JSX.Element {
+  private finishedLine(key: string, inv: IInvoiceState): React.JSX.Element {
     return <tr key={key}>
       <td>{key}</td>
       <td>{inv.Meta.Invoiceid}</td>
@@ -105,7 +105,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
   }
 
 	render() {
-    let res:JSX.Element[] = [];
+    let res:React.JSX.Element[] = [];
     console.log("invoices=", this.state.invoices);
     if (this.state.invoices && this.state.invoices.length > 0) {
       this.state.invoices.forEach((inv) => {

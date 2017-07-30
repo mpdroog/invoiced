@@ -1,23 +1,17 @@
 {
     "compilerOptions": {
-        "outDir": "../static/assets",
-        //"sourceMap": true,
-        "noImplicitAny": true,
-        "removeComments": true,
-        "module": "commonjs",
-        "moduleResolution": "node",
         "target": "es5",
+        "module": "commonjs",
+
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+
+        "noImplicitAny": false,
+        "removeComments": true,
         "jsx": "react"
     },
-    "files": [
-        "./typings/index.d.ts",
-        "./pages/dashboard.tsx",
-        "./pages/hour-add.tsx",
-        "./pages/hours.tsx",
-        "./pages/invoice-add.tsx",
-        "./pages/invoices.tsx"
-    ],
     "exclude": [
         "node_modules"
-    ]
+    ],
+    "compileOnSave": false
 }

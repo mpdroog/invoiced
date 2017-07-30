@@ -3,10 +3,10 @@ import {IInjectedProps} from "react-router";
 import Axios from "axios";
 import * as Big from "big.js";
 import * as Moment from "moment";
-import * as DatePicker from "react-datepicker";
+import DatePicker from "react-datepicker";
 
-import "./invoice.css";
-import "react-datepicker/dist/react-datepicker.css";
+//import "./invoice.css";
+//import "react-datepicker/dist/react-datepicker.css";
 
 type IInvoiceStatus = "NEW" | "CONCEPT" | "FINAL";
 interface IInvoiceProps extends React.Props<InvoiceEdit> {
@@ -29,11 +29,11 @@ interface IInvoiceMeta {
   Status: IInvoiceStatus
   Invoiceid: string
   InvoiceidL: boolean
-  Issuedate?: moment.Moment
+  Issuedate?: Moment.Moment
   IssuedateL: boolean
   Ponumber: string
-  Duedate?: moment.Moment
-  Paydate?: moment.Moment
+  Duedate?: Moment.Moment
+  Paydate?: Moment.Moment
   Freefield?: string
 }
 interface IInvoiceLine {
@@ -114,7 +114,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
   }
 
   componentDidMount() {
-    let params = this.props.params;
+    let params = this.props.match.params;
     if (params["id"]) {
       console.log(`Load invoice name=${params["id"]} from bucket=${params["bucket"]}`);
       this.ajax(params["bucket"], params["id"]);
@@ -308,7 +308,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
 	render() {
     let inv = this.state;
     let that = this;
-    let lines: JSX.Element[] = [];
+    let lines: React.JSX.Element[] = [];
 
     inv.Lines.forEach(function(line: IInvoiceLine, idx: number) {
       console.log(inv.Meta.Status);

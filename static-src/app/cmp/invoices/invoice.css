@@ -16,6 +16,19 @@
     padding-top: 15px;
 }
 
+.react-datepicker-wrapper {
+	display: initial !important;
+}
+
+/* Align save/finalize/pdf buttons */
+.nm7 {
+	margin-top: -7px;
+}
+/* Shown non-editable when final */
+.o50 {
+    opacity: 0.5;
+}
+
 /*.invoice > div {
 }
 
@@ -52,4 +65,3 @@
 .invoice .total {
 	right: 0;
 }*/
-/*# sourceMappingURL=app.css.map*/
