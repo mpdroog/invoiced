@@ -5,16 +5,16 @@ Simple hour registration + invoice generator.
 Technical background
 ===========
 - The backend is written in Golang, the used DB is BoltDB
-- The frontend is ReactJS/TypeScript/Webpack
+- The frontend is ReactJS/TypeScript/Brunch
 
 How to build
 ===========
 Frontend
 ```
 # Install NodeJS
+# Install yarn (better npm)
 cd static-src
-brew install
-npm run dll
+yarn install
 npm run dev
 ```
 
