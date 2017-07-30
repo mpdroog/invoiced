@@ -4,10 +4,12 @@ static/assets/app.js
 static/assets/app.js.map
 node_modules
 static/assets/app.css
+static/assets/app.css.map
 billing.db
 static/assets/COMMITHASH
 static/assets/VERSION
-static/assets/vendor.dll.js
+static/assets/vendor.js
+static/assets/vendor.js.map
 static-src/vendor.json
 static-src/npm-debug.log
 static-src/app.css
