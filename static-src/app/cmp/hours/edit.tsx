@@ -5,6 +5,8 @@ import * as Big from "big.js";
 import * as Moment from "moment";
 import DatePicker from "react-datepicker";
 
+import Import from "./edit-import";
+
 interface IHourLineState {
   Hours: number
   Day: string
@@ -49,6 +51,31 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
     })
     .catch(err => {
       handleErr(err);
+    });
+  }
+
+  private importLine(lines) {
+    let out = this.state.Lines;
+    for (let i = 0; i < lines.length; i++) {
+      let day = lines[i];
+      for (let i2 = 0; i2 < day.fromTo.length; i2++) {
+        let fromTo = day.fromTo[i2];
+        let start = Moment.duration(fromTo[0]);
+        let stop = Moment.duration(fromTo[1]);
+        let sum = stop.subtract(start);
+
+        out.push({
+          Start: fromTo[0],
+          Stop: fromTo[1],
+          Hours: sum.asHours(),
+          Description: day.text,
+          Day: day.day
+        });
+      }
+    }
+
+    this.setState({
+      Lines: out
     });
   }
 
@@ -177,6 +204,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
           </div>
 		    </div>
     </div>
+    <Import importFn={this.importLine.bind(this)} />
 
     <div className="normalheader">
       <div className="hpanel hblue">
