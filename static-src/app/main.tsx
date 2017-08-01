@@ -16,12 +16,12 @@ try {
             <Router history={history}><Switch>
                   <Route exact path="/" component={Dashboard} />
 
-                  <Route path="/hour-add" component={HoursEdit} />
                   <Route path="/hour-add/:id" component={HoursEdit} />
+                  <Route path="/hour-add" component={HoursEdit} />
                   <Route path="/hours" component={HoursList} />
 
+                  <Route path="/invoice-add/:bucket/:id" component={InvoiceEdit} />
                   <Route path="/invoice-add" component={InvoiceEdit} />
-                  <Route path="/invoice-add/:id" component={InvoiceEdit} />
                   <Route path="/invoices" component={InvoicesPage} />
             </Switch></Router>,
             document.getElementById('root')

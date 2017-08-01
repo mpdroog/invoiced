@@ -133,10 +133,10 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
 
   private parseInput(data: IInvoiceState) {
     console.log(data);
-    if (window.location.href != `#/invoice-add/${this.props.params["bucket"]}/${data.Meta.Conceptid}`) {
+    if (window.location.href != `#/invoice-add/${this.props.match.params["bucket"]}/${data.Meta.Conceptid}`) {
       // Update URL so refresh will keep the invoice open
-      history.replaceState({}, "", `#/invoice-add/${this.props.params["bucket"]}/${data.Meta.Conceptid}`);
-      this.props.params["id"] = data.Meta.Conceptid;
+      history.replaceState({}, "", `#/invoice-add/${this.props.match.params["bucket"]}/${data.Meta.Conceptid}`);
+      this.props.match.params["id"] = data.Meta.Conceptid;
     }
     data.Meta.Issuedate = data.Meta.Issuedate ? Moment(data.Meta.Issuedate) : null;
     data.Meta.Duedate = data.Meta.Duedate ? Moment(data.Meta.Duedate) : null;
@@ -300,7 +300,7 @@ export default class InvoiceEdit extends React.Component<IInjectedProps, IInvoic
       console.log("PDF only available in finalized invoices");
       return;
     }
-    let url = `/api/v1/invoice/${this.props.params["id"]}/pdf?bucket=${this.props.params["bucket"]}`;
+    let url = `/api/v1/invoice/${this.props.match.params["id"]}/pdf?bucket=${this.props.match.params["bucket"]}`;
     console.log(`Open PDF ${url}`);
     location.assign(url);
   }
