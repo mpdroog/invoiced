@@ -8,13 +8,17 @@ import (
 	"log"
 	"net/http"
 	"github.com/mpdroog/invoiced/invoice"
+	"github.com/mpdroog/invoiced/hour"
 	"github.com/shopspring/decimal"
 	"strings"
+	"strconv"
+	"fmt"
 )
 
 type DashboardMetric struct {
 	RevenueTotal string
 	RevenueEx string
+	Hours string
 }
 
 var db *bolt.DB
@@ -83,6 +87,52 @@ func Dashboard(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 				return e
 			}
 			m[month].RevenueEx, e = addValue(m[month].RevenueEx, u.Total.Ex)
+			if e != nil {
+				return e
+			}
+
+			i++
+		}
+
+		b = tx.Bucket([]byte("hours"))
+		if b == nil {
+			// Empty bucket
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(nil)
+			return nil
+		}
+		c = b.Cursor()
+
+		i = 0
+		// Start from last
+		for k, v := c.Last(); k != nil && i < count; k, v = c.Prev() {
+			u := new(hour.Hour)
+			if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
+				return e
+			}
+
+			idx := strings.LastIndex(u.Lines[0].Day, "-")
+			if idx == -1 {
+				log.Printf("WARN: Hour(%s) has no valid issuedate?", u.Lines[0].Day)
+				continue
+			}
+			month := u.Lines[0].Day[0:idx]
+			_, ok := m[month]
+			if !ok {
+				m[month] = &DashboardMetric{}
+			}
+
+			hours := "0.00"
+			for n := 0; n < len(u.Lines); n++ {
+				raw := strconv.FormatFloat(u.Lines[n].Hours, 'f', 0, 64)
+				hours, e = addValue(hours, raw)
+				if e != nil {
+					return e
+				}
+			}
+
+			log.Printf("Hours(date=%s) hours=%s", month, hours)
+			m[month].Hours, e = addValue(m[month].Hours, hours)
 			if e != nil {
 				return e
 			}

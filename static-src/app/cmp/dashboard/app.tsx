@@ -33,11 +33,12 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			let key:string = sorted[i];
 			let revenue:number = this.state.metrics[key].RevenueEx;
 			let delta:number = (((+revenue*100) - (+pref*100)) / 100).toFixed(0);
+			let hours:number = this.state.metrics[key].Hours;
 			var change = {};
 			if (delta > 0) {
 				change = {backgroundColor: "green", color: "white"};
 			}
-			items.push(<tr key={key}><td>{key}</td><td>&euro; {revenue}</td><td style={change}>&euro; {delta}</td></tr>);
+			items.push(<tr key={key}><td>{key}</td><td>&euro; {revenue}</td><td style={change}>&euro; {delta}</td><td>{hours}</td></tr>);
 
 			pref = revenue;
 			years[ key.substr(0, key.indexOf("-")) ] += revenue*100;
@@ -48,6 +49,7 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			let key = sorted[i];
 			let vals = this.state.metrics[key];
 			vals.RevenueEx = parseInt(vals.RevenueEx);
+			vals.Hours = parseInt(vals.Hours);
 			vals.name = key;
 			stats.push(vals);
 		}
@@ -71,7 +73,7 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			            </h2>
 			            <table className="table">
 			            	<thead>
-			            		<tr><th>Date</th><th>Revenue</th><th>Δ</th></tr>
+			            		<tr><th>Date</th><th>Revenue</th><th>Δ</th><th>Hours</th></tr>
 			            	</thead>
 			            	<tbody>{items}</tbody>
 			            </table>
@@ -84,16 +86,33 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			        <div className="panel-body">
 			            <h2 className="font-light m-b-xs pa">
 			            	<i className="fa fa-area-chart"></i>
-			                Graph
+			                Revenue Graph
 			            </h2>
 			            <LineChart width={600} height={200} data={stats}>
-						<XAxis dataKey="name"/>
-						<Line type="monotone" dataKey="RevenueEx" stroke='#82ca9d' fill='#82ca9d' />
-						<Tooltip/>
+							<XAxis dataKey="name"/>
+							<Line type="monotone" dataKey="RevenueEx" stroke='#82ca9d' fill='#82ca9d' />
+							<Tooltip/>
 						</LineChart>
 			        </div>
 			    </div>
 			</div>
+
+			<div className="normalheader col-md-6">
+			    <div className="hpanel">
+			        <div className="panel-body">
+			            <h2 className="font-light m-b-xs pa">
+			            	<i className="fa fa-area-chart"></i>
+			                Hour Graph
+			            </h2>
+			            <LineChart width={600} height={200} data={stats}>
+							<XAxis dataKey="name"/>
+							<Line type="monotone" dataKey="Hours" stroke='#82ca9d' fill='#82ca9d' />
+							<Tooltip/>
+						</LineChart>
+			        </div>
+			    </div>
+			</div>
+
 		</div>;
 	}
 
