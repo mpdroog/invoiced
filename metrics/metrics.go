@@ -12,7 +12,6 @@ import (
 	"github.com/shopspring/decimal"
 	"strings"
 	"strconv"
-	"fmt"
 )
 
 type DashboardMetric struct {
