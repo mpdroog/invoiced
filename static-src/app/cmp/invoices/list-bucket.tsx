@@ -11,6 +11,7 @@ interface IInvoicePagination {
 interface IInvoiceListState {
   pagination?: IInvoicePagination
   invoices?: IInvoiceState[]
+  isBalance: bool
 }
 
 interface IInvoiceListProps {
@@ -26,7 +27,8 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
           "from": "",
           "count": 50
         },
-        "invoices": null
+        "invoices": null,
+        "isBalance": false,
       };
   }
 
@@ -104,6 +106,11 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     </tr>;
   }
 
+  private toggleUpload(e) {
+    e.preventDefault();
+    this.setState({isBalance: !this.state.isBalance});
+  }
+
 	render() {
     let res:React.JSX.Element[] = [];
     console.log("invoices=", this.state.invoices);
@@ -122,13 +129,22 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
 
     var headerButtons = <div/>;
     if (this.props.bucket === "invoices") {
-      headerButtons = <a href={"#invoice-add/"+this.props.bucket} className="btn btn-default btn-hover-primary showhide">
-        <i className="fa fa-plus"></i> New
-      </a>;
-    } else {
-      headerButtons = <a href={"#invoice-add/"+this.props.bucket} className="btn btn-default btn-hover-primary showhide">
-        <i className="fa fa-upload"></i> Bankbalance
-      </a>;    
+      headerButtons = <div>
+        <a href={"#invoice-add/"+this.props.bucket} className="btn btn-default btn-hover-primary showhide">
+          <i className="fa fa-plus"></i> New
+        </a>
+        <a href="#" onClick={this.toggleUpload.bind(this)} className="btn btn-default btn-hover-primary showhide">
+          <i className="fa fa-upload"></i> Bankbalance
+        </a>
+      </div>;
+    }
+
+    var balanceUpload = null;
+    if (this.state.isBalance) {
+      var url = `/api/v1/invoice/${this.props.bucket}/balance`;
+      balanceUpload = <div>
+        <form method="post" encType="multipart/form-data" action={url}><input name="file" type="file"/><button type="submit">Save</button></form>
+      </div>;
     }
 
 		return <div className="normalheader">
@@ -142,6 +158,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
             {this.props.title}
           </div>
           <div className="panel-body">
+            {balanceUpload}
             <table className="table table-striped">
             	<thead><tr><th>#</th><th>Invoice</th><th>Customer</th><th>Amount</th><th>I/O</th></tr></thead>
             	<tbody>{res}</tbody>

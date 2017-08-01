@@ -101,6 +101,7 @@ func main() {
 	router.GET("/api/v1/invoice/:id/pdf", invoice.Pdf)
 	router.GET("/api/v1/invoice/:id/credit", invoice.Credit)
 	router.POST("/api/v1/invoice/:id/paid", invoice.Paid)
+	router.POST("/api/v1/invoice/:id/balance", invoice.Balance)
 	router.DELETE("/api/v1/invoice/:id", invoice.Delete)
 
 	router.GET("/api/v1/hours", hour.List)
