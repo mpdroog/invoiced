@@ -139,7 +139,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
     Axios.post('/api/v1/hour', this.state)
     .then(res => {
       console.log(res.data);
-      this.props.params["id"] = res.data.Name;
+      this.props.match.params["id"] = res.data.Name;
       history.replaceState({}, "", `#/hour-add/${res.data.Name}`);
     })
     .catch(err => {
