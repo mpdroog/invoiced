@@ -38,13 +38,13 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#invoices" id="js-invoices">
-                        <i class="fa fa-money"></i>
+                    <a href="#hours" id="js-hours">
+                        <i class="fa fa-clock-o"></i>
                     </a>
                 </li>
                 <li>
-                    <a href="#hours" id="js-hours">
-                        <i class="fa fa-clock-o"></i>
+                    <a href="#invoices" id="js-invoices">
+                        <i class="fa fa-money"></i>
                     </a>
                 </li>
             </ul>
@@ -188,7 +188,7 @@
       }
 
       var key = e.code;
-      var page = location.hash.substr(2, location.hash.indexOf("?")-2);
+      var page = location.hash.substr(2);
       //var shift = e.shiftKey;
       //var ctrl = e.ctrlKey;
 
