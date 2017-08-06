@@ -33,11 +33,16 @@ func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 func main() {
 	var wg sync.WaitGroup
+	flag.BoolVar(&config.Local, "l", true, "Local-mode (only 127, no https)")
 	flag.BoolVar(&config.Verbose, "v", false, "Verbose-mode (log more)")
 	flag.StringVar(&config.DbPath, "d", "./billing.db", "Path to BoltDB database")
 	flag.StringVar(&config.HTTPListen, "h", "localhost:9999", "HTTP listening port")
 	flag.BoolVar(&config.HTTPSOnly, "s", false, "HTTPS Only")
 	flag.Parse()
+
+	if !config.Local {
+		config.HTTPSOnly = true
+	}
 
 	var e error
 	config.CurDir, e = osext.ExecutableFolder()
@@ -114,6 +119,10 @@ func main() {
 	wg.Add(1)
 	go func() {
 		var e error
+		var router http.Handler = router
+		if config.Local {
+			router = middleware.LocalOnly(router)
+		}
 		if config.Verbose {
 			log.Printf("Listening on %s\n", config.HTTPListen)
 			e = http.ListenAndServe(config.HTTPListen, middleware.HTTPLog(router))
