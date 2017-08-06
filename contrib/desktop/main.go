@@ -9,6 +9,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"bufio"
 	"os"
+	"github.com/mitchellh/go-homedir"
 )
 
 var (
@@ -98,8 +99,12 @@ func onReady() {
 }
 
 func main() {
+	home, e := homedir.Dir()
+	if e != nil {
+		panic(e)
+	}
 	flag.BoolVar(&verbose, "v", false, "Verbose-mode (log more)")
-	flag.StringVar(&dbPath, "d", "billingdb", "Path to database")
+	flag.StringVar(&dbPath, "d", home+"/invoiced", "Path to database")
 	flag.Parse()
 	if verbose {
 		fmt.Printf("Verbose-mode\n")
