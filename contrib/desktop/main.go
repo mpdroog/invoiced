@@ -11,7 +11,10 @@ import (
 	"os"
 )
 
-var verbose bool
+var (
+	verbose bool
+	dbPath string
+)
 
 func onReady() {
 	// Start invoicing service
@@ -19,7 +22,7 @@ func onReady() {
 	if verbose {
 		arg = "-v"
 	}
-	cmd := exec.Command("../../invoiced", arg)
+	cmd := exec.Command("../../invoiced", arg, "-d="+dbPath)
 
 	// stderr
 	stderr, e := cmd.StderrPipe()
@@ -96,6 +99,7 @@ func onReady() {
 
 func main() {
 	flag.BoolVar(&verbose, "v", false, "Verbose-mode (log more)")
+	flag.StringVar(&dbPath, "d", "billingdb", "Path to database")
 	flag.Parse()
 	if verbose {
 		fmt.Printf("Verbose-mode\n")
