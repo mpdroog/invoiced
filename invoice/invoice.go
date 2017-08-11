@@ -1,21 +1,17 @@
 package invoice
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/boltdb/bolt"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/validator.v2"
 	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
+	"github.com/mpdroog/invoiced/db"
 )
-
-var db *bolt.DB
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -32,208 +28,167 @@ func randStringBytesRmndr(n int) string {
 	return string(b)
 }
 
-func Init(d *bolt.DB) error {
-	db = d
-	return db.Update(func(tx *bolt.Tx) error {
-		_, e := tx.CreateBucketIfNotExists([]byte("invoices"))
-		return e
-	})
-}
-
 func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	if name == "" {
 		http.Error(w, "Please supply a name to delete", 400)
 		return
 	}
-	if e := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("invoices"))
-		v := b.Get([]byte(name))
-		if v == nil {
-			http.Error(w, "invoice.Delete no such name", http.StatusNotFound)
-			return nil
-		}
+	// TODO: read from cookie?
+	entity := "rootdev"
 
-		buf := bytes.NewBuffer(v)
-		u := new(Invoice)
-		if e := json.NewDecoder(buf).Decode(u); e != nil {
-			return e
-		}
-		if u.Meta.Status == "FINAL" {
-			// Cannot delete finalized invoices
-			http.Error(w, "invoice.Delete cannot delete finalized invoice", 400)
-			return nil
-		}
-
-		if e := b.Delete([]byte(name)); e != nil {
-			return e
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		if _, e := w.Write(buf.Bytes()); e != nil {
-			return e
-		}
-		return nil
-	}); e != nil {
+	if e := db.Remove(fmt.Sprintf("%s/concepts/sales-invoices/%s.toml", entity, name)); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Delete fail", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if _, e := w.Write([]byte("{'ok': true}")); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Delete fail", http.StatusInternalServerError)
+		return
 	}
 }
 
 // Lock invoice for changes and set invoiceid
 func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
+	if name == "" {
+		http.Error(w, "Please supply a name to finalize", 400)
+		return
+	}
+	// TODO: read from cookie?
+	entity := "rootdev"
+	year := "2017"
 	log.Printf("invoice.Finalize with conceptid=%s", name)
-	e := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("invoices"))
-		v := b.Get([]byte(name))
-		if v == nil {
-			http.Error(w, "invoice.Finalize no such name", http.StatusNotFound)
-			return nil
-		}
 
-		u := new(Invoice)
-		if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
+	u := new(Invoice)
+	if e := db.Open(fmt.Sprintf("%s/concepts/sales-invoices/%s.toml", entity, name), u); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, fmt.Sprintf("invoice.Finalize failed loading file from disk"), 400)
+		return
+	}
+
+	if len(u.Meta.Issuedate) == 0 {
+		u.Meta.Issuedate = time.Now().Format("2006-01-02")
+	}
+
+	if u.Meta.Invoiceid == "" {
+		// Create invoiceid
+		// TODO?????
+		var idx uint64 = 22
+		/*idx, e := b.NextSequence()
+		if e != nil {
 			return e
-		}
+		}*/
 
-		if len(u.Meta.Issuedate) == 0 {
-			u.Meta.Issuedate = time.Now().Format("2006-01-02")
-		}
+		u.Meta.Invoiceid = createInvoiceId(time.Now(), idx)
+		log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
+	}
+	u.Meta.Status = "FINAL"
 
-		if u.Meta.Invoiceid == "" {
-			// Create invoiceid
-			idx, e := b.NextSequence()
-			if e != nil {
-				return e
-			}
+	// TODO: Uniqueness check?
 
-			u.Meta.Invoiceid = createInvoiceId(time.Now(), idx)
-			log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
-		}
-		u.Meta.Status = "FINAL"
+	now := time.Now()
+	if e := db.Save(fmt.Sprintf("%s/%d/Q%d/sales-invoices-unpaid/%s.toml", entity, year, yearQuarter(now), u.Meta.Invoiceid), u); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, fmt.Sprintf("invoice.Finalize failed writing to disk"), 400)
+		return
+	}
 
-		// Save any changes..
-		buf := new(bytes.Buffer)
-		if e := json.NewEncoder(buf).Encode(u); e != nil {
-			return e
-		}
-		if e := b.Put([]byte(u.Meta.Conceptid), buf.Bytes()); e != nil {
-			return e
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		_, e := w.Write(buf.Bytes())
-		return e
-	})
-	if e != nil {
+	if e := db.Remove(fmt.Sprintf("%s/concepts/sales-invoices/%s.toml", entity, name)); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Finalize fail", http.StatusInternalServerError)
+		return
+	}
+	if e := db.Commit(); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Finalize fail", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if e := json.NewEncoder(w).Encode(u); e != nil {
+		log.Printf(e.Error())
 	}
 }
 
 func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
+	bucket := ps.ByName("bucket") // 2017Q3
+	entity := "rootdev"
 	log.Printf("invoice.Reset with conceptid=%s", name)
-	e := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("invoices"))
-		v := b.Get([]byte(name))
-		if v == nil {
-			http.Error(w, "invoice.Reset no such name", http.StatusNotFound)
-			return nil
-		}
 
-		u := new(Invoice)
-		if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
-			return e
-		}
-
-		if len(u.Meta.Issuedate) == 0 {
-			u.Meta.Issuedate = time.Now().Format("2006-01-02")
-		}
-
-		if u.Meta.Invoiceid == "" {
-			// Create invoiceid
-			idx, e := b.NextSequence()
-			if e != nil {
-				return e
-			}
-
-			u.Meta.Invoiceid = createInvoiceId(time.Now(), idx)
-			log.Printf("invoice.Reset create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
-		}
-		u.Meta.Status = "CONCEPT"
-
-		// Save any changes..
-		buf := new(bytes.Buffer)
-		if e := json.NewEncoder(buf).Encode(u); e != nil {
-			return e
-		}
-		if e := b.Put([]byte(u.Meta.Conceptid), buf.Bytes()); e != nil {
-			return e
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		_, e := w.Write(buf.Bytes())
-		return e
-	})
-	if e != nil {
+	u := new(Invoice)
+	if e := db.Open(fmt.Sprintf("%s/%s/sales-invoices-unpaid/%s.toml", entity, bucket, name), u); e != nil {
 		log.Printf(e.Error())
-		http.Error(w, "invoice.Reset fail", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("invoice.Reset failed loading file from disk"), 400)
+		return
+	}
+	u.Meta.Status = "CONCEPT"
+	if e := db.Remove(fmt.Sprintf("%s/%s/sales-invoices-unpaid/%s.toml", entity, bucket, name)); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Finalize fail", http.StatusInternalServerError)
+		return
+	}
+	if e := db.Save(fmt.Sprintf("%s/concepts/sales-invoices/%s.toml", entity, u.Meta.Conceptid), u); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, fmt.Sprintf("invoice.Finalize failed writing to disk"), 400)
+		return
+	}
+	if e := db.Commit(); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Finalize fail", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if e := json.NewEncoder(w).Encode(u); e != nil {
+		log.Printf(e.Error())
 	}
 }
 
 // Mark invoice as paid
 func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
+	bucket := ps.ByName("bucket") // 2017Q3
+	entity := "rootdev"
+	year := "2017"
 	log.Printf("invoice.Paid with conceptid=%s", name)
-	e := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("invoices"))
-		v := b.Get([]byte(name))
-		if v == nil {
-			http.Error(w, "invoice.Paid no such name", http.StatusNotFound)
-			return nil
-		}
-		if e := b.Delete([]byte(name)); e != nil {
-			return e
-		}
 
-		u := new(Invoice)
-		if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
-			return e
-		}
-
-		if u.Meta.Status != "FINAL" {
-			http.Error(w, "invoice.Paid can only set paid on FINAL-invoices", http.StatusNotFound)
-			return nil
-		}
-		u.Meta.Paydate = time.Now().Format("2006-01-02")
-
-		// Save any changes..
-		buf := new(bytes.Buffer)
-		if e := json.NewEncoder(buf).Encode(u); e != nil {
-			return e
-		}
-		b, e := tx.CreateBucketIfNotExists([]byte("invoices-paid"))
-		if e != nil {
-			return e
-		}
-		if e := b.Put([]byte(u.Meta.Conceptid), buf.Bytes()); e != nil {
-			return e
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		_, e = w.Write(buf.Bytes())
-		return e
-	})
-	if e != nil {
+	u := new(Invoice)
+	if e := db.Open(fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name), u); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, fmt.Sprintf("invoice.Paid failed loading file from disk"), 400)
+		return
+	}
+	u.Meta.Paydate = time.Now().Format("2006-01-02")
+	if e := db.Remove(fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Paid fail", http.StatusInternalServerError)
+		return
+	}
+	if e := db.Save(fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name), u); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, fmt.Sprintf("invoice.Paid failed writing to disk"), 400)
+		return
+	}
+	if e := db.Commit(); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Paid fail", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if e := json.NewEncoder(w).Encode(u); e != nil {
+		log.Printf(e.Error())
 	}
 }
 
 func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// IF POST create InvoiceID = 2016Q3-0001
+	entity := "rootdev"
 	if r.Body == nil {
 		http.Error(w, "Please send a request body", 400)
 		return
@@ -249,30 +204,22 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	}
 
-	buf := new(bytes.Buffer)
-	if e := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("invoices"))
-		// TODO: Check if current entry is FINAL, if so prevent!
+	if u.Meta.Conceptid == "" {
+		u.Meta.Conceptid = fmt.Sprintf("CONCEPT-%s", randStringBytesRmndr(6))
+		log.Printf("invoice.Save create conceptId=%s", u.Meta.Conceptid)
+	} else {
+		log.Printf("invoice.Save update conceptId=%s", u.Meta.Conceptid)
+	}
+	u.Meta.Status = "CONCEPT"
 
-		if u.Meta.Conceptid == "" {
-			u.Meta.Conceptid = fmt.Sprintf("CONCEPT-%s", randStringBytesRmndr(6))
-			log.Printf("invoice.Save create conceptId=%s", u.Meta.Conceptid)
-		} else {
-			log.Printf("invoice.Save update conceptId=%s", u.Meta.Conceptid)
-		}
-		u.Meta.Status = "CONCEPT"
-
-		if e := json.NewEncoder(buf).Encode(u); e != nil {
-			return e
-		}
-		return b.Put([]byte(u.Meta.Conceptid), buf.Bytes())
-	}); e != nil {
+	if e := db.Save(fmt.Sprintf("%s/concepts/sales-invoices/%s.toml", entity, u.Meta.Conceptid), u); e != nil {
 		log.Printf(e.Error())
-		http.Error(w, "invoice.Save fail", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("invoice.Save failed writing to disk"), 400)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if _, e := w.Write(buf.Bytes()); e != nil {
+	if e := json.NewEncoder(w).Encode(u); e != nil {
 		log.Printf(e.Error())
 	}
 }
@@ -280,98 +227,78 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	args := r.URL.Query()
 	bucket := args.Get("bucket")
-	if bucket == "" {
+	/*if bucket == "" {
 		bucket = "invoices"
+	}*/
+	name := ps.ByName("id")
+	entity := "rootdev"
+	year := "2017"
+	log.Printf("invoice.Load with conceptid=%s", name)
+
+	path := fmt.Sprintf("%s/concepts/sales-invoices/%s.toml", entity, name)
+	if bucket != "concepts" {
+		path = fmt.Sprintf("%s/%s/%s/sales-invoiced-paid?/%s.toml", entity, year, bucket, name)
 	}
-	if !strings.HasPrefix(bucket, "invoices") {
-		http.Error(w, "invoice.Load invalid bucket-name", 400)
+
+	u := new(Invoice)
+	if e := db.Open(path, u); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, fmt.Sprintf("invoice.Reset failed loading file from disk"), 400)
 		return
 	}
-	name := ps.ByName("id")
-	log.Printf("invoice.Load with conceptid=%s", name)
-	e := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket))
-		v := b.Get([]byte(name))
-		if v == nil {
-			http.Error(w, "invoice.Load no such name", http.StatusNotFound)
-			return nil
-		}
 
-		w.Header().Set("Content-Type", "application/json")
-		_, e := w.Write(v)
-		return e
-	})
-	if e != nil {
+	w.Header().Set("Content-Type", "application/json")
+	if e := json.NewEncoder(w).Encode(u); e != nil {
 		log.Printf(e.Error())
-		http.Error(w, "invoice.Save fail", http.StatusInternalServerError)
 	}
 }
 
 func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	entity := "rootdev"
+	year := "2017"
 	args := r.URL.Query()
 	bucket := args.Get("bucket")
-	if bucket == "" {
-		bucket = "invoices"
+
+	paths := []string{fmt.Sprintf("%s/concepts/sales-invoices", entity)}
+	if bucket != "concepts" {
+		paths = []string{
+			//fmt.Sprintf("%s/%s/{all}/sales-invoices-paid", entity, year),
+			fmt.Sprintf("%s/%s/{all}/%s", entity, year, bucket),
+		}
 	}
-	if !strings.HasPrefix(bucket, "invoices") {
-		http.Error(w, "invoice.Load invalid bucket-name", 400)
+
+	from, e := strconv.Atoi(args.Get("from"))
+	if e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.List fail", http.StatusInternalServerError)
 		return
 	}
-	from := args.Get("from")
 	count, e := strconv.Atoi(args.Get("count"))
 	if e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.List fail", http.StatusInternalServerError)
+		return
 	}
 
-	e = db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket))
-		if b == nil {
-			// Empty bucket
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(nil)
-			return nil
-		}
-		c := b.Cursor()
-
-		var keys []*Invoice
-		i := 0
-		if from == "" {
-			// Start from last
-			for k, v := c.Last(); k != nil && i < count; k, v = c.Prev() {
-				//keys = append(keys, string(k))
-				u := new(Invoice)
-				if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
-					return e
-				}
-
-				keys = append(keys, u)
-				i++
-			}
-		} else {
-			// Start from key
-			for k, v := c.Seek([]byte(from)); k != nil && i < count; k, v = c.Prev() {
-				//keys = append(keys, string(k))
-				u := new(Invoice)
-				if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
-					return e
-				}
-
-				keys = append(keys, u)
-				i++
-			}
-		}
-		log.Printf("invoice.List count=%d", len(keys))
-
-		w.Header().Set("Content-Type", "application/json")
-		if e := json.NewEncoder(w).Encode(keys); e != nil {
-			return e
-		}
+	var list []*Invoice
+	mem := new(Invoice)
+	p, e := db.List(paths, db.Pagination{From:from, Count:count}, &mem, func(filename, filepath string) error {
+		list = append(list, mem)
+		mem = new(Invoice)
 		return nil
 	})
 	if e != nil {
 		log.Printf(e.Error())
-		http.Error(w, "invoice.List fail", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("invoice.List failed scanning disk"), 400)
+		return	
+	}
+	log.Printf("invoice.List count=%d", len(list))
+
+	w.Header().Set("X-Pagination-Total", string(p.Total))
+	w.Header().Set("Content-Type", "application/json")
+	if e := json.NewEncoder(w).Encode(list); e != nil {
+		log.Printf(e.Error())
+		return
 	}
 }
 
@@ -379,43 +306,36 @@ func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	args := r.URL.Query()
 	bucket := args.Get("bucket")
-	if bucket == "" {
+	entity := ""
+	year := "2017"
+	/*if bucket == "" {
 		bucket = "invoices"
-	}
-	if !strings.HasPrefix(bucket, "invoices") {
-		http.Error(w, "invoice.Load invalid bucket-name", 400)
+	}*/
+	log.Printf("invoice.Pdf with id=%s", name)
+
+	u := new(Invoice)
+	if e := db.Open(fmt.Sprintf("%s/%s/%s/%s.toml", entity, year, bucket, name), u); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, fmt.Sprintf("invoice.Pdf failed loading file from disk"), 400)
 		return
 	}
-
-	log.Printf("invoice.Pdf with id=%s", name)
-	e := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket))
-		v := b.Get([]byte(name))
-		if v == nil {
-			return fmt.Errorf("No such invoice name")
-		}
-
-		u := new(Invoice)
-		if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
-			return e
-		}
-
-		f, e := pdf(u)
-		if e != nil {
-			return e
-		}
-
-		w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.pdf"`, u.Meta.Invoiceid))
-		w.Header().Set("Content-Type", "application/pdf")
-		return f.Output(w)
-	})
+	f, e := pdf(u)
 	if e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Pdf fail", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.pdf"`, u.Meta.Invoiceid))
+	w.Header().Set("Content-Type", "application/pdf")
+	if e := f.Output(w); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Pdf fail", http.StatusInternalServerError)
+		return
 	}
 }
 
-func Credit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+/*func Credit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	args := r.URL.Query()
 	bucket := args.Get("bucket")
@@ -461,4 +381,4 @@ func Credit(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Pdf fail", http.StatusInternalServerError)
 	}
-}
+}*/

@@ -16,3 +16,5 @@ static-src/app.css
 static-src/app.css.map
 npm-debug.log
 static/assets/app.css
+contrib/desktop/desktop
+billingdb

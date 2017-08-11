@@ -24,7 +24,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       super(props);
       this.state = {
         "pagination": {
-          "from": "",
+          "from": 0,
           "count": 50
         },
         "invoices": null,

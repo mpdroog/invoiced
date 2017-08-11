@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+// TEMP
+func YearQuarter(now time.Time) int {
+	return yearQuarter(now)
+}
+
 func yearQuarter(now time.Time) int {
 	switch now.Month() {
 	case time.January:

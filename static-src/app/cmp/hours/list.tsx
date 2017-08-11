@@ -16,7 +16,7 @@ export default class Hours extends React.Component<{}, IHourState> {
     super();
     this.state = {
       "pagination": {
-        "from": "",
+        "from": 0,
         "count": 50
       },
       "hours": null
