@@ -8,12 +8,14 @@ import (
 	"sync"
 	"flag"
 	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/entities"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
 	"github.com/mpdroog/invoiced/middleware"
 	"github.com/mpdroog/invoiced/rules"
 	"github.com/mpdroog/invoiced/metrics"
+	"time"
 )
 
 func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -22,6 +24,53 @@ func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		prefix = "https://"
 	}
 
+	if _, e := r.Cookie("sess"); e != nil {
+		// no session
+		http.Redirect(w, r, prefix+config.HTTPListen+"/static/auth.html", 302)
+		return
+	}
+	http.Redirect(w, r, prefix+config.HTTPListen+"/static/", 301)
+}
+
+func Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// Auth login
+	if e := r.ParseForm(); e != nil {
+		log.Printf("Login: %s\n", e.Error())
+		http.Error(w, "Parse form-failed", 400)
+		return
+	}
+
+	email := r.FormValue("email")
+	pass := r.FormValue("pass")
+	if len(email) == 0 || len(pass) == 0 {
+		http.Error(w, "Missing POST email/pass", 400)
+		return
+	}
+
+	sess, e := middleware.Login(email, pass)
+	if e != nil {
+		log.Printf("Login: %s\n", e.Error())
+		http.Error(w, "Login: Auth failed", 400)
+		return
+	}
+	if len(sess) == 0 {
+		http.Error(w, "Login: Invalid user/pass", 400)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name: "sess",
+		Value: sess,
+		Expires: time.Now().Add(time.Hour * 24 * 365),
+		HttpOnly: true,
+		Domain: config.HTTPListen,
+		Secure: config.HTTPSOnly,
+	})
+
+	prefix := "http://"
+	if config.HTTPSOnly {
+		prefix = "https://"
+	}
 	http.Redirect(w, r, prefix+config.HTTPListen+"/static/", 301)
 }
 
@@ -50,6 +99,9 @@ func main() {
 	if e := db.Init(config.DbPath); e != nil {
 		panic(e)
 	}
+	if e := middleware.Init(); e != nil {
+		panic(e)
+	}
 
 	/*if e := invoice.Init(db); e != nil {
 		log.Fatal(e)
@@ -66,6 +118,8 @@ func main() {
 
 	router := httprouter.New()
 	router.GET("/", Index)
+	router.POST("/", Login)
+	router.GET("/api/v1/entities", entities.List)
 
 	router.GET("/api/v1/metrics", metrics.Dashboard)
 
@@ -94,6 +148,7 @@ func main() {
 		if config.Local {
 			router = middleware.LocalOnly(router)
 		}
+		router = middleware.HTTPAuth(router)
 		if config.Verbose {
 			log.Printf("Listening on %s\n", config.HTTPListen)
 			e = http.ListenAndServe(config.HTTPListen, middleware.HTTPLog(router))
