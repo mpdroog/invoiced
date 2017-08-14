@@ -4,6 +4,7 @@
 package main
 
 import (
+	"math"
 	"fmt"
 	"github.com/boltdb/bolt"
 	"os"
@@ -17,7 +18,17 @@ import (
 
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
+	"io/ioutil"
 )
+
+func round(num float64) int {
+    return int(num + math.Copysign(0.5, num))
+}
+
+func toFixed(num float64, precision int) float64 {
+    output := math.Pow(10, float64(precision))
+    return float64(round(num * output)) / output
+}
 
 func main() {
 	db, e := bolt.Open("/Users/mark/billing.db", 0600, nil)
@@ -61,6 +72,9 @@ func main() {
 			u := new(hour.Hour)
 			if e := json.NewDecoder(bytes.NewReader(v)).Decode(u); e != nil {
 				panic(e)
+			}
+			for key, val := range u.Lines {
+				u.Lines[key].Hours = toFixed(val.Hours, 2)
 			}
 
 			day, e := time.Parse("2006-01-02", u.Lines[0].Day) // YYYY-mm-dd
@@ -198,6 +212,29 @@ func main() {
 		}
 		return nil
 	}); e != nil {
+		panic(e)
+	}
+
+	d := []byte(`IV="a5FbH/LiRl5XtLOLvL0MSrJLU8BxP8Ao"
+Version=1
+
+[company.rootdev]
+Name="RootDev"
+COC=""
+VAT=""
+IBAN=""
+BIC=""
+Salt="Ab/tViXI1AvpKxaYvuJ5VphRYCb/gTqH"
+
+[[user]]
+Email="rootdev@gmail.com"
+Hash=""
+Company=["rootdev"]
+Name="Mark Droog"
+Address1="Dorpsstraat 236a"
+Address2="1713HP Obdam"
+`)
+	if e := ioutil.WriteFile("./db/entities.toml", d, 0755); e != nil {
 		panic(e)
 	}
 }
