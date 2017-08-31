@@ -1,33 +1,85 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import {Router, Route, Switch} from "react-router";
-import { createHashHistory } from 'history';
+import {Design} from "./shared/design";
 
-import Dashboard from "./cmp/dashboard/app";
-import HoursEdit from "./cmp/hours/edit";
-import HoursList from "./cmp/hours/list";
+function hashChange() {
+      let url = location.hash.substr(1).split("/");
+      let inject = null;
+      let props = null;
 
-import InvoiceEdit from "./cmp/invoices/edit";
-import InvoicesPage from "./cmp/invoices/list";
+      if (url[0] === '') {
+            url.shift();
+      }
+      if (url.length === 0) {
+            inject = require("./cmp/entities/app");
+      }
+
+      if (inject === null) {
+            props = {
+                  entity: url.shift(),
+                  year: url.shift()
+            };
+            switch (url.shift()) {
+                  case "hours":
+                        switch (url.shift()) {
+                              case "add":
+                              case "edit":
+                                    inject = require("./cmp/hours/edit");
+                                    break;
+
+                              default:
+                                    inject = require("./cmp/hours/list");
+                                    break;
+                        }
+                        break;
+
+                  case "invoices":
+                        switch (url.shift()) {
+                              case "add":
+                              case "edit":
+                                    props.bucket = url.shift();
+                                    inject = require("./cmp/invoices/edit");
+                                    break;
+
+                              default:
+                                    inject = require("./cmp/invoices/list");
+                                    break;                        
+                        }
+                        break;
+
+                  case "":
+                  case undefined:
+                        inject = require("./cmp/dashboard/app");
+                        break;
+
+                  default:
+                        throw "Invalid path: " + location.hash;
+            }
+      }
+
+      let page = null;
+      if (props !== null) {
+            props.id = url.shift();
+            page = React.createElement(inject.default, props);
+            page = React.createElement(Design, props, page);
+      } else {
+            page = React.createElement(inject.default, props);
+      }
+      ReactDOM.render(page, root);
+}
 
 try {
-      const history = createHashHistory();
-      ReactDOM.render(
-            <Router history={history}><Switch>
-                  <Route exact path="/" component={Dashboard} />
+      let splash = document.getElementById("js-splash");
+      let root = document.getElementById('root');
 
-                  <Route path="/hour-add/:id" component={HoursEdit} />
-                  <Route path="/hour-add" component={HoursEdit} />
-                  <Route path="/hours" component={HoursList} />
+      hashChange();
+      splash && splash.remove();
+      window.onhashchange = function() {
+            ReactDOM.unmountComponentAtNode(root);
+            hashChange();
+      };
 
-                  <Route path="/invoice-add/:bucket/:id" component={InvoiceEdit} />
-                  <Route path="/invoice-add" component={InvoiceEdit} />
-                  <Route path="/invoices" component={InvoicesPage} />
-            </Switch></Router>,
-            document.getElementById('root')
-      );
 } catch (e) {
-      //console.log(e);
       handleErr(e);
-      //throw e;
+      throw e;
 }

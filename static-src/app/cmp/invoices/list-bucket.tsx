@@ -1,7 +1,6 @@
 import * as React from "react";
 import Axios from "axios";
 import {IInvoiceState} from "./invoice-add";
-import {IInjectedProps} from "react-router";
 import {DOM} from "../../lib/dom";
 
 interface IInvoicePagination {
@@ -30,24 +29,6 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
         "invoices": null,
         "isBalance": false,
       };
-  }
-
-  componentDidMount() {
-    this.ajax();
-  }
-
-  private ajax() {
-    Axios.get('/api/v1/invoices', {params: {
-      from: this.state.pagination.from,
-      count: this.state.pagination.count,
-      bucket: this.props.bucket
-    }})
-    .then(res => {
-      this.setState({invoices: res.data});
-    })
-    .catch(err => {
-      handleErr(err);
-    });
   }
 
   private delete(e: BrowserEvent) {
@@ -80,28 +61,28 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     });
   }
 
-  private conceptLine(key: string, inv: IInvoiceState): React.JSX.Element {
+  private conceptLine(key: string, inv: IInvoiceState, bucket: string): React.JSX.Element {
     return <tr key={key}>
       <td>{key}</td>
       <td>{inv.Meta.Invoiceid}</td>
       <td>{inv.Customer.Name}</td>
       <td>&euro; {inv.Total.Total}</td>
       <td>
-        <a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+this.props.bucket+"/"+key}><i className="fa fa-pencil"></i></a>
+        <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
         <a disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? "btn-hover-danger faa-parent animated-hover" : "")} data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this, key)}><i className="fa fa-trash faa-flash"></i></a>
         <a className="btn btn-default btn-hover-primary" onClick={this.setPaid.bind(this, key)}><i className="fa fa-check"></i></a>
       </td>
     </tr>;
   }
 
-  private finishedLine(key: string, inv: IInvoiceState): React.JSX.Element {
+  private finishedLine(key: string, inv: IInvoiceState, bucket: string): React.JSX.Element {
     return <tr key={key}>
       <td>{key}</td>
       <td>{inv.Meta.Invoiceid}</td>
       <td>{inv.Customer.Name}</td>
       <td>&euro; {inv.Total.Total}</td>
       <td>
-        <a className="btn btn-default btn-hover-primary" href={"#invoice-add/"+this.props.bucket+"/"+key}><i className="fa fa-pencil"></i></a>
+        <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
       </td>
     </tr>;
   }
@@ -113,27 +94,40 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
 
 	render() {
     let res:React.JSX.Element[] = [];
-    console.log("invoices=", this.state.invoices);
-    if (this.state.invoices && this.state.invoices.length > 0) {
-      this.state.invoices.forEach((inv) => {
-        let key: string = inv.Meta.Conceptid;
-        if (this.props.bucket === "invoices") {
-          res.push(this.conceptLine(key, inv));
-        } else {
-          res.push(this.finishedLine(key, inv));
+    // billingdb/rootdev/2017/Q1/sales-invoices-paid/
+    console.log("invoices=", this.props.items);
+    if (this.props.items) {
+      for (let dir in this.props.items) {
+        if (! this.props.items.hasOwnProperty(dir)) {
+          continue;
         }
-      });
-    } else {
+        let bucket = dir.split("/")[3];
+
+        this.props.items[dir].forEach((inv) => {
+          let key: string = inv.Meta.Conceptid;
+          if (this.props.bucket === "invoices") {
+            res.push(this.conceptLine(key, inv, bucket));
+          } else {
+            res.push(this.finishedLine(key, inv, bucket));
+          }
+        });
+      }
+    }
+
+    if (res.length === 0) {
       res.push(<tr key="empty"><td colSpan={5}>No invoices yet :)</td></tr>);
     }
 
     var headerButtons = <div/>;
-    if (this.props.bucket === "invoices") {
+    if (this.props.bucket === "concepts") {
       headerButtons = <div>
-        <a href={"#invoice-add/"+this.props.bucket} className="btn btn-default btn-hover-primary showhide">
+        <a href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/add"} className="btn btn-default btn-hover-primary showhide">
           <i className="fa fa-plus"></i> New
         </a>
-        <a href="#" onClick={this.toggleUpload.bind(this)} className="btn btn-default btn-hover-primary showhide">
+      </div>;
+    }
+    if (this.props.bucket === "sales-invoices-unpaid") {
+      headerButtons = <div><a href="#" onClick={this.toggleUpload.bind(this)} className="btn btn-default btn-hover-primary showhide">
           <i className="fa fa-upload"></i> Bankbalance
         </a>
       </div>;
@@ -143,7 +137,10 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     if (this.state.isBalance) {
       var url = `/api/v1/invoice/${this.props.bucket}/balance`;
       balanceUpload = <div>
-        <form method="post" encType="multipart/form-data" action={url}><input name="file" type="file"/><button type="submit">Save</button></form>
+        <form className="form-inline" method="post" encType="multipart/form-data" action={url}>
+          <input className="form-control" name="file" type="file"/>
+          <button className="btn btn-default btn-hover-primary" type="submit"><i className="fa fa-arrow-up"></i> Upload</button>
+        </form>
       </div>;
     }
 

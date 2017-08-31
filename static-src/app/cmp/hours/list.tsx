@@ -12,8 +12,8 @@ interface IHourState {
 }
 
 export default class Hours extends React.Component<{}, IHourState> {
-  constructor() {
-    super();
+  constructor(p, s) {
+    super(p, s);
     this.state = {
       "pagination": {
         "from": 0,
@@ -28,7 +28,9 @@ export default class Hours extends React.Component<{}, IHourState> {
   }
 
   private ajax() {
-    Axios.get('/api/v1/hours', {params: this.state.pagination})
+    let entity = this.props.entity;
+    let year = this.props.year;
+    Axios.get('/api/v1/hours/'+entity+'/'+year, {params: this.state.pagination})
     .then(res => {
       this.setState({hours: res.data});
     })
@@ -59,7 +61,7 @@ export default class Hours extends React.Component<{}, IHourState> {
         res.push(<tr key={elem}>
           <td>{elem}</td>
           <td>
-            <a className="btn btn-default btn-hover-primary" href={"#hour-add/"+elem}><i className="fa fa-pencil"></i></a>
+            <a className="btn btn-default btn-hover-primary" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+elem}><i className="fa fa-pencil"></i></a>
             <a className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={elem} onClick={that.delete.bind(that)}><i className="fa fa-trash faa-flash"></i></a>
           </td></tr>);
       });

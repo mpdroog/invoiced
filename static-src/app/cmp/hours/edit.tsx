@@ -1,11 +1,9 @@
 import * as React from "react";
-import {IInjectedProps} from "react-router";
 import Axios from "axios";
 import * as Big from "big.js";
 import * as Moment from "moment";
-import DatePicker from "react-datepicker";
-
 import Import from "./edit-import";
+import Datepicker from "./datepicker";
 
 interface IHourLineState {
   Hours: number
@@ -22,8 +20,8 @@ interface IHourState {
   Lines?: IHourLineState[]
   Name?: string
 }
-export default class HourEdit extends React.Component<IInjectedProps, IHourState> {
-  constructor(props: IInjectedProps) {
+export default class HourEdit extends React.Component<{}, IHourState> {
+  constructor(props) {
     super(props);
     this.state = {
       start: "",
@@ -37,10 +35,10 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
   }
 
   componentDidMount() {
-    console.log("componentDidMount", this.props.match.params["id"]);
-    if (this.props.match.params["id"]) {
-      console.log("Load hour name=" + this.props.match.params["id"]);
-      this.ajax(this.props.match.params["id"]);
+    console.log("componentDidMount", this.props);
+    if (this.props.id) {
+      console.log("Load hour name=" + this.props.id);
+      this.ajax(this.props.id);
     }
   }
 
@@ -139,7 +137,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
     Axios.post('/api/v1/hour', this.state)
     .then(res => {
       console.log(res.data);
-      this.props.match.params["id"] = res.data.Name;
+      this.props.id = res.data.Name;
       history.replaceState({}, "", `#/hour-add/${res.data.Name}`);
     })
     .catch(err => {
@@ -179,12 +177,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
           </div>
           <div className="panel-body">
             <div className="col-sm-2">
-              <DatePicker
-                id="hour-day"
-                className="form-control"
-                dateFormat="YYYY-MM-DD"
-                selected={that.state.day}
-                onChange={this.updateDate.bind(this)} />
+              <input type="date" id="hour-day" className="form-control" value={this.state.day.format("YYYY-MM-DD")} onChange={this.update.bind(this)}/>
             </div>
             <div className="col-sm-2">
               <input type="text" id="hour-start" className="form-control" placeholder="HH:mm" value={this.state.start} onChange={this.update.bind(this)}/>
