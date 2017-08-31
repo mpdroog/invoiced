@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/itshosted/webutils/encrypt"
-	//"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/config"
 	"log"
 	"net/http"
 	"time"
@@ -36,8 +36,18 @@ func HTTPAuth(next http.Handler) http.Handler {
 		if cookie != nil && len(cookie.Value) > 0 {
 			if e := encrypt.DecryptBase64("aes", entities.IV, cookie.Value, &sess); e != nil {
 				log.Printf("HTTPAuth " + e.Error())
-				w.WriteHeader(500)
-				w.Write([]byte("Failed reading cookie"))
+				// TODO: Somewhere general with login setcookie...
+				http.SetCookie(w, &http.Cookie{
+					Name: "sess",
+					Value: "",
+					Expires: time.Now().Add(-1 * time.Hour),
+					HttpOnly: true,
+					Domain: config.HTTPListen,
+					Secure: config.HTTPSOnly,
+				})
+
+				w.WriteHeader(403)
+				w.Write([]byte("Invalid auth creds"))
 				return
 			}
 		}

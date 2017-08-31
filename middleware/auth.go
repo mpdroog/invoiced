@@ -31,7 +31,7 @@ type Entity struct {
 	VAT string
 	IBAN string
 	BIC string
-	Salt string
+	Salt string `json:"-"`
 }
 type User struct {
 	Email string
@@ -81,8 +81,29 @@ func Login(email, pass string) (string, error) {
 	return "", nil
 }
 
+// Resolve user companies by sess
+func Companies(sessCipher string) (map[string]Entity, error) {
+	var sess Sess
+	if e := encrypt.DecryptBase64("aes", entities.IV, sessCipher, &sess); e != nil {
+		return nil, e
+	}
+
+	out := make(map[string]Entity)
+	for _, user := range entities.User {
+		if user.Email == sess.Email {
+			// Found user
+			for _, entity := range user.Company {
+				// TODO: not set exception?
+				out[entity] = entities.Company[entity]
+			}
+			return out, nil
+		}
+	}
+	return nil, nil
+}
+
 // Check if user is allowed to open this path
-func companyAllowed(company, email string) (bool, error) {
+func CompanyAllowed(company, email string) (bool, error) {
 	for _, user := range entities.User {
 		// Found the user
 		for _, name := range user.Company {
