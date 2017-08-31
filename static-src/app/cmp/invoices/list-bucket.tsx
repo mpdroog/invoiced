@@ -87,15 +87,34 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     </tr>;
   }
 
-  private toggleUpload(e) {
+  private openUpload(e) {
     e.preventDefault();
-    this.setState({isBalance: !this.state.isBalance});
+    document.getElementById('js-balance-field').click();
+  }
+  private uploadBalance(e) {
+    if (e.target.files.length === 0) {
+      return;
+    }
+
+    console.log("Upload");
+    let file = e.target.files[0];
+    let form = new FormData();
+    form.append('file', file, file.name);
+
+    // api/v1/invoice/:entity/:year/:bucket/:id/balance
+    Axios.post('/api/v1/invoice-balance/'+this.props.entity+'/'+this.props.year,
+      form, {headers: {'Content-Type': 'multipart/form-data' }})
+    .then(res => {
+      // TODO: Report something to UI?
+      location.reload();
+    })
+    .catch(err => {
+      handleErr(err);
+    });
   }
 
 	render() {
     let res:React.JSX.Element[] = [];
-    // billingdb/rootdev/2017/Q1/sales-invoices-paid/
-    console.log("invoices=", this.props.items);
     if (this.props.items) {
       for (let dir in this.props.items) {
         if (! this.props.items.hasOwnProperty(dir)) {
@@ -121,28 +140,25 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     var headerButtons = <div/>;
     if (this.props.bucket === "concepts") {
       headerButtons = <div>
-        <a href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/add"} className="btn btn-default btn-hover-primary showhide">
+        <a id="js-new" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/add"} className="btn btn-default btn-hover-primary showhide">
           <i className="fa fa-plus"></i> New
         </a>
       </div>;
     }
     if (this.props.bucket === "sales-invoices-unpaid") {
-      headerButtons = <div><a href="#" onClick={this.toggleUpload.bind(this)} className="btn btn-default btn-hover-primary showhide">
+      headerButtons = <div><a id="js-balance" onClick={this.openUpload.bind(this)} className="btn btn-default btn-hover-primary showhide">
           <i className="fa fa-upload"></i> Bankbalance
         </a>
       </div>;
     }
 
-    var balanceUpload = null;
-    if (this.state.isBalance) {
-      var url = `/api/v1/invoice/${this.props.bucket}/balance`;
-      balanceUpload = <div>
-        <form className="form-inline" method="post" encType="multipart/form-data" action={url}>
-          <input className="form-control" name="file" type="file"/>
-          <button className="btn btn-default btn-hover-primary" type="submit"><i className="fa fa-arrow-up"></i> Upload</button>
-        </form>
-      </div>;
-    }
+    let url = `/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/balance`;
+    let balanceUpload = <div>
+      <form className="form-inline hidden" method="post" encType="multipart/form-data" action={url}>
+        <input id="js-balance-field" accept=".xml" className="form-control" name="file" type="file" onChange={this.uploadBalance.bind(this)} />
+        <button className="btn btn-default btn-hover-primary" type="submit"><i className="fa fa-arrow-up"></i> Upload</button>
+      </form>
+    </div>;
 
 		return <div className="normalheader">
 		    <div className="hpanel hblue">

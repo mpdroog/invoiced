@@ -91,11 +91,6 @@
     };
   });
 
-  /*window.onhashchange = function() {
-    console.log("onhashchange");
-    location.reload();
-  };*/
-
   /* Catch #-URLS against dev-errs refreshing the page in React */
   window.addEventListener("click", function(e) {
     if (e.target) {
@@ -124,7 +119,7 @@
       }
 
       var key = e.code;
-      var page = location.hash.substr(2);
+      var page = location.hash.substr(1).split("/")[2];
       //var shift = e.shiftKey;
       //var ctrl = e.ctrlKey;
 
@@ -157,7 +152,11 @@
       }
       if (page === "invoices" && key === "KeyN") {
         console.log("Invoices New");
-        location.href = "#invoice-add/invoices";
+        document.getElementById("js-new").click();
+      }
+      if (page === "invoices" && key === "KeyB") {
+        console.log("Invoices Balance");
+        document.getElementById("js-balance").click();
       }
 
     }, false);
