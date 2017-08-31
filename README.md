@@ -2,13 +2,23 @@ InvoiceD
 ===========
 Simple hour registration + invoice generator.
 
-What makes us better than the competition:
+What makes us better than the competition (non-technical):
 
-* we save all userdata as TOML-files onto the filesystem (human readable)
-* we commit changes to a local Git-repository (free revision control of precious data)
+* Audit trail, every change is recorded and easily revertable!
+* Always available, no internet? no problem!! The whole system runs from your own PC (if you want)
+* Searching for an old invoice? We got a powersearch, so finding it should be a breeze!
+* We're FAST, instantly loading pages :D
+* Completely free! (But if you pay 1EUR/month we'll give you backups)
+
+What makes us better than the competition (technical):
+
+* we save all userdata as TOML-files onto the filesystem (human readable and possibly readable after corruption)
+* we commit changes to a local Git-repository (free version control of precious data with an audit-trail of changes)
+* we push/pull with remote GIT nodes on change (distributed accounting/easy backups)
 * we index everything (Bleve) so we got a power search!
 * we're good looking
-* we're opensource
+* we're FAST (average page loading time of 400ms!)
+* we're opensource (sourcecode is free, adjustable and we like contributions back)
 
 Technical background
 ===========
