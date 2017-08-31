@@ -83,25 +83,28 @@ func Init(path string) error {
 	}
 	opts := &git.PullOptions{RemoteName: "github", Auth: http.NewBasicAuth("mpdroog", "2dqqR24m")}
 	if e := opts.Validate(); e != nil {
-		log.Printf("[Git] Push validate=%s", e.Error())
-	}
-
-	if e := tree.Pull(opts); e != nil {
-		// ignore empty repo warnings
-		if e.Error() != "remote repository is empty" && e.Error() != "already up-to-date" {
-			return e
-		}
+		return e
 	}
 
 	// Async git push..
 	go func() {
+		// initial pull
+		if e := tree.Pull(opts); e != nil {
+			// ignore empty repo warnings
+			if e.Error() != "remote repository is empty" && e.Error() != "already up-to-date" {
+				log.Printf("[Git] Pull err=%s", e.Error())
+			}
+		}
+
 		// err = small fn to delay retry of push
 		err := func() {
 			time.Sleep(time.Minute * 3)
 			canPush <- struct{}{}
 		}
 		for {
-			log.Printf("Git awaiting push")
+			if config.Verbose {
+				log.Printf("Git awaiting push")
+			}
 			<- canPush
 			repos, e := Repo.Remotes()
 			if e != nil {
