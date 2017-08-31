@@ -27,5 +27,11 @@ module.exports = {
         require('csswring')()
       ]
     }
+  },
+  npm: {
+    aliases: {
+      'react': 'react-lite',
+      'react-dom': 'react-lite'
+    }
   }
 };
