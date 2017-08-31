@@ -124,7 +124,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
 
         this.props.items[dir].forEach((inv) => {
           let key: string = inv.Meta.Conceptid;
-          if (this.props.bucket === "invoices") {
+          if (this.props.bucket === "concepts" || this.props.bucket === "sales-invoices-unpaid") {
             res.push(this.conceptLine(key, inv, bucket));
           } else {
             res.push(this.finishedLine(key, inv, bucket));

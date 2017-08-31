@@ -1515,7 +1515,7 @@ body {
 #header {
   background-color: #fff;
   display: block;
-  height: 62px;
+  height: 56px;
   margin: 0;
   padding: 0;
   position: relative;
@@ -2706,15 +2706,12 @@ h6 {
 }
 .normalheader {
   min-width: 320px;
-  padding: 40px 40px 0px 40px;
+  padding: 40px 0px 0px 40px;
 }
 @media (max-width: 768px) {
   .normalheader {
     padding: 15px 15px 0px 15px;
   }
-}
-.normalheader h2 {
-  margin-top: 0px;
 }
 .input-xs {
   height: 20px;
@@ -3539,7 +3536,7 @@ ul.h-list li:hover a {
   height: 55px;
 }
 .landing-page header {
-  background: url('../images/landing/header.jpg') 50% 0 no-repeat;
+  background: url('header.jpg') 50% 0 no-repeat;
   height: 480px;
   padding-top: 50px;
   margin-bottom: 30px;

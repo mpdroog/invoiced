@@ -74,7 +74,7 @@ export default class Hours extends React.Component<{}, IHourState> {
           <div className="panel-heading hbuilt">
             <div className="panel-tools">
               <div className="btn-group nm7">
-                <a href="#hour-add" className="btn btn-default btn-hover-primary showhide"><i className="fa fa-plus"></i> New</a>
+                <a href={"#"+that.props.entity+"/"+that.props.year+"/hours/add"} id="js-new" className="btn btn-default btn-hover-primary showhide"><i className="fa fa-plus"></i> New</a>
               </div>
             </div>
             Hour registration
