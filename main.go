@@ -58,6 +58,7 @@ func Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	// TODO: Somewhere general to share with logout?
 	http.SetCookie(w, &http.Cookie{
 		Name: "sess",
 		Value: sess,
@@ -119,25 +120,25 @@ func main() {
 	router := httprouter.New()
 	router.GET("/", Index)
 	router.POST("/", Login)
+
 	router.GET("/api/v1/entities", entities.List)
+	router.GET("/api/v1/metrics/:entity/:year", metrics.Dashboard)
 
-	router.GET("/api/v1/metrics", metrics.Dashboard)
-
-	router.GET("/api/v1/invoices", invoice.List)
-	router.POST("/api/v1/invoice", invoice.Save)
-	router.GET("/api/v1/invoice/:id", invoice.Load)
-	router.POST("/api/v1/invoice/:id/finalize", invoice.Finalize)
-	router.POST("/api/v1/invoice/:id/reset", invoice.Reset)
-	router.GET("/api/v1/invoice/:id/pdf", invoice.Pdf)
+	router.GET("/api/v1/invoices/:entity/:year", invoice.List)
+	router.POST("/api/v1/invoice/:entity/:year", invoice.Save)
+	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id", invoice.Load)
+	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/finalize", invoice.Finalize)
+	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/reset", invoice.Reset)
+	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/pdf", invoice.Pdf)
 	//router.GET("/api/v1/invoice/:id/credit", invoice.Credit)
-	router.POST("/api/v1/invoice/:id/paid", invoice.Paid)
-	router.POST("/api/v1/invoice/:id/balance", invoice.Balance)
-	router.DELETE("/api/v1/invoice/:id", invoice.Delete)
+	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/paid", invoice.Paid)
+	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/balance", invoice.Balance)
+	router.DELETE("/api/v1/invoice/:entity/:year/:bucket/:id", invoice.Delete)
 
-	router.GET("/api/v1/hours", hour.List)
-	router.POST("/api/v1/hour", hour.Save)
-	router.GET("/api/v1/hour/:id", hour.Load)
-	router.DELETE("/api/v1/hour/:id", hour.Delete)
+	router.GET("/api/v1/hours/:entity/:year", hour.List)
+	router.POST("/api/v1/hour/:entity/:year/:type", hour.Save)
+	router.GET("/api/v1/hour/:entity/:year/:type/:id", hour.Load)
+	router.DELETE("/api/v1/hour/:entity/:year/:type/:id", hour.Delete)
 
 	router.ServeFiles("/static/*filepath", http.Dir(config.CurDir+"/static"))
 

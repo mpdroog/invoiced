@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"time"
 	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/config"
+	"strings"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -29,15 +31,16 @@ func randStringBytesRmndr(n int) string {
 }
 
 func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := ps.ByName("id")
+	name := strings.ToLower(ps.ByName("id"))
 	if name == "" {
 		http.Error(w, "Please supply a name to delete", 400)
 		return
 	}
 	// TODO: read from cookie?
-	entity := "rootdev"
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
 
-	if e := db.Remove(fmt.Sprintf("%s/concepts/sales-invoices/%s.toml", entity, name)); e != nil {
+	if e := db.Remove(fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name)); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Delete fail", http.StatusInternalServerError)
 		return
@@ -53,18 +56,20 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 // Lock invoice for changes and set invoiceid
 func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := ps.ByName("id")
+	name := strings.ToLower(ps.ByName("id"))
 	if name == "" {
 		http.Error(w, "Please supply a name to finalize", 400)
 		return
 	}
 	// TODO: read from cookie?
-	entity := "rootdev"
-	year := "2017"
-	log.Printf("invoice.Finalize with conceptid=%s", name)
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
+	if config.Verbose {
+		log.Printf("invoice.Finalize with conceptid=%s", name)
+	}
 
 	u := new(Invoice)
-	if e := db.Open(fmt.Sprintf("%s/concepts/sales-invoices/%s.toml", entity, name), u); e != nil {
+	if e := db.Open(fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name), u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Finalize failed loading file from disk"), 400)
 		return
@@ -84,20 +89,27 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}*/
 
 		u.Meta.Invoiceid = createInvoiceId(time.Now(), idx)
-		log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
+		if config.Verbose {
+			log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
+		}
 	}
 	u.Meta.Status = "FINAL"
 
 	// TODO: Uniqueness check?
 
-	now := time.Now()
-	if e := db.Save(fmt.Sprintf("%s/%d/Q%d/sales-invoices-unpaid/%s.toml", entity, year, yearQuarter(now), u.Meta.Invoiceid), u); e != nil {
+	now, e := time.Parse("2006-01-02", u.Meta.Issuedate)
+	if e != nil {
+		log.Printf(e.Error())
+		http.Error(w, fmt.Sprintf("invoice.Finalize failed parsing Issuedate"), 400)
+		return
+	}
+	if e := db.Save(fmt.Sprintf("%s/%s/Q%d/sales-invoices-unpaid/%s.toml", entity, year, yearQuarter(now), name), u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Finalize failed writing to disk"), 400)
 		return
 	}
 
-	if e := db.Remove(fmt.Sprintf("%s/concepts/sales-invoices/%s.toml", entity, name)); e != nil {
+	if e := db.Remove(fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name)); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Finalize fail", http.StatusInternalServerError)
 		return
@@ -115,31 +127,34 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := ps.ByName("id")
+	name := strings.ToLower(ps.ByName("id"))
 	bucket := ps.ByName("bucket") // 2017Q3
-	entity := "rootdev"
-	log.Printf("invoice.Reset with conceptid=%s", name)
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
+	if config.Verbose {
+		log.Printf("invoice.Reset with conceptid=%s", name)
+	}
 
 	u := new(Invoice)
-	if e := db.Open(fmt.Sprintf("%s/%s/sales-invoices-unpaid/%s.toml", entity, bucket, name), u); e != nil {
+	if e := db.Open(fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name), u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Reset failed loading file from disk"), 400)
 		return
 	}
 	u.Meta.Status = "CONCEPT"
-	if e := db.Remove(fmt.Sprintf("%s/%s/sales-invoices-unpaid/%s.toml", entity, bucket, name)); e != nil {
+	if e := db.Save(fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, u.Meta.Conceptid), u); e != nil {
 		log.Printf(e.Error())
-		http.Error(w, "invoice.Finalize fail", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("invoice.Reset failed writing to disk"), 400)
 		return
 	}
-	if e := db.Save(fmt.Sprintf("%s/concepts/sales-invoices/%s.toml", entity, u.Meta.Conceptid), u); e != nil {
+	if e := db.Remove(fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)); e != nil {
 		log.Printf(e.Error())
-		http.Error(w, fmt.Sprintf("invoice.Finalize failed writing to disk"), 400)
+		http.Error(w, "invoice.Reset fail", http.StatusInternalServerError)
 		return
 	}
 	if e := db.Commit(); e != nil {
 		log.Printf(e.Error())
-		http.Error(w, "invoice.Finalize fail", http.StatusInternalServerError)
+		http.Error(w, "invoice.Reset fail", http.StatusInternalServerError)
 		return
 	}
 
@@ -151,10 +166,10 @@ func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 // Mark invoice as paid
 func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := ps.ByName("id")
+	name := strings.ToLower(ps.ByName("id"))
 	bucket := ps.ByName("bucket") // 2017Q3
-	entity := "rootdev"
-	year := "2017"
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
 	log.Printf("invoice.Paid with conceptid=%s", name)
 
 	u := new(Invoice)
@@ -186,9 +201,11 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 }
 
-func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// IF POST create InvoiceID = 2016Q3-0001
-	entity := "rootdev"
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
+
 	if r.Body == nil {
 		http.Error(w, "Please send a request body", 400)
 		return
@@ -212,7 +229,7 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 	u.Meta.Status = "CONCEPT"
 
-	if e := db.Save(fmt.Sprintf("%s/concepts/sales-invoices/%s.toml", entity, u.Meta.Conceptid), u); e != nil {
+	if e := db.Save(fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, u.Meta.Conceptid), u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Save failed writing to disk"), 400)
 		return
@@ -225,23 +242,23 @@ func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	args := r.URL.Query()
-	bucket := args.Get("bucket")
-	/*if bucket == "" {
-		bucket = "invoices"
-	}*/
+	//args := r.URL.Query()
 	name := ps.ByName("id")
-	entity := "rootdev"
-	year := "2017"
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
+	bucket := ps.ByName("bucket")
 	log.Printf("invoice.Load with conceptid=%s", name)
 
-	path := fmt.Sprintf("%s/concepts/sales-invoices/%s.toml", entity, name)
-	if bucket != "concepts" {
-		path = fmt.Sprintf("%s/%s/%s/sales-invoiced-paid?/%s.toml", entity, year, bucket, name)
+	paths := []string{
+		fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name),
+		fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name),
+	}
+	if (bucket == "concepts") {
+		paths = []string{fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name)}
 	}
 
 	u := new(Invoice)
-	if e := db.Open(path, u); e != nil {
+	if e := db.OpenFirst(paths, u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Reset failed loading file from disk"), 400)
 		return
@@ -253,18 +270,16 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 }
 
-func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	entity := "rootdev"
-	year := "2017"
+func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
 	args := r.URL.Query()
-	bucket := args.Get("bucket")
+	//bucket := args.Get("bucket")
 
-	paths := []string{fmt.Sprintf("%s/concepts/sales-invoices", entity)}
-	if bucket != "concepts" {
-		paths = []string{
-			//fmt.Sprintf("%s/%s/{all}/sales-invoices-paid", entity, year),
-			fmt.Sprintf("%s/%s/{all}/%s", entity, year, bucket),
-		}
+	paths := []string{
+		fmt.Sprintf("%s/%s/concepts/sales-invoices", entity, year),
+		fmt.Sprintf("%s/%s/{all}/sales-invoices-paid", entity, year),
+		fmt.Sprintf("%s/%s/{all}/sales-invoices-unpaid", entity, year),
 	}
 
 	from, e := strconv.Atoi(args.Get("from"))
@@ -280,10 +295,13 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	}
 
-	var list []*Invoice
+	list := make(map[string][]*Invoice)
 	mem := new(Invoice)
-	p, e := db.List(paths, db.Pagination{From:from, Count:count}, &mem, func(filename, filepath string) error {
-		list = append(list, mem)
+	p, e := db.List(paths, db.Pagination{From:from, Count:count}, &mem, func(filename, filepath, path string) error {
+		/*if _, exist := list[filepath]; exist {
+			return fmt.Errorf("Duplicate filename " + filename)
+		}*/
+		list[path] = append(list[path], mem)
 		mem = new(Invoice)
 		return nil
 	})
@@ -292,7 +310,9 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		http.Error(w, fmt.Sprintf("invoice.List failed scanning disk"), 400)
 		return	
 	}
-	log.Printf("invoice.List count=%d", len(list))
+	if config.Verbose {
+		log.Printf("invoice.List count=%d", len(list))
+	}
 
 	w.Header().Set("X-Pagination-Total", string(p.Total))
 	w.Header().Set("Content-Type", "application/json")
@@ -303,18 +323,24 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := ps.ByName("id")
-	args := r.URL.Query()
-	bucket := args.Get("bucket")
-	entity := ""
-	year := "2017"
+	name := strings.ToLower(ps.ByName("id"))
+	bucket := ps.ByName("bucket")
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
 	/*if bucket == "" {
 		bucket = "invoices"
 	}*/
-	log.Printf("invoice.Pdf with id=%s", name)
+	if config.Verbose {
+		log.Printf("invoice.Pdf with id=%s", name)
+	}
+
+	paths := []string{
+		fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name),
+		fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name),
+	}
 
 	u := new(Invoice)
-	if e := db.Open(fmt.Sprintf("%s/%s/%s/%s.toml", entity, year, bucket, name), u); e != nil {
+	if e := db.OpenFirst(paths, u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Pdf failed loading file from disk"), 400)
 		return
