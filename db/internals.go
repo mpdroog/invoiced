@@ -8,6 +8,8 @@ import (
 )
 
 // Convert /path/{all}/sub into [/path/a/sub, /path/b/sub]
+// Not using https://golang.org/pkg/path/filepath/#Glob so all
+// errors are reported
 func parseWildcards(paths []string) ([]string, error) {
 	var out []string
 	for _, path := range paths {
@@ -39,7 +41,7 @@ func parseWildcards(paths []string) ([]string, error) {
 			return nil, e
 		}
 		for _, found := range founds {
-			abs := pre + found.Name() + "/" + post
+			abs := pre + found.Name() + post
 			if f, e := os.Stat(abs); e == nil && f.IsDir() {
 				// dir exists
 				out = append(out, abs)

@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 )
 
-const MAX_FILES = 100
+const MAX_FILES = 1000
 
 type Pagination struct {
 	From int // TODO: possible?
@@ -23,11 +23,11 @@ type PaginationHeader struct {
 	Total int
 }
 
-func List(path []string, p Pagination, mem interface{}, f func(string, string) error) (PaginationHeader, error) {
+func List(path []string, p Pagination, mem interface{}, f func(string, string, string) error) (PaginationHeader, error) {
 	var page PaginationHeader
 
 	if p.Count > MAX_FILES {
-		return page, fmt.Errorf("Pagination.Count exceeds MAX_FILES(%s)", MAX_FILES)
+		return page, fmt.Errorf("Pagination.Count exceeds MAX_FILES(%d)", MAX_FILES)
 	}
 
 	var pfPath []string
@@ -42,7 +42,6 @@ func List(path []string, p Pagination, mem interface{}, f func(string, string) e
 	if e != nil {
 		return page, e
 	}
-	fmt.Printf("PS: %s\n", paths)
 
 	i := 0
 	for _, path := range paths {
@@ -52,26 +51,28 @@ func List(path []string, p Pagination, mem interface{}, f func(string, string) e
 		if e != nil {
 			return page, e
 		}
-		fmt.Printf("X %s -> %s\n", path, files)
 
 		abs := path
 		for _, file := range files {
 			if file.IsDir() {
-				log.Printf("Ignore %s\n", abs + file.Name())
+				if config.Verbose {
+					log.Printf("Ignore %s\n", abs + file.Name())
+				}
 				continue
 			}
 			if config.Ignore(file.Name()) {
-				log.Printf("Ignore %s\n", abs + file.Name())
+				if config.Verbose {
+					log.Printf("Ignore %s\n", abs + file.Name())
+				}
 				continue
 			}
 
 			// Wrap in anonymous fn to keep open fds low
 			e := func() error {
-				log.Printf("Read %s\n", abs + file.Name())
-				if abs + file.Name() == "billingdb/rootdev/2017/Q1//sales-invoices-paid/concept-mkhtlt.toml" {
-					// HACK
-					return nil
+				if config.Verbose {
+					log.Printf("Read %s\n", abs + file.Name())
 				}
+
 				file, e := os.Open(abs + file.Name())
 				if e != nil {
 					return e
@@ -83,7 +84,7 @@ func List(path []string, p Pagination, mem interface{}, f func(string, string) e
 					return e
 				}
 				title := filepath.Base(file.Name())
-				if e := f(title[0:strings.LastIndex(title, ".")], file.Name()); e != nil {
+				if e := f(title[0:strings.LastIndex(title, ".")], file.Name(), path); e != nil {
 					return e
 				}
 				i++

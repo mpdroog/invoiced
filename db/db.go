@@ -20,6 +20,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"time"
+	"github.com/mpdroog/invoiced/config"
 )
 
 var (
@@ -50,7 +51,9 @@ func Init(path string) error {
 	}
 
 	if _, e := os.Stat(Path+".git"); os.IsNotExist(e) {
-		log.Printf("Create git-repo")
+		if config.Verbose {
+			log.Printf("Create git-repo")
+		}
 		repo, e := git.PlainInit(path, false)
 		if e != nil {
 			return e
@@ -69,7 +72,9 @@ func Init(path string) error {
 		}
 
 	} else {
-		log.Printf("Load git-repo")
+		if config.Verbose {
+			log.Printf("Load git-repo")
+		}
 		repo, e := git.PlainOpen(path)
 		if e != nil {
 			return e
@@ -113,7 +118,9 @@ func Init(path string) error {
 				continue
 			}
 			for _, repo := range repos {
-				log.Printf("Push to %s", repo.Config().Name)
+				if config.Verbose {
+					log.Printf("Push to %s", repo.Config().Name)
+				}
 				opts := &git.PushOptions{RemoteName: repo.Config().Name, Auth: http.NewBasicAuth("mpdroog", "2dqqR24m")}
 				if e := opts.Validate(); e != nil {
 					log.Printf("[Git] Push validate=%s", e.Error())
@@ -165,6 +172,33 @@ func Open(path string, out interface{}) (error) {
 		return e
 	}
 	return nil
+}
+
+func OpenFirst(paths []string, out interface{}) (error) {
+	for _, path := range paths {
+		if !pathFilter(path) {
+			return fmt.Errorf("Path hack attempt: %s", path)
+		}
+
+		abs := Path+path
+		file, e := os.Open(abs)
+		if e != nil {
+			if os.IsNotExist(e) {
+				// try next file!
+				continue
+			}
+			return e
+		}
+		defer file.Close()
+
+		buf := bufio.NewReader(file)
+		if _, e := toml.DecodeReader(buf, out); e != nil {
+			return e
+		}
+		return nil
+	}
+
+	return fmt.Errorf("No file found")
 }
 
 func Save(file string, in interface{}) error {
