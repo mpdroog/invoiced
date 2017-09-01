@@ -68,8 +68,9 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("invoice.Finalize with conceptid=%s", name)
 	}
 
+	from := fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name)
 	u := new(Invoice)
-	if e := db.Open(fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name), u); e != nil {
+	if e := db.Open(from, u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Finalize failed loading file from disk"), 400)
 		return
@@ -103,13 +104,14 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		http.Error(w, fmt.Sprintf("invoice.Finalize failed parsing Issuedate"), 400)
 		return
 	}
-	if e := db.Save(fmt.Sprintf("%s/%s/Q%d/sales-invoices-unpaid/%s.toml", entity, year, yearQuarter(now), name), u); e != nil {
+	to := fmt.Sprintf("%s/%s/Q%d/sales-invoices-unpaid/%s.toml", entity, year, yearQuarter(now), name)
+	if e := db.Save(to, u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Finalize failed writing to disk"), 400)
 		return
 	}
 
-	if e := db.Remove(fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name)); e != nil {
+	if e := db.Remove(from); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Finalize fail", http.StatusInternalServerError)
 		return
@@ -135,19 +137,21 @@ func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("invoice.Reset with conceptid=%s", name)
 	}
 
+	from := fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)
 	u := new(Invoice)
-	if e := db.Open(fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name), u); e != nil {
+	if e := db.Open(from, u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Reset failed loading file from disk"), 400)
 		return
 	}
+	to := fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, u.Meta.Conceptid)
 	u.Meta.Status = "CONCEPT"
-	if e := db.Save(fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, u.Meta.Conceptid), u); e != nil {
+	if e := db.Save(to, u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Reset failed writing to disk"), 400)
 		return
 	}
-	if e := db.Remove(fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)); e != nil {
+	if e := db.Remove(from); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Reset fail", http.StatusInternalServerError)
 		return
@@ -170,23 +174,27 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	bucket := ps.ByName("bucket") // 2017Q3
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
-	log.Printf("invoice.Paid with conceptid=%s", name)
+	if config.Verbose {
+		log.Printf("invoice.Paid with conceptid=%s", name)
+	}
 
+	from := fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)
+	to := fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name)
 	u := new(Invoice)
-	if e := db.Open(fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name), u); e != nil {
+	if e := db.Open(from, u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Paid failed loading file from disk"), 400)
 		return
 	}
 	u.Meta.Paydate = time.Now().Format("2006-01-02")
-	if e := db.Remove(fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)); e != nil {
-		log.Printf(e.Error())
-		http.Error(w, "invoice.Paid fail", http.StatusInternalServerError)
-		return
-	}
-	if e := db.Save(fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name), u); e != nil {
+	if e := db.Save(to, u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Paid failed writing to disk"), 400)
+		return
+	}
+	if e := db.Remove(from); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Paid fail", http.StatusInternalServerError)
 		return
 	}
 	if e := db.Commit(); e != nil {

@@ -92,9 +92,11 @@ func balanceSetPaid(entity, year, name, payDate, amount string) (bool, error) {
 	b := strings.Index(name, "Q")
 	e := strings.Index(name, "-")
 	bucket := name[b+1:e]
+	from := fmt.Sprintf("%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)
+	to := fmt.Sprintf("%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name)
 
 	u := new(Invoice)
-	if e := db.Open(fmt.Sprintf("%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name), u); e != nil {
+	if e := db.Open(from, u); e != nil {
 		return false, e
 	}
 	if u.Total.Total != amount {
@@ -103,10 +105,10 @@ func balanceSetPaid(entity, year, name, payDate, amount string) (bool, error) {
 	}
 	u.Meta.Paydate = payDate
 
-	if e := db.Remove(fmt.Sprintf("%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)); e != nil {
+	if e := db.Save(to, u); e != nil {
 		return false, e
 	}
-	if e := db.Save(fmt.Sprintf("%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name), u); e != nil {
+	if e := db.Remove(from); e != nil {
 		return false, e
 	}
 	if e := db.Commit(); e != nil {
