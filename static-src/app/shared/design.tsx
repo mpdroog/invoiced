@@ -5,7 +5,7 @@ function Menu ({ company, year }) {
     var s = {marginRight: "15px", float: "left"};
     return (<div id="header">
         <div id="logo" className="light-version">
-            <a href="/"><img src={logo} className="m-b" alt="logo"/></a>
+            <a href="/" id="js-entities"><img src={logo} className="m-b" alt="logo"/></a>
         </div>
         <nav role="navigation">
             <div style={s}>&nbsp;</div>
