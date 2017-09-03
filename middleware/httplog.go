@@ -53,10 +53,27 @@ func HTTPAuth(next http.Handler) http.Handler {
 		}
 
 		requireAuth := strings.HasPrefix(r.URL.Path, "/api/v1/")
-		if sess.Email == "" && requireAuth {
-			w.WriteHeader(401)
-			w.Write([]byte("Auth missing"))
-			return
+		if requireAuth {
+			if sess.Email == "" {
+				w.WriteHeader(401)
+				w.Write([]byte("Auth missing"))
+				return
+			}
+			// check if allowed to open URL
+			segments := strings.Split(r.URL.Path, "/")
+			if len(segments) >= 5 {
+				ok, err := CompanyAllowed(segments[4], sess.Email)
+				if err != nil {
+					w.WriteHeader(500)
+					w.Write([]byte("Permission check fail"))
+					return
+				}
+				if !ok {
+					w.WriteHeader(403)
+					w.Write([]byte("Permission denied: You cannot view company " + segments[4]))
+					return
+				}
+			}
 		}
 		// TODO: expiry?
 
