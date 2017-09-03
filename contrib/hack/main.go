@@ -18,7 +18,9 @@ import (
 
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
+	revfs "github.com/mpdroog/invoiced/db"
 	"io/ioutil"
+    "path/filepath"
 )
 
 func round(num float64) int {
@@ -55,8 +57,13 @@ func main() {
 		}
 	}
 
-	if e := os.MkdirAll("./db/rootdev/concepts/sales-invoices", os.ModePerm); e != nil {
-		panic(e)
+	for _, year := range years {
+		if e := os.MkdirAll("./db/rootdev/" + year + "/concepts/sales-invoices", os.ModePerm); e != nil {
+			panic(e)
+		}
+		if e := os.MkdirAll("./db/rootdev/" + year + "/concepts/hours", os.ModePerm); e != nil {
+			panic(e)
+		}
 	}
 
 	// create hours
@@ -119,7 +126,7 @@ func main() {
 				panic(e)
 			}
 
-			path := "./db/rootdev/concepts/sales-invoices/" + name + ".toml"
+			path := "./db/rootdev/2017/concepts/sales-invoices/" + name + ".toml"
 			if u.Meta.Issuedate != "" {
 				day, e := time.Parse("2006-01-02", u.Meta.Issuedate) // YYYY-mm-dd
 				if e != nil {
@@ -164,7 +171,7 @@ func main() {
 				panic(e)
 			}
 
-			path := "./db/rootdev/concepts/sales-invoices/" + name + ".toml"
+			path := "./db/rootdev/2017/concepts/sales-invoices/" + name + ".toml"
 			if u.Meta.Issuedate == "" {
 				switch u.Meta.Invoiceid {
 				case "2016Q2-0001":
@@ -220,10 +227,10 @@ Version=1
 
 [company.rootdev]
 Name="RootDev"
-COC=""
-VAT=""
-IBAN=""
-BIC=""
+COC="65898621"
+VAT="NL067931959B01"
+IBAN="NL17 RABO 0310 0295 97"
+BIC="RABONL2U"
 Salt="Ab/tViXI1AvpKxaYvuJ5VphRYCb/gTqH"
 
 [[user]]
@@ -235,6 +242,36 @@ Address1="Dorpsstraat 236a"
 Address2="1713HP Obdam"
 `)
 	if e := ioutil.WriteFile("./db/entities.toml", d, 0755); e != nil {
+		panic(e)
+	}
+
+	// Now revision it all
+	if e := revfs.Init("db"); e != nil {
+		panic(e)
+	}
+	Repo := revfs.Repo
+
+	tree, e := Repo.Worktree()
+	if e != nil {
+		panic(e)
+	}
+	e = filepath.Walk("db", func (path string, f os.FileInfo, err error) error {
+		fmt.Printf("Read %s\n", path)
+		if strings.HasPrefix(path, "db/.git/") {
+			return nil
+		}
+		if f.IsDir() {
+			return nil
+		}
+
+		fmt.Printf("Add %s\n", path[len("db/"):])
+		_, e := tree.Add(path[len("db/"):])
+		return e
+	})
+	if e != nil {
+		panic(e)
+	}
+	if e := revfs.Commit(); e != nil {
 		panic(e)
 	}
 }
