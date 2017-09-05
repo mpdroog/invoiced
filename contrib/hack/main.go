@@ -21,6 +21,12 @@ import (
 	revfs "github.com/mpdroog/invoiced/db"
 	"io/ioutil"
     "path/filepath"
+
+	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
+
+	//gitconfig "gopkg.in/src-d/go-git.v4/config"
+
 )
 
 func round(num float64) int {
@@ -271,7 +277,11 @@ Address2="1713HP Obdam"
 	if e != nil {
 		panic(e)
 	}
-	if e := revfs.Commit(); e != nil {
+	opts := &git.CommitOptions{Author: &object.Signature{Name: "root", Email: "support@boekhoud.cloud", When: time.Now()}}
+	if e := opts.Validate(Repo); e != nil {
+		panic(e)
+	}
+	if _, e := tree.Commit("Initial commit", opts); e != nil {
 		panic(e)
 	}
 }

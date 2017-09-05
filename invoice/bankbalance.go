@@ -53,32 +53,43 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	res := new(Reply)
-	for _, payment := range p {
-		if config.Verbose {
-			log.Printf(
-				"Parse payments(%s) %sEUR with comment=%s from=%s(%s)\n",
-				payment.Id, payment.Amount, payment.Comment, payment.Name, payment.IBAN,
-			)
-		}
+	change := db.Commit{
+		Name: r.Header.Get("X-Name"),
+		Email: r.Header.Get("X-Email"),
+		Message: fmt.Sprintf("Read CAMT053 bankbalance"),
+	}
+	e = db.Update(change, func(t *db.Txn) error {
+		for _, payment := range p {
+			if config.Verbose {
+				log.Printf(
+					"Parse payments(%s) %sEUR with comment=%s from=%s(%s)\n",
+					payment.Id, payment.Amount, payment.Comment, payment.Name, payment.IBAN,
+				)
+			}
 
-		ok, e := balanceSetPaid(entity, year, payment.Comment, payment.Date, payment.Amount)
-		if e != nil {
-			log.Printf(e.Error())
-			http.Error(w, "Failed marking payments as paid", 500)
-			return
-		}
+			ok, e := balanceSetPaid(t, entity, year, payment.Comment, payment.Date, payment.Amount)
+			if e != nil {
+				return e
+			}
 
-		if ok {
-			res.OK++
-		} else {
-			res.ERR++
-		}
+			if ok {
+				res.OK++
+			} else {
+				res.ERR++
+			}
 
-		if !ok {
-			log.Printf("Failed marking payment(%s) as paid\n", payment.Comment)
-		} else if config.Verbose {
-			log.Printf("Marked payment(%s) as paid\n", payment.Comment)
+			if !ok {
+				log.Printf("Failed marking payment(%s) as paid\n", payment.Comment)
+			} else if config.Verbose {
+				log.Printf("Marked payment(%s) as paid\n", payment.Comment)
+			}
 		}
+		return nil
+	})
+	if e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "Commit failed", 500)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -87,8 +98,8 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 }
 
-func balanceSetPaid(entity, year, name, payDate, amount string) (bool, error) {
-	// TODO: Something cleaner?
+// TODO: Something cleaner?
+func balanceSetPaid(t *db.Txn, entity, year, name, payDate, amount string) (bool, error) {
 	b := strings.Index(name, "Q")
 	e := strings.Index(name, "-")
 	bucket := name[b+1:e]
@@ -96,7 +107,7 @@ func balanceSetPaid(entity, year, name, payDate, amount string) (bool, error) {
 	to := fmt.Sprintf("%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name)
 
 	u := new(Invoice)
-	if e := db.Open(from, u); e != nil {
+	if e := t.Open(from, u); e != nil {
 		return false, e
 	}
 	if u.Total.Total != amount {
@@ -105,15 +116,11 @@ func balanceSetPaid(entity, year, name, payDate, amount string) (bool, error) {
 	}
 	u.Meta.Paydate = payDate
 
-	if e := db.Save(to, u); e != nil {
+	if e := t.Save(to, u); e != nil {
 		return false, e
 	}
-	if e := db.Remove(from); e != nil {
+	if e := t.Remove(from); e != nil {
 		return false, e
 	}
-	if e := db.Commit(); e != nil {
-		return false, e
-	}
-
 	return true, nil
 }

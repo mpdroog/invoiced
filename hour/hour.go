@@ -21,7 +21,15 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	if e := db.Remove(fmt.Sprintf("%s/concepts/hours/%s.toml", entity, name)); e != nil {
+	change := db.Commit{
+		Name: r.Header.Get("X-Name"),
+		Email: r.Header.Get("X-Email"),
+		Message: fmt.Sprintf("Delete invoice %s", name),
+	}
+	e := db.Update(change, func(t *db.Txn) error {
+		return t.Remove(fmt.Sprintf("%s/concepts/hours/%s.toml", entity, name))
+	})
+	if e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "hour.Delete fail", http.StatusInternalServerError)
 	}
@@ -48,10 +56,17 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	entity := ps.ByName("entity")
-	if e := db.Save(fmt.Sprintf("%s/concepts/hours/%s.toml", entity, u.Name), u); e != nil {
+	change := db.Commit{
+		Name: r.Header.Get("X-Name"),
+		Email: r.Header.Get("X-Email"),
+		Message: fmt.Sprintf("Save invoice %s", u.Name),
+	}
+	e := db.Update(change, func(t *db.Txn) error {
+		return t.Save(fmt.Sprintf("%s/concepts/hours/%s.toml", entity, u.Name), u)
+	})
+	if e != nil {
 		log.Printf(e.Error())
-		http.Error(w, fmt.Sprintf("hour.Save failed writing to disk"), 400)
-		return
+		http.Error(w, "hour.Delete fail", http.StatusInternalServerError)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -66,7 +81,10 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	entity := ps.ByName("entity")
 	u := new(Hour)
-	if e := db.Open(fmt.Sprintf("%s/concepts/hours/%s.toml", entity, name), u); e != nil {
+	e := db.View(func(t *db.Txn) error {
+		return t.Open(fmt.Sprintf("%s/concepts/hours/%s.toml", entity, name), u)
+	})
+	if e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("hour.Load failed loading file from disk"), 400)
 		return
@@ -87,11 +105,20 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		fmt.Sprintf("%s/%s/{all}/hours", entity, year),
 	}
 
-	var list []string
+	var (
+		list []string
+		p db.PaginationHeader
+		e error
+	)
 	mem := new(Hour)
-	p, e := db.List(dirs, db.Pagination{From:0, Count:30}, mem, func(filename, file, path string) error {
-		list = append(list, filename)
-		return nil
+
+	e = db.View(func(t *db.Txn) error {
+		pa, e := t.List(dirs, db.Pagination{From:0, Count:30}, mem, func(filename, file, path string) error {
+			list = append(list, filename)
+			return nil
+		})
+		p = pa
+		return e
 	})
 	if e != nil {
 		log.Printf(e.Error())

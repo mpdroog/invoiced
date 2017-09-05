@@ -11,16 +11,17 @@ import (
 	//"gopkg.in/src-d/go-git.v4/plumbing/transport"
 	"github.com/BurntSushi/toml"
 	//"path/filepath"
-	"path"
+	//"path"
 	"regexp"
 	"log"
 	"strings"
 	"fmt"
 	"io/ioutil"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	//"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"time"
 	"github.com/mpdroog/invoiced/config"
+	"sync"
 )
 
 var (
@@ -28,7 +29,13 @@ var (
 	Path string
 	canPush chan struct{}
 	pathRegex *regexp.Regexp
+	lock *sync.RWMutex
 )
+
+type Txn struct {
+	Write bool
+}
+type Fn func(*Txn) error
 
 // Simple path hack prevention
 func pathFilter(path string) bool {
@@ -39,6 +46,10 @@ func pathFilter(path string) bool {
 }
 
 func Init(path string) error {
+	lock = new(sync.RWMutex)
+	lock.RLock()
+	defer lock.RUnlock()
+
 	Path = path
 	if !strings.HasSuffix(Path, "/") {
 		Path += "/"
@@ -155,7 +166,7 @@ func Remotes() ([]string, error) {
 	return out, nil
 }*/
 
-func Open(path string, out interface{}) (error) {
+func (t *Txn) Open(path string, out interface{}) (error) {
 	if !pathFilter(path) {
 		return fmt.Errorf("Path hack attempt: %s", path)
 	}
@@ -174,7 +185,7 @@ func Open(path string, out interface{}) (error) {
 	return nil
 }
 
-func OpenFirst(paths []string, out interface{}) (error) {
+func (t *Txn) OpenFirst(paths []string, out interface{}) (error) {
 	for _, path := range paths {
 		if !pathFilter(path) {
 			return fmt.Errorf("Path hack attempt: %s", path)
@@ -201,88 +212,9 @@ func OpenFirst(paths []string, out interface{}) (error) {
 	return fmt.Errorf("No file found")
 }
 
-func Save(file string, in interface{}) error {
-	if !pathFilter(file) {
-		return fmt.Errorf("Path hack attempt: %s", file)
-	}
-
-	abs := Path+file
-	// ensure dir exists
-	if e := os.MkdirAll(path.Dir(abs), os.ModePerm); e != nil {
-		return e
-	}
-
-	// TODO: Flag to determine if overwrite is allowed? isNew?
-
-	// overwrite file
-	f, e := os.OpenFile(abs, os.O_RDWR|os.O_CREATE, 0755)
-	if e != nil {
-		return e
-	}
-	defer f.Close()
-
-	buf := bufio.NewWriter(f)
-	if e := toml.NewEncoder(buf).Encode(in); e != nil {
-		return e
-	}
-	if e := buf.Flush(); e != nil {
-		return e
-	}
-
-	// commit on git
-	tree, e := Repo.Worktree()
-	if e != nil {
-		return e
-	}
-	if _, e := tree.Add(file); e != nil {
-		return e
-	}
-	return nil
-}
-
-func Remove(path string) error {
-	if !pathFilter(path) {
-		return fmt.Errorf("Path hack attempt: %s", path)
-	}
-	abs := Path+path
-	if e := os.Remove(abs); e != nil {
-		return e
-	}
-
-	// commit on git
-	tree, e := Repo.Worktree()
-	if e != nil {
-		return e
-	}
-	if _, e := tree.Add(path); e != nil {
-		return e
-	}
-	return nil
-}
-
-// TODO: Use this..
-func Commit() error {
-	// TODO: Set When to something consistent?
-	opts := &git.CommitOptions{Author: &object.Signature{Name: "MP Droog", Email: "rootdev@gmail.com", When: time.Now()}}
-	if e := opts.Validate(Repo); e != nil {
-		return e
-	}
-	tree, e := Repo.Worktree()
-	if e != nil {
-		return e
-	}
-	if _, e := tree.Commit("Autocommit", opts); e != nil {
-		return e
-	}
-
-	// push
-	canPush <- struct{}{}
-	return nil
-}
-
 // Find file
 // TODO: Remove this hack..
-func Lookup(path, fileName string) (string, error) {
+func (t *Txn) Lookup(path, fileName string) (string, error) {
 	if !pathFilter(path) {
 		return "", fmt.Errorf("Path hack attempt: %s", path)
 	}
@@ -304,4 +236,12 @@ func Lookup(path, fileName string) (string, error) {
 		}
 	}
 	return out, nil
+}
+
+func View(fn Fn) error {
+	lock.Lock()
+	defer lock.Unlock()
+
+	txn := &Txn{Write: false}
+	return fn(txn)
 }

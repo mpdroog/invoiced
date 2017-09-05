@@ -126,7 +126,10 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     });
   }
 
-  private parseInput(data: IInvoiceState) {
+  private parseInput(data: IInvoiceState, newbucket) {
+    if (newbucket) {
+      this.props.bucket = newbucket;
+    }
     console.log(data);
     let url = `#${this.props.entity}/${this.props.year}/invoices/edit/${this.props.bucket}/${data.Meta.Conceptid}`;
     if (window.location.href != url) {
@@ -273,7 +276,7 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     e.preventDefault();
     Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${this.state.Meta.Conceptid}/reset`, {})
     .then(res => {
-      this.parseInput.call(this, res.data);
+      this.parseInput.call(this, res.data, res.headers["x-bucket-change"]);
     })
     .catch(err => {
       handleErr(err);
@@ -284,7 +287,7 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     e.preventDefault();
     Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${this.state.Meta.Conceptid}/finalize`, {})
     .then(res => {
-      this.parseInput.call(this, res.data);
+      this.parseInput.call(this, res.data, res.headers["x-bucket-change"]);
     })
     .catch(err => {
       handleErr(err);

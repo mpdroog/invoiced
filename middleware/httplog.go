@@ -59,6 +59,13 @@ func HTTPAuth(next http.Handler) http.Handler {
 				w.Write([]byte("Auth missing"))
 				return
 			}
+			user := UserByEmail(sess.Email)
+			if user == nil {
+				w.WriteHeader(401)
+				w.Write([]byte("No such user"))
+				return				
+			}
+
 			// check if allowed to open URL
 			segments := strings.Split(r.URL.Path, "/")
 			if len(segments) >= 5 {
@@ -74,6 +81,9 @@ func HTTPAuth(next http.Handler) http.Handler {
 					return
 				}
 			}
+
+			r.Header.Add("X-User-Email", user.Email)
+			r.Header.Add("X-User-Name", user.Name)
 		}
 		// TODO: expiry?
 

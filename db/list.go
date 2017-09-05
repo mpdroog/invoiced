@@ -23,8 +23,10 @@ type PaginationHeader struct {
 	Total int
 }
 
-func List(path []string, p Pagination, mem interface{}, f func(string, string, string) error) (PaginationHeader, error) {
+func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, string, string) error) (PaginationHeader, error) {
 	var page PaginationHeader
+	lock.Lock()
+	defer lock.Unlock()
 
 	if p.Count > MAX_FILES {
 		return page, fmt.Errorf("Pagination.Count exceeds MAX_FILES(%d)", MAX_FILES)

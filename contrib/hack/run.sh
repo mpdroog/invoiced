@@ -6,4 +6,4 @@ set -u
 rm -rf db
 go build && ./hack
 rm -rf ../../billingdb
-#mv db/ ../../billingdb
+mv db/ ../../billingdb

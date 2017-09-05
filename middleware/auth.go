@@ -45,10 +45,9 @@ type User struct {
 var entities Entities
 
 func Init() error {
-	if e := db.Open("entities.toml", &entities); e != nil {
-		return e
-	}
-	return nil	
+	return db.View(func(t *db.Txn) error {
+		return t.Open("entities.toml", &entities)
+	})
 }
 
 // Authenticate user and return sess-cookie if valid
@@ -102,8 +101,18 @@ func Companies(sessCipher string) (map[string]Entity, error) {
 	return nil, nil
 }
 
+func UserByEmail(email string) *User {
+	for _, user := range entities.User {
+		if user.Email == email {
+			return &user
+		}
+	}
+	return nil
+}
+
 // Check if user is allowed to open this path
 func CompanyAllowed(company, email string) (bool, error) {
+	// TODO: security bug here? no email check???
 	for _, user := range entities.User {
 		// Found the user
 		for _, name := range user.Company {
