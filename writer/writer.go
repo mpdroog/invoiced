@@ -12,8 +12,9 @@ import (
 
 func getType(ctypes string, accepts []string) string {
 	for _, ctype := range strings.Split(ctypes, ",") {
+		ctype = strings.ToLower(strings.TrimSpace(ctype))
 		for _, accept := range accepts {
-			if strings.ToLower(strings.TrimSpace(ctype)) == accept {
+			if ctype == accept {
 				return accept
 			}
 		}
@@ -23,6 +24,9 @@ func getType(ctypes string, accepts []string) string {
 
 func Decode(r *http.Request, d interface{}) error {
 	ctype := r.Header.Get("Content-Type")
+	if idx := strings.Index(ctype, ";"); idx > -1 {
+		ctype = ctype[:idx]
+	}
 
 	if ctype == "application/json" {
 		defer r.Body.Close()
