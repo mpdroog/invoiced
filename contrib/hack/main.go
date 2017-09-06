@@ -18,6 +18,7 @@ import (
 
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
+	"github.com/mpdroog/invoiced/utils"
 	revfs "github.com/mpdroog/invoiced/db"
 	"io/ioutil"
     "path/filepath"
@@ -95,7 +96,7 @@ func main() {
 				panic(e)
 			}
 			y := day.Year()
-			q := invoice.YearQuarter(day)
+			q := utils.YearQuarter(day)
 			path := fmt.Sprintf("./db/rootdev/%d/Q%d/hours/%s.toml", y, q, name)
 
 			f, e := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0755)
@@ -139,7 +140,7 @@ func main() {
 					panic(e)
 				}
 				y := day.Year()
-				q := invoice.YearQuarter(day)
+				q := utils.YearQuarter(day)
 				path = fmt.Sprintf("./db/rootdev/%d/Q%d/sales-invoices-unpaid/%s.toml", y, q, name)
 			}
 
@@ -205,7 +206,7 @@ func main() {
 					panic(e)
 				}
 				y := day.Year()
-				q := invoice.YearQuarter(day)
+				q := utils.YearQuarter(day)
 				path = fmt.Sprintf("./db/rootdev/%d/Q%d/sales-invoices-paid/%s.toml", y, q, name)
 			}
 
