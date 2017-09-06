@@ -1,3 +1,5 @@
+// package writer abstracts the used encoding lib to
+// send data back to the client.
 package writer
 
 import (
