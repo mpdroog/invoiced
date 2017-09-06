@@ -11,7 +11,7 @@ import (
 	"strings"
 	"io"
 	"github.com/mpdroog/invoiced/db"
-	"encoding/json"
+	"github.com/mpdroog/invoiced/writer"
 )
 
 type Reply struct {
@@ -92,8 +92,7 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if e := json.NewEncoder(w).Encode(res); e != nil {
+	if e := writer.Encode(w, r, res); e != nil {
 		log.Printf(e.Error())
 	}
 }

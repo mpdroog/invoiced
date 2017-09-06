@@ -1,7 +1,6 @@
 package invoice
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/validator.v2"
@@ -14,6 +13,7 @@ import (
 	"github.com/mpdroog/invoiced/config"
 	"strings"
 	"github.com/jung-kurt/gofpdf"
+	"github.com/mpdroog/invoiced/writer"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -57,6 +57,7 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return		
 	}
 
+	// TODO: something cleaner?
 	w.Header().Set("Content-Type", "application/json")
 	if _, e := w.Write([]byte("{'ok': true}")); e != nil {
 		log.Printf("invoice.Delete " + e.Error())
@@ -134,9 +135,8 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	w.Header().Set("X-Bucket-Change", bucketTo)
-	w.Header().Set("Content-Type", "application/json")
-	if e := json.NewEncoder(w).Encode(u); e != nil {
-		log.Printf(e.Error())
+	if e := writer.Encode(w, r, u); e != nil {
+		log.Printf("invoice.Finalize " + e.Error())
 	}
 }
 
@@ -180,9 +180,8 @@ func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	w.Header().Set("X-Bucket-Change", bucketTo)
-	w.Header().Set("Content-Type", "application/json")
-	if e := json.NewEncoder(w).Encode(u); e != nil {
-		log.Printf(e.Error())
+	if e := writer.Encode(w, r, u); e != nil {
+		log.Printf("invoice.Reset " + e.Error())
 	}
 }
 
@@ -224,9 +223,8 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if e := json.NewEncoder(w).Encode(u); e != nil {
-		log.Printf(e.Error())
+	if e := writer.Encode(w, r, u); e != nil {
+		log.Printf("invoice.Paid " + e.Error())
 	}
 }
 
@@ -240,8 +238,8 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 	u := new(Invoice)
-	if e := json.NewDecoder(r.Body).Decode(u); e != nil {
-		log.Printf(e.Error())
+	if e := writer.Decode(r, u); e != nil {
+		log.Printf("invoice.Save " + e.Error())
 		http.Error(w, "invoice.Save failed to decode input", 400)
 		return
 	}
@@ -273,9 +271,8 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	w.Header().Set("X-Bucket-Change", "concepts")
-	w.Header().Set("Content-Type", "application/json")
-	if e := json.NewEncoder(w).Encode(u); e != nil {
-		log.Printf(e.Error())
+	if e := writer.Encode(w, r, u); e != nil {
+		log.Printf("invoice.Save " + e.Error())
 	}
 }
 
@@ -305,9 +302,8 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if e := json.NewEncoder(w).Encode(u); e != nil {
-		log.Printf(e.Error())
+	if e := writer.Encode(w, r, u); e != nil {
+		log.Printf("invoice.Load " + e.Error())
 	}
 }
 
@@ -356,12 +352,8 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if config.Verbose {
 		log.Printf("invoice.List count=%d", len(list))
 	}
-
-	//w.Header().Set("X-Pagination-Total", string(p.Total))
-	w.Header().Set("Content-Type", "application/json")
-	if e := json.NewEncoder(w).Encode(list); e != nil {
-		log.Printf(e.Error())
-		return
+	if e := writer.Encode(w, r, list); e != nil {
+		log.Printf("invoice.List " + e.Error())
 	}
 }
 

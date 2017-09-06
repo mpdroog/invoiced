@@ -1,8 +1,6 @@
 package metrics
 
 import (
-	//"bytes"
-	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
@@ -14,6 +12,7 @@ import (
 	"strings"
 	"strconv"
 	"fmt"
+	"github.com/mpdroog/invoiced/writer"
 )
 
 type DashboardMetric struct {
@@ -127,9 +126,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("metrics.Dashboard count=%d", len(m))
 	}
 	//w.Header().Set("X-Pagination-Total", string(p.Total))
-	w.Header().Set("Content-Type", "application/json")
-	if e := json.NewEncoder(w).Encode(m); e != nil {
-		log.Printf(e.Error())
-		return
+	if e := writer.Encode(w, r, m); e != nil {
+		log.Printf("metrics.Dashboard " + e.Error())
 	}
 }
