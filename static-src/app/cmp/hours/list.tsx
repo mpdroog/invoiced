@@ -45,7 +45,7 @@ export default class Hours extends React.Component<{}, IHourState> {
     e.preventDefault();
     let id = DOM.eventFilter(e, "A").dataset["target"];
 
-    Axios.delete(`/api/v1/hour/${id}`)
+    Axios.delete(`/api/v1/hour/${this.props.entity}/${this.props.year}/${this.props.bucket}/${id}`)
     .then(res => {
       location.reload();
     })
@@ -58,15 +58,20 @@ export default class Hours extends React.Component<{}, IHourState> {
     let res:React.JSX.Element[] = [];
     let that = this;
     console.log("hours=",this.state.hours);
-    if (this.state.hours && this.state.hours.length > 0) {
-      this.state.hours.forEach(function(elem) {
-        res.push(<tr key={elem}>
-          <td>{elem}</td>
-          <td>
-            <a className="btn btn-default btn-hover-primary" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+elem}><i className="fa fa-pencil"></i></a>
-            <a className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={elem} onClick={that.delete.bind(that)}><i className="fa fa-trash faa-flash"></i></a>
-          </td></tr>);
-      });
+    if (this.state.hours) {
+      for (let bucket in this.state.hours) {
+        if (! this.state.hours.hasOwnProperty(bucket)) {
+          continue;
+        }
+        this.state.hours[bucket].forEach(function(elem) {
+          res.push(<tr key={bucket+elem}>
+            <td>{elem}</td>
+            <td>
+              <a className="btn btn-default btn-hover-primary" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+bucket+"/"+elem}><i className="fa fa-pencil"></i></a>
+              <a className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={elem} onClick={that.delete.bind(that)}><i className="fa fa-trash faa-flash"></i></a>
+            </td></tr>);
+        });
+      }
     } else {
       res.push(<tr key="empty"><td colSpan={4}>No hours yet :)</td></tr>);
     }

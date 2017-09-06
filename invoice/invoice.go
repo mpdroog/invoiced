@@ -14,6 +14,7 @@ import (
 	"strings"
 	"github.com/jung-kurt/gofpdf"
 	"github.com/mpdroog/invoiced/writer"
+	"github.com/mpdroog/invoiced/utils"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -106,7 +107,7 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 				return e
 			}*/
 
-			u.Meta.Invoiceid = createInvoiceId(time.Now(), idx)
+			u.Meta.Invoiceid = utils.CreateInvoiceId(time.Now(), idx)
 			if config.Verbose {
 				log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
 			}
@@ -118,7 +119,7 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if e != nil {
 			return e
 		}
-		bucketTo = fmt.Sprintf("Q%d", yearQuarter(now))
+		bucketTo = fmt.Sprintf("Q%d", utils.YearQuarter(now))
 		to := fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucketTo, name)
 		if e := t.Save(to, u); e != nil {
 			return e
@@ -336,8 +337,8 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	mem := new(Invoice)
 
 	e = db.View(func(t *db.Txn) error {
-		_, e := t.List(paths, db.Pagination{From:from, Count:count}, &mem, func(filename, filepath, path string) error {
-			list[path] = append(list[path], mem)
+		_, e := t.List(paths, db.Pagination{From:from, Count:count}, &mem, func(filename, filepath, fpath string) error {
+			list[fpath] = append(list[fpath], mem)
 			mem = new(Invoice)
 			return nil
 		})

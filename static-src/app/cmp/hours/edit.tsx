@@ -43,7 +43,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
   }
 
   private ajax(name: string) {
-    Axios.get(`/api/v1/hour/${name}`)
+    Axios.get(`/api/v1/hour/${this.props.entity}/${this.props.year}/${this.props.bucket}/${name}`)
     .then(res => {
       this.setState(res.data);
     })
@@ -134,11 +134,11 @@ export default class HourEdit extends React.Component<{}, IHourState> {
 
   private save(e: BrowserEvent) {
     e.preventDefault();
-    Axios.post('/api/v1/hour', this.state)
+    Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts`, this.state)
     .then(res => {
       console.log(res.data);
       this.props.id = res.data.Name;
-      history.replaceState({}, "", `#/hour-add/${res.data.Name}`);
+      history.replaceState({}, "", `#${this.props.entity}/${this.props.year}/hours/edit/${res.data.Name}`);
     })
     .catch(err => {
       handleErr(err);

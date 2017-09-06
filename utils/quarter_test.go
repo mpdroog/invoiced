@@ -1,4 +1,4 @@
-package invoice
+package utils
 
 import (
 	"testing"

@@ -1,4 +1,4 @@
-package invoice
+package utils
 
 import (
 	"fmt"
@@ -7,10 +7,6 @@ import (
 
 // TEMP
 func YearQuarter(now time.Time) int {
-	return yearQuarter(now)
-}
-
-func yearQuarter(now time.Time) int {
 	switch now.Month() {
 	case time.January:
 		fallthrough
@@ -42,6 +38,6 @@ func yearQuarter(now time.Time) int {
 
 // Create invoice with YYYY-QN-XXXX pattern
 // i.e. 2016-Q1-0001 (Invoice 1 in the first Quarter of 2016)
-func createInvoiceId(now time.Time, idx uint64) string {
-	return fmt.Sprintf("%dQ%d-%04d", now.Year(), yearQuarter(now), idx)
+func CreateInvoiceId(now time.Time, idx uint64) string {
+	return fmt.Sprintf("%dQ%d-%04d", now.Year(), YearQuarter(now), idx)
 }

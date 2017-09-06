@@ -136,9 +136,9 @@ func main() {
 	router.DELETE("/api/v1/invoice/:entity/:year/:bucket/:id", invoice.Delete)
 
 	router.GET("/api/v1/hours/:entity/:year", hour.List)
-	router.POST("/api/v1/hour/:entity/:year/:type", hour.Save)
-	router.GET("/api/v1/hour/:entity/:year/:type/:id", hour.Load)
-	router.DELETE("/api/v1/hour/:entity/:year/:type/:id", hour.Delete)
+	router.POST("/api/v1/hour/:entity/:year/:bucket", hour.Save)
+	router.GET("/api/v1/hour/:entity/:year/:bucket/:id", hour.Load)
+	router.DELETE("/api/v1/hour/:entity/:year/:bucket/:id", hour.Delete)
 
 	router.ServeFiles("/static/*filepath", http.Dir(config.CurDir+"/static"))
 

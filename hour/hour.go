@@ -9,6 +9,7 @@ import (
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/writer"
+	"github.com/mpdroog/invoiced/utils"
 )
 
 func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -82,10 +83,11 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
+	bucket := ps.ByName("bucket")
 
 	u := new(Hour)
 	e := db.View(func(t *db.Txn) error {
-		return t.Open(fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, name), u)
+		return t.Open(fmt.Sprintf("%s/%s/%s/hours/%s.toml", entity, year, bucket, name), u)
 	})
 	if e != nil {
 		log.Printf(e.Error())
@@ -107,14 +109,15 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	var (
-		list []string
 		e error
 	)
 	mem := new(Hour)
+	list := make(map[string][]string)
 
 	e = db.View(func(t *db.Txn) error {
-		_, e := t.List(dirs, db.Pagination{From:0, Count:30}, mem, func(filename, file, path string) error {
-			list = append(list, filename)
+		_, e := t.List(dirs, db.Pagination{From:0, Count:30}, mem, func(filename, file, fpath string) error {
+			k := utils.BucketDir(fpath)
+			list[k] = append(list[k], filename)
 			return nil
 		})
 		return e

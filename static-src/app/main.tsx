@@ -24,6 +24,7 @@ function hashChange() {
                         switch (url.shift()) {
                               case "add":
                               case "edit":
+                                    props.bucket = url.shift();
                                     inject = require("./cmp/hours/edit");
                                     break;
 
