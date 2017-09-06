@@ -10,9 +10,12 @@ import (
 	"log"
 	"github.com/mpdroog/invoiced/config"
 	"path/filepath"
+	"time"
 )
 
 const MAX_FILES = 1000
+const DEADLINE = "5s"
+var deadline time.Duration
 
 type Pagination struct {
 	From int // TODO: possible?
@@ -23,14 +26,21 @@ type PaginationHeader struct {
 	Total int
 }
 
+func init() {
+	var e error
+	deadline, e = time.ParseDuration(DEADLINE)
+	if e != nil {
+		panic(e)
+	}
+}
+
 func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, string, string) error) (PaginationHeader, error) {
 	var page PaginationHeader
-	lock.Lock()
-	defer lock.Unlock()
 
 	if p.Count > MAX_FILES {
 		return page, fmt.Errorf("Pagination.Count exceeds MAX_FILES(%d)", MAX_FILES)
 	}
+	timeout := time.Now().Add(deadline)
 
 	var pfPath []string
 	for _, p := range path {
@@ -47,6 +57,9 @@ func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, 
 
 	i := 0
 	for _, path := range paths {
+		if time.Now().After(timeout) {
+			return page, fmt.Errorf("Deadline Timeout")
+		}
 		// TODO: pagination??
 
 		files, e := ioutil.ReadDir(path)
@@ -56,15 +69,25 @@ func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, 
 
 		abs := path
 		for _, file := range files {
+			if time.Now().After(timeout) {
+				return page, fmt.Errorf("Deadline Timeout")
+			}
+
 			if file.IsDir() {
 				if config.Verbose {
-					log.Printf("Ignore %s\n", abs + file.Name())
+					log.Printf("Ignore %s (is directory)\n", abs + file.Name())
 				}
 				continue
 			}
 			if config.Ignore(file.Name()) {
 				if config.Verbose {
-					log.Printf("Ignore %s\n", abs + file.Name())
+					log.Printf("Ignore %s (in .gitignore)\n", abs + file.Name())
+				}
+				continue
+			}
+			if (! strings.HasSuffix(file.Name(), ".toml")) {
+				if config.Verbose {
+					log.Printf("Ignore %s (invalid extension)\n", abs + file.Name())
 				}
 				continue
 			}
