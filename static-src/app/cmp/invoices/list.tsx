@@ -1,6 +1,7 @@
 import * as React from "react";
 import Invoices from "./list-bucket";
 import Axios from "axios";
+import * as Msgpack from 'msgpack-lite';
 
 export default class InvoicesPage extends React.Component<{}, {}> {
   constructor(props) {
@@ -16,8 +17,9 @@ export default class InvoicesPage extends React.Component<{}, {}> {
     Axios.get('/api/v1/invoices/'+this.props.entity+'/'+this.props.year, {params: {
       from: 0,
       count: 0
-    }})
+    }, headers: {'Accept': 'application/x-msgpack'}, responseType: 'arraybuffer'})
     .then(res => {
+      res.data = Msgpack.decode(new Uint8Array(res.data));
       let s = {concepts: [], pending: [], paid: []};
       for (let key in res.data) {
         if (! res.data.hasOwnProperty(key)) {
