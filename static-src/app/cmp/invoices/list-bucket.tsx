@@ -40,7 +40,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       return;
     }
 
-    Axios.delete(`/api/v1/invoice/${id}?bucket=${this.props.bucket}`)
+    Axios.delete(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${id}`)
     .then(res => {
       location.reload();
     })
@@ -69,7 +69,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td>&euro; {inv.Total.Total}</td>
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
-        <a disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? "btn-hover-danger faa-parent animated-hover" : "")} data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this, key)}><i className="fa fa-trash faa-flash"></i></a>
+        <a disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? "btn-hover-danger faa-parent animated-hover" : "")} data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
         <a className="btn btn-default btn-hover-primary" onClick={this.setPaid.bind(this, key)}><i className="fa fa-check"></i></a>
       </td>
     </tr>;
