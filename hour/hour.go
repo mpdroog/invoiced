@@ -23,9 +23,9 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	change := db.Commit{
-		Name: r.Header.Get("X-Name"),
-		Email: r.Header.Get("X-Email"),
-		Message: fmt.Sprintf("Delete invoice %s", name),
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
+		Message: fmt.Sprintf("Delete concept hour %s", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
 		return t.Remove(fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, name))
@@ -60,9 +60,9 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	year := ps.ByName("year")
 
 	change := db.Commit{
-		Name: r.Header.Get("X-Name"),
-		Email: r.Header.Get("X-Email"),
-		Message: fmt.Sprintf("Save invoice %s", u.Name),
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
+		Message: fmt.Sprintf("Save concept hour %s", u.Name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
 		return t.Save(fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, u.Name), u)

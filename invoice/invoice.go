@@ -43,11 +43,14 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	year := ps.ByName("year")
 
 	change := db.Commit{
-		Name: r.Header.Get("X-Name"),
-		Email: r.Header.Get("X-Email"),
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Delete concept invoice %s", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
+		fmt.Printf(
+			"%s/%s/concepts/sales-invoices/%s.toml", entity, year, name,
+		)
 		return t.Remove(fmt.Sprintf(
 			"%s/%s/concepts/sales-invoices/%s.toml", entity, year, name,
 		))
@@ -83,8 +86,8 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var u *Invoice
 	bucketTo := ""
 	change := db.Commit{
-		Name: r.Header.Get("X-Name"),
-		Email: r.Header.Get("X-Email"),
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Finalize concept invoice %s", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
@@ -156,8 +159,8 @@ func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	u := new(Invoice)
 
 	change := db.Commit{
-		Name: r.Header.Get("X-Name"),
-		Email: r.Header.Get("X-Email"),
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Reset invoice to concept"),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
@@ -201,8 +204,8 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	u := new(Invoice)
 
 	change := db.Commit{
-		Name: r.Header.Get("X-Name"),
-		Email: r.Header.Get("X-Email"),
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Mark invoice %s as paid", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
@@ -258,8 +261,8 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	u.Meta.Status = "CONCEPT"
 
 	change := db.Commit{
-		Name: r.Header.Get("X-Name"),
-		Email: r.Header.Get("X-Email"),
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Update invoice %s", u.Meta.Conceptid),
 	}
 	e := db.Update(change, func(t *db.Txn) error {

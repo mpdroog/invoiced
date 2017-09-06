@@ -54,8 +54,8 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	res := new(Reply)
 	change := db.Commit{
-		Name: r.Header.Get("X-Name"),
-		Email: r.Header.Get("X-Email"),
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Read CAMT053 bankbalance"),
 	}
 	e = db.Update(change, func(t *db.Txn) error {
