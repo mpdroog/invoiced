@@ -22,7 +22,6 @@ export default class InvoicesPage extends React.Component<{}, {}> {
     .then(res => {
       res.data = Msgpack.decode(new Uint8Array(res.data));
       let s = {concepts: [], pending: [], paid: [], commits: []};
-      console.log(res.data);
 
       // invoices
       for (let key in res.data.Invoices) {
@@ -56,7 +55,7 @@ export default class InvoicesPage extends React.Component<{}, {}> {
       let subject = `RE: ${item.Message}`;
       let body = `Open invoices ${location.href}`;
       let now = Moment.unix(item.Committer.When[0]);
-      console.log(now);
+
       commits.push(
         <div className="vertical-timeline-block">
           <div className="vertical-timeline-icon navy-bg">

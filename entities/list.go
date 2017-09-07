@@ -8,6 +8,11 @@ import (
 	"github.com/mpdroog/invoiced/writer"
 )
 
+type DetailRes struct {
+	User *middleware.User
+	Entity *middleware.Entity
+}
+
 // List company's the user can administrate
 func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	c, e := r.Cookie("sess")
@@ -22,5 +27,16 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 	if e := writer.Encode(w, r, res); e != nil {
 		log.Printf("entities.List " + e.Error())
+	}
+}
+
+// List current company+user details
+func Details(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	res := &DetailRes{
+		User: middleware.UserByEmail(r.Header.Get("X-User-Email")),
+		Entity: middleware.CompanyByName(ps.ByName("entity")),
+	}
+	if e := writer.Encode(w, r, res); e != nil {
+		log.Printf("entities.Details " + e.Error())
 	}
 }

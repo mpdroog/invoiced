@@ -110,6 +110,15 @@ func UserByEmail(email string) *User {
 	return nil
 }
 
+func CompanyByName(name string) *Entity {
+	for cname, entity := range entities.Company {
+		if cname == name {
+			return &entity
+		}
+	}
+	return nil
+}
+
 // Check if user is allowed to open this path
 func CompanyAllowed(company, email string) (bool, error) {
 	// TODO: security bug here? no email check???

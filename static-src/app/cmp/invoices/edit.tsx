@@ -64,11 +64,11 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     super(props);
     this.revisions = [];
     this.state = {
-      Company: "RootDev",
+      Company: props.entity,
       Entity: {
-        Name: "M.P. Droog",
-        Street1: "Dorpsstraat 236a",
-        Street2: "Obdam, 1713HP, NL"
+        Name: "",
+        Street1: "",
+        Street2: ""
       },
       Customer: {
         Name: "XSNews B.V.",
@@ -113,7 +113,32 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     if (params.id) {
       console.log(`Load invoice name=${params.id} from bucket=${params.bucket}`);
       this.ajax(params["bucket"], params.id);
+    } else {
+      this.ajaxDefaults(params.entity);
     }
+  }
+
+  private ajaxDefaults(entity: string) {
+    let that = this;
+    Axios.get(`/api/v1/entities/${entity}/details`)
+    .then(res => {
+      that.setState({
+        Company: res.data.Entity.Name,
+        Entity: {
+          Name: res.data.User.Name,
+          Street1: res.data.User.Address1,
+          Street2: res.data.User.Address2,
+        },
+        Bank: {
+          Vat: res.data.Entity.VAT,
+          Coc: res.data.Entity.COC,
+          Iban: res.data.Entity.IBAN,
+        }
+      });
+    })
+    .catch(err => {
+      handleErr(err);
+    });
   }
 
   private ajax(bucket: string, name: string) {
