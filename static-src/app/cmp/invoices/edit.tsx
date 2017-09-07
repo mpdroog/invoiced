@@ -2,6 +2,7 @@ import * as React from "react";
 import Axios from "axios";
 import * as Big from "big.js";
 import * as Moment from "moment";
+import {DOM} from "../../lib/dom";
 
 type IInvoiceStatus = "NEW" | "CONCEPT" | "FINAL";
 interface IInvoiceProps extends React.Props<InvoiceEdit> {
@@ -171,7 +172,8 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     this.setState(data);
   }
 
-  private lineAdd() {
+  private lineAdd(e) {
+    e.preventDefault();
     if (this.state.Meta.Status === 'FINAL') {
       console.log("Finalized, not allowing changes!");
       return;
@@ -186,7 +188,11 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     this.setState({Lines: this.state.Lines});
   }
 
-  private lineRemove(key: number) {
+  private lineRemove(e) {
+    e.preventDefault();
+    let node = DOM.eventFilter(e, "BUTTON");
+    let key = node.dataset["idx"];
+
     if (this.state.Meta.Status === 'FINAL') {
       console.log("Finalized, not allowing changes!");
       return;
@@ -338,7 +344,7 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
       console.log(inv.Meta.Status);
       lines.push(
         <tr key={"line"+idx}>
-          <td><button disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? 'btn-hover-danger faa-parent animated-hover' : '')} onClick={that.lineRemove.bind(that, idx)}><i className="fa fa-trash faa-flash"></i></button></td>
+          <td><button disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? 'btn-hover-danger faa-parent animated-hover' : '')} onClick={that.lineRemove.bind(that)} data-idx={idx}><i className="fa fa-trash faa-flash"></i></button></td>
           <td><input className="form-control" type="text" data-key={"Lines."+idx+".Description"} onChange={that.handleChange.bind(that)} value={line.Description}/></td>
           <td><input className="form-control" type="text" data-key={"Lines."+idx+".Quantity"} onChange={that.handleChange.bind(that)} value={line.Quantity}/></td>
           <td><input className="form-control" type="text" data-key={"Lines."+idx+".Price"} onChange={that.handleChange.bind(that)} value={line.Price}/></td>
