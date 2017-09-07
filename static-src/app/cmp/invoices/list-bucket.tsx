@@ -49,10 +49,13 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     });
   }
 
-  private setPaid(id: string) {
-    Axios.post('/api/v1/invoice/'+id+'/paid', {params: {
-      bucket: this.props.bucket
-    }})
+  private setPaid(e) {
+    e.preventDefault();
+    let node = DOM.eventFilter(e, "A");
+    let id = node.dataset.id;
+    let bucket = node.dataset.bucket;
+
+    Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${id}/paid`, {})
     .then(res => {
       location.reload();
     })
@@ -70,7 +73,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
         <a disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? "btn-hover-danger faa-parent animated-hover" : "")} data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
-        <a className="btn btn-default btn-hover-primary" onClick={this.setPaid.bind(this, key)}><i className="fa fa-check"></i></a>
+        <a className="btn btn-default btn-hover-primary" data-id={key} data-bucket={bucket} onClick={this.setPaid.bind(this)}><i className="fa fa-check"></i></a>
       </td>
     </tr>;
   }
