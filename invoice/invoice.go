@@ -336,6 +336,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	var inv []*db.CommitMessage
 	list := make(map[string][]*Invoice)
 	mem := new(Invoice)
 
@@ -343,6 +344,13 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		_, e := t.List(paths, db.Pagination{From:from, Count:count}, &mem, func(filename, filepath, fpath string) error {
 			list[fpath] = append(list[fpath], mem)
 			mem = new(Invoice)
+			return nil
+		})
+		if e != nil {
+			return e
+		}
+		e = t.Logs(3, func(c *db.CommitMessage) error {
+			inv = append(inv, c)
 			return nil
 		})
 		return e
@@ -353,10 +361,15 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	res := &ListReply{
+		Invoices: list,
+		Commits: inv,
+	}
+
 	if config.Verbose {
 		log.Printf("invoice.List count=%d", len(list))
 	}
-	if e := writer.Encode(w, r, list); e != nil {
+	if e := writer.Encode(w, r, res); e != nil {
 		log.Printf("invoice.List " + e.Error())
 	}
 }

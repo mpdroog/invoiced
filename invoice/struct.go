@@ -1,5 +1,7 @@
 package invoice
 
+import 	"github.com/mpdroog/invoiced/db"
+
 type Invoice struct {
 	Company string `validate:"nonzero"`
 	Entity  struct {
@@ -41,4 +43,9 @@ type Invoice struct {
 		Coc  string `validate:"nonzero"`
 		Iban string `validate:"nonzero,iban"`
 	}
+}
+
+type ListReply struct {
+	Invoices map[string][]*Invoice
+	Commits []*db.CommitMessage
 }
