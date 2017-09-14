@@ -3,7 +3,6 @@ import Axios from "axios";
 import * as Big from "big.js";
 import * as Moment from "moment";
 import Import from "./edit-import";
-import Datepicker from "./datepicker";
 
 interface IHourLineState {
   Hours: number
