@@ -1,9 +1,9 @@
 import * as React from "react";
 import Axios from "axios";
-import * as Big from "big.js";
 import * as Moment from "moment";
-import {DOM} from "../../lib/dom";
 import {Autocomplete, LockedInput} from "../../shared/components";
+import {InvoiceLineEdit} from "./edit-line";
+import * as Big from "big.js";
 
 type IInvoiceStatus = "NEW" | "CONCEPT" | "FINAL";
 interface IInvoiceProps extends React.Props<InvoiceEdit> {
@@ -166,46 +166,28 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     this.setState(data);
   }
 
-  private lineAdd(e) {
-    e.preventDefault();
+  private triggerChange(indices: string[], val: string) {
     if (this.state.Meta.Status === 'FINAL') {
       console.log("Finalized, not allowing changes!");
       return;
     }
-    console.log("Add invoice line");
-    this.state.Lines.push({
-      Description: "",
-      Quantity: "0",
-      Price: "0.00",
-      Total: "0.00"
-    });
-    this.setState({Lines: this.state.Lines});
+    let node: any = this.state;
+    for (let i = 0; i < indices.length-1; i++) {
+      node = node[ indices[i] ];
+    }
+    node[indices[indices.length-1]] = val;
+
+    // Any post-processing
+    if (indices[0] === "Lines") {
+      let idx = indices[1] as any;
+      this.state.Lines[idx] = this.lineUpdate(this.state.Lines[idx]);
+      this.state.Total = this.totalUpdate(this.state.Lines);
+    }
+    this.setState(this.state);
+    this.revisions.push({}); // TODO :)
   }
 
-  private lineRemove(e) {
-    e.preventDefault();
-    let node = DOM.eventFilter(e, "BUTTON");
-    let key = node.dataset["idx"];
-
-    if (this.state.Meta.Status === 'FINAL') {
-      console.log("Finalized, not allowing changes!");
-      return;
-    }
-    let line: IInvoiceLine = this.state.Lines[key];
-    let isEmpty = line.Description === ""
-      && line.Quantity === "0"
-      && line.Price === "0.00"
-      && line.Total === "0.00";
-    let isOk = !isEmpty && confirm(`Are you sure you want to remove the invoiceline with description '${line.Description}'?`);
-
-    if (isEmpty || isOk) {
-      console.log(`Remove invoice line with key=${key}`);
-      console.log("Deleted idx ", this.state.Lines.splice(key, 1)[0]);
-      this.setState({Lines: this.state.Lines});
-    }
-  }
-
-  lineUpdate(line: IInvoiceLine) {
+  private lineUpdate(line: IInvoiceLine) {
     line.Total = new Big(line.Price).times(line.Quantity).round(2).toFixed(2).toString();
     return line;
   }
@@ -235,27 +217,6 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     };
   }
 
-  private triggerChange(indices: string[], val: string) {
-    if (this.state.Meta.Status === 'FINAL') {
-      console.log("Finalized, not allowing changes!");
-      return;
-    }
-    let node: any = this.state;
-    for (let i = 0; i < indices.length-1; i++) {
-      node = node[ indices[i] ];
-    }
-    node[indices[indices.length-1]] = val;
-
-    // Any post-processing
-    if (indices[0] === "Lines") {
-      let idx = indices[1] as any;
-      this.state.Lines[idx] = this.lineUpdate(this.state.Lines[idx]);
-      this.state.Total = this.totalUpdate(this.state.Lines);
-    }
-    this.setState(this.state);
-    this.revisions.push({}); // TODO :)
-  }
-
   private handleChange(e: InputEvent) {
     console.log("handleChange", e.target.dataset["key"]);
     let indices = e.target.dataset["key"].split('.');
@@ -264,9 +225,7 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
 
   private save(e: BrowserEvent) {
     e.preventDefault();
-    let req = JSON.parse(JSON.stringify(this.state)); // deepCopy
-    //req.Meta.Issuedate = this.state.Meta.Issuedate ? this.state.Meta.Issuedate.format('YYYY-MM-DD') : "";
-    //req.Meta.Duedate = this.state.Meta.Duedate ? this.state.Meta.Duedate.format('YYYY-MM-DD') : "";
+    let req = JSON.parse(JSON.stringify(this.state));
     console.log(req);
 
     Axios.post('/api/v1/invoice/'+this.props.entity+'/'+this.props.year, req)
@@ -326,20 +285,7 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
 	render() {
     let inv = this.state;
     let that = this;
-    let lines: React.JSX.Element[] = [];
-
-    inv.Lines.forEach(function(line: IInvoiceLine, idx: number) {
-      console.log(inv.Meta.Status);
-      lines.push(
-        <tr key={"line"+idx}>
-          <td><button disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? 'btn-hover-danger faa-parent animated-hover' : '')} onClick={that.lineRemove.bind(that)} data-idx={idx}><i className="fa fa-trash faa-flash"></i></button></td>
-          <td><input className="form-control" type="text" data-key={"Lines."+idx+".Description"} onChange={that.handleChange.bind(that)} value={line.Description}/></td>
-          <td><input className="form-control" type="text" data-key={"Lines."+idx+".Quantity"} onChange={that.handleChange.bind(that)} value={line.Quantity}/></td>
-          <td><input className="form-control" type="text" data-key={"Lines."+idx+".Price"} onChange={that.handleChange.bind(that)} value={line.Price}/></td>
-          <td><input className="form-control" readOnly={true} disabled={true} type="text" data-key={"Lines."+idx+".Total"} value={line.Total}/></td>
-        </tr>
-      );
-    });
+    //let lines: React.JSX.Element = this.
 
 		return <form><div className="normalheader">
 		    <div className="hpanel hblue">
@@ -420,37 +366,7 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     </div>
   </div>
 
-  <table className="table table-striped">
-    <thead>
-      <tr>
-        <th>&nbsp;</th>
-        <th>Description</th>
-        <th>Quantity</th>
-        <th>Price</th>
-        <th>Line Total</th>
-      </tr>
-    </thead>
-    <tbody>{lines}</tbody>
-    <tfoot>
-      <tr>
-        <td colSpan={3} className="text">
-          <button disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? 'btn-hover-success faa-parent animated-hover' : '')} onClick={this.lineAdd.bind(this)}><i className="fa fa-plus faa-bounce"></i> Add row</button>
-        </td>
-        <td className="text">Total (ex tax)</td>
-        <td><input className="form-control" disabled={true} type="text" data-key="Total.Ex" readOnly={true} value={inv.Total.Ex}/></td>
-      </tr>
-      <tr>
-        <td colSpan={3}></td>
-        <td className="text">Tax (21%)</td>
-        <td><input className="form-control" onChange={this.handleChange.bind(this)} disabled={true} type="text" data-key="Total.Tax" readOnly={true} value={inv.Total.Tax}/></td>
-      </tr>
-      <tr>
-        <td colSpan={3}>&nbsp;</td>
-        <td className="text">Total</td>
-        <td><input className="form-control" onChange={this.handleChange.bind(this)} disabled={true} type="text" data-key="Total.Total" readOnly={true} value={inv.Total.Total}/></td>
-      </tr>
-    </tfoot>
-  </table>
+  <InvoiceLineEdit parent={this} />
 
   <div className="row notes col-sm-12">
     <p>Notes</p>
