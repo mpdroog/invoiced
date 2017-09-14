@@ -122,6 +122,10 @@ func main() {
 	router.POST("/", Login)
 
 	router.GET("/api/v1/entities", entities.List)
+	router.GET("/api/v1/entities/:entity/details", entities.Details)
+
+	router.GET("/api/v1/debtors/:entity/search", entities.Search)
+
 	router.GET("/api/v1/metrics/:entity/:year", metrics.Dashboard)
 
 	router.GET("/api/v1/invoices/:entity/:year", invoice.List)
