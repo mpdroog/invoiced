@@ -43,8 +43,7 @@ export class InvoiceLineEdit extends React.Component<{}, {}> {
     let isOk = !isEmpty && confirm(`Are you sure you want to remove the invoiceline with description '${line.Description}'?`);
 
     if (isEmpty || isOk) {
-      console.log(`Remove invoice line with key=${key}`);
-      console.log("Deleted idx ", parent.state.Lines.splice(key, 1)[0]);
+      console.log(`Deleted idx (${key})`, parent.state.Lines.splice(key, 1)[0]);
       parent.setState({Lines: parent.state.Lines});
     }
   }

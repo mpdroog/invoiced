@@ -4,61 +4,9 @@ import * as Moment from "moment";
 import {Autocomplete, LockedInput} from "../../shared/components";
 import {InvoiceLineEdit} from "./edit-line";
 import * as Big from "big.js";
+import * as Struct from "./edit-struct";
 
-type IInvoiceStatus = "NEW" | "CONCEPT" | "FINAL";
-interface IInvoiceProps extends React.Props<InvoiceEdit> {
-  id? : string
-}
-interface IInvoiceEntity {
-  Name: string
-  Street1: string
-  Street2: string
-}
-interface IInvoiceCustomer {
-  Name: string
-  Street1: string
-  Street2: string
-  Vat: string
-  Coc: string
-}
-interface IInvoiceMeta {
-  Conceptid: string
-  Status: IInvoiceStatus
-  Invoiceid: string
-  Issuedate?: string
-  Ponumber: string
-  Duedate?: string
-  Paydate?: Moment.Moment
-  Freefield?: string
-}
-interface IInvoiceLine {
-  Description: string
-  Quantity: string //number
-  Price: string //number
-  Total: string //number
-}
-interface IInvoiceTotal {
-  Ex: string //number
-  Tax: string //number
-  Total: string //number
-}
-interface IInvoiceBank {
-  Vat: string
-  Coc: string
-  Iban: string
-}
-export interface IInvoiceState {
-  Company?: string
-  Entity?: IInvoiceEntity
-  Customer?: IInvoiceCustomer
-  Meta?: IInvoiceMeta
-  Lines?: IInvoiceLine[]
-  Notes?: string
-  Total?: IInvoiceTotal
-  Bank?: IInvoiceBank
-}
-
-export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
+export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceState> {
   private revisions: IInvoiceState[];
   constructor(props) {
     super(props);
@@ -217,7 +165,7 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     };
   }
 
-  private handleChange(e: InputEvent) {
+  handleChange(e: InputEvent) {
     console.log("handleChange", e.target.dataset["key"]);
     let indices = e.target.dataset["key"].split('.');
     this.triggerChange(indices, e.target.value);
@@ -285,7 +233,6 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
 	render() {
     let inv = this.state;
     let that = this;
-    //let lines: React.JSX.Element = this.
 
 		return <form><div className="normalheader">
 		    <div className="hpanel hblue">
