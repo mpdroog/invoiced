@@ -108,7 +108,7 @@ export class Autocomplete extends React.Component<{}, {}> {
 	}
 
 	return <div style={p}>
-		<input type="text" className="form-control" onFocus={this.toggleDropdown.bind(this)} onBlur={this.toggleDropdown.bind(this)} onChange={this.lookup.bind(this)} value={this.props.value} disabled={this.props.disabled} data-key={this.props['data-key']} />
+		<input type="text" className="form-control" onFocus={this.toggleDropdown.bind(this)} onBlur={this.toggleDropdown.bind(this)} onChange={this.lookup.bind(this)} value={this.props.value} disabled={this.props.disabled} placeholder={this.props.placeholder} data-key={this.props['data-key']} />
 		{suggest}
 		</div>;
 	}

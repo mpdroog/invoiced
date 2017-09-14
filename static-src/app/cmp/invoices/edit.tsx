@@ -380,9 +380,9 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
       Invoice For
     </div>
     <div className="col-sm-3">
-      <Autocomplete data-key="Customer.Name" onSelect={that.selectCustomer.bind(that)} onChange={that.handleChange.bind(that)} url={"/api/v1/debtors/"+that.props.entity+"/search"} value={inv.Customer.Name} />
-      <input className="form-control" type="text" data-key="Customer.Street1" onChange={that.handleChange.bind(this)} value={inv.Customer.Street1}/>
-      <input className="form-control" type="text" data-key="Customer.Street2" onChange={that.handleChange.bind(this)} value={inv.Customer.Street2}/>
+      <Autocomplete data-key="Customer.Name" onSelect={that.selectCustomer.bind(that)} onChange={that.handleChange.bind(that)} placeholder="Company Name" url={"/api/v1/debtors/"+that.props.entity+"/search"} value={inv.Customer.Name} />
+      <input className="form-control" type="text" data-key="Customer.Street1" onChange={that.handleChange.bind(this)} value={inv.Customer.Street1} placeholder="Street1" />
+      <input className="form-control" type="text" data-key="Customer.Street2" onChange={that.handleChange.bind(this)} value={inv.Customer.Street2} placeholder="Street2" />
 
       <input className="form-control" type="text" data-key="Customer.Vat" onChange={that.handleChange.bind(this)} value={inv.Customer.Vat} placeholder="VAT-number"/>
       <input className="form-control" type="text" data-key="Customer.Coc" onChange={that.handleChange.bind(this)} value={inv.Customer.Coc} placeholder="Chamber Of Commerce (CoC)"/>
