@@ -3,6 +3,7 @@ import Axios from "axios";
 import * as Big from "big.js";
 import * as Moment from "moment";
 import {DOM} from "../../lib/dom";
+import {Autocomplete, LockedInput} from "../../shared/components";
 
 type IInvoiceStatus = "NEW" | "CONCEPT" | "FINAL";
 interface IInvoiceProps extends React.Props<InvoiceEdit> {
@@ -24,11 +25,9 @@ interface IInvoiceMeta {
   Conceptid: string
   Status: IInvoiceStatus
   Invoiceid: string
-  InvoiceidL: boolean
-  Issuedate?: Moment.Moment
-  IssuedateL: boolean
+  Issuedate?: string
   Ponumber: string
-  Duedate?: Moment.Moment
+  Duedate?: string
   Paydate?: Moment.Moment
   Freefield?: string
 }
@@ -72,9 +71,9 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
         Street2: ""
       },
       Customer: {
-        Name: "XSNews B.V.",
-        Street1: "New Yorkstraat 9-13",
-        Street2: "1175 RD Lijnden",
+        Name: "",
+        Street1: "",
+        Street2: "",
         Vat: "",
         Coc: ""
       },
@@ -82,11 +81,9 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
         Conceptid: "",
         Status: "NEW",
         Invoiceid: "",
-        InvoiceidL: true,
         Issuedate: null,
-        IssuedateL: true,
         Ponumber: "",
-        Duedate: Moment().add(14, 'days'),
+        Duedate: Moment().add(14, 'days').format('YYYY-MM-DD'),
         Paydate: null
       },
       Lines: [{
@@ -156,19 +153,16 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     if (newbucket) {
       this.props.bucket = newbucket;
     }
-    console.log(data);
     let url = `#${this.props.entity}/${this.props.year}/invoices/edit/${this.props.bucket}/${data.Meta.Conceptid}`;
     if (window.location.href != url) {
       // Update URL so refresh will keep the invoice open
       history.replaceState({}, "", url);
       this.props.id = data.Meta.Conceptid;
     }
-    data.Meta.Issuedate = data.Meta.Issuedate ? Moment(data.Meta.Issuedate) : null;
-    data.Meta.Duedate = data.Meta.Duedate ? Moment(data.Meta.Duedate) : null;
-    data.Meta.Paydate = data.Meta.Paydate ? Moment(data.Meta.Paydate) : null;
+    data.Meta.Issuedate = data.Meta.Issuedate ? Moment(data.Meta.Issuedate).format('YYYY-MM-DD') : null;
+    data.Meta.Duedate = data.Meta.Duedate ? Moment(data.Meta.Duedate).format('YYYY-MM-DD') : null;
+    data.Meta.Paydate = data.Meta.Paydate ? Moment(data.Meta.Paydate).format('YYYY-MM-DD') : null;
 
-    data.Meta.InvoiceidL = true;
-    data.Meta.IssuedateL = true;
     this.setState(data);
   }
 
@@ -268,30 +262,11 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     this.triggerChange(indices, e.target.value);
   }
 
-  private handleChangeDate(id: string) {
-    let indices = id.split('.');
-    let that = this;
-    return function(val: string) {
-      console.log("handleChangeDate", id, val);
-      that.triggerChange.call(that, indices, val);
-    };
-  }
-
-  private toggleChange(id: string, val: boolean) {
-    let indices = id.split('.');
-    let that = this;
-    val = !val; // Invert value
-    return function() {
-      console.log("toggleChange", id, val);
-      that.triggerChange.call(that, indices, val);
-    };
-  }
-
   private save(e: BrowserEvent) {
     e.preventDefault();
     let req = JSON.parse(JSON.stringify(this.state)); // deepCopy
-    req.Meta.Issuedate = this.state.Meta.Issuedate ? this.state.Meta.Issuedate.format('YYYY-MM-DD') : "";
-    req.Meta.Duedate = this.state.Meta.Duedate ? this.state.Meta.Duedate.format('YYYY-MM-DD') : "";
+    //req.Meta.Issuedate = this.state.Meta.Issuedate ? this.state.Meta.Issuedate.format('YYYY-MM-DD') : "";
+    //req.Meta.Duedate = this.state.Meta.Duedate ? this.state.Meta.Duedate.format('YYYY-MM-DD') : "";
     console.log(req);
 
     Axios.post('/api/v1/invoice/'+this.props.entity+'/'+this.props.year, req)
@@ -333,6 +308,19 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
     let url = `/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${this.props.id}/pdf`;
     console.log(`Open PDF ${url}`);
     location.assign(url);
+  }
+
+  private selectCustomer(data) {
+    console.log("Select customer", data);
+    this.setState({
+      Customer: {
+        Name: data.Name,
+        Street1: data.Street1,
+        Street2: data.Street2,
+        Vat: data.VAT,
+        Coc: data.COC
+      }
+    });
   }
 
 	render() {
@@ -392,7 +380,7 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
       Invoice For
     </div>
     <div className="col-sm-3">
-      <input className="form-control" type="text" data-key="Customer.Name" onChange={that.handleChange.bind(this)} value={inv.Customer.Name}/>
+      <Autocomplete data-key="Customer.Name" onSelect={that.selectCustomer.bind(that)} onChange={that.handleChange.bind(that)} url={"/api/v1/debtors/"+that.props.entity+"/search"} value={inv.Customer.Name} />
       <input className="form-control" type="text" data-key="Customer.Street1" onChange={that.handleChange.bind(this)} value={inv.Customer.Street1}/>
       <input className="form-control" type="text" data-key="Customer.Street2" onChange={that.handleChange.bind(this)} value={inv.Customer.Street2}/>
 
@@ -408,19 +396,13 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
               Invoice ID
             </td>
             <td>
-              <div className="input-group">
-                <input className="form-control" disabled={inv.Meta.InvoiceidL} type="text" data-key="Meta.Invoiceid" onChange={that.handleChange.bind(that)} value={inv.Meta.Invoiceid} placeholder="AUTOGENERATED"/>
-                <div className="input-group-addon"><a className="" onClick={that.toggleChange('Meta.InvoiceidL', inv.Meta.InvoiceidL)}><i className={"fa faa-ring animated-hover " + (inv.Meta.InvoiceidL?"fa-lock":"fa-unlock")}></i></a></div>
-              </div>
+              <LockedInput type="text" value={inv.Meta.Invoiceid} placeholder="AUTOGENERATED" onChange={that.handleChange.bind(that)} locked={true} data-key="Meta.Invoiceid"/>
             </td>
           </tr>
           <tr>
             <td className="text">Issue Date</td>
             <td>
-              <div className="input-group">
-                <input type="date" disabled={inv.Meta.IssuedateL} value={inv.Meta.Issuedate?inv.Meta.Issuedate.format("YYYY-MM-DD"):""} placeholder="AUTOGENERATED" onChange={that.handleChangeDate('Meta.Issuedate').bind(that)} className="form-control" />
-                <div className="input-group-addon"><a className="" onClick={that.toggleChange('Meta.IssuedateL', inv.Meta.IssuedateL)}><i className={"fa faa-ring animated-hover " + (inv.Meta.IssuedateL?"fa-lock":"fa-unlock")}></i></a></div>
-              </div>
+              <LockedInput type="date" value={inv.Meta.Issuedate} placeholder="AUTOGENERATED" onChange={that.handleChange.bind(that)} locked={true} data-key="Meta.Issuedate"/>
             </td>
           </tr>
           <tr>
@@ -430,7 +412,7 @@ export default class InvoiceEdit extends React.Component<{}, IInvoiceState> {
           <tr>
             <td className="text">Due Date</td>
             <td>
-                <input type="date" value={inv.Meta.Duedate.format("YYYY-MM-DD")} onChange={that.handleChangeDate('Meta.Issuedate').bind(that)} className="form-control" />
+                <input type="date" value={inv.Meta.Duedate} onChange={that.handleChange.bind(that)} className="form-control" data-key="Meta.Duedate" />
             </td>
           </tr>
         </tbody>
