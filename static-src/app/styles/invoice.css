@@ -16,6 +16,10 @@
     padding-top: 15px;
 }
 
+.pt8 {
+	padding-top: 8px;
+}
+
 .react-datepicker__input-container {
 	display: initial !important;
 }
@@ -29,39 +33,6 @@
     opacity: 0.5;
 }
 
-/*.invoice > div {
+textarea.form-control.h140 {
+	height: 140px;
 }
-
-.invoice .company {
-	font-family: Helvetica;
-	font-weight: bold;
-	font-size: 28px;
-	float: left;
-}
-.invoice .entity {
-	float: right;
-	right: 0;
-}
-.invoice .customer {
-	float: left;
-}
-.invoice .meta {
-	float: right;
-	right: 0;
-}
-.invoice .lines {
-	top: 130px;
-}
-.invoice .total {
-	top: 190px;
-	right: 0;
-}
-.invoice .notes {
-	top: 190px;
-}
-.invoice .banking {
-	top: 280px;
-}
-.invoice .total {
-	right: 0;
-}*/
