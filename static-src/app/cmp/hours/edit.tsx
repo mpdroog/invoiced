@@ -27,6 +27,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
       stop: "",
       description: "",
       day: Moment(),
+      import: false,
 
       Lines: [],
       Name: ""
@@ -155,6 +156,11 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     return str;
   }
 
+  private toggleImport(e) {
+    e.preventDefault();
+    this.setState({import: !this.state.import});
+  }
+
 	render() {
     let lines: React.JSX.Element[] = [];
     let that = this;
@@ -196,13 +202,14 @@ export default class HourEdit extends React.Component<{}, IHourState> {
           </div>
 		    </div>
     </div>
-    <Import importFn={this.importLine.bind(this)} />
+    <Import hide={this.state.import} onHide={this.toggleImport.bind(this)} importFn={this.importLine.bind(this)} />
 
     <div className="normalheader">
       <div className="hpanel hblue">
         <div className="panel-heading hbuilt">
           <div className="panel-tools">
             <div className="btn-group nm7">
+              <button className="btn btn-default btn-hover-success" onClick={this.toggleImport.bind(this)}><i className="fa fa-arrow-up"></i>&nbsp;Import</button>
               <button className="btn btn-default btn-hover-success" onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i>&nbsp;Save</button>
             </div>
           </div>

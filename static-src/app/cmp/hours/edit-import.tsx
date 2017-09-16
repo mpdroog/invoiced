@@ -23,6 +23,7 @@ const monthMap = {
 	"july": "07",
 	"augustus": "08",
 	"september": "09",
+	"sept": "09",
 	"october": "10",
 	"november": "11",
 	"december": "12",
@@ -141,23 +142,36 @@ export default class HourImport extends React.Component<IImportProps, {}> {
 		this.props.importFn(
 			importText(this.state.text.split("\n"))
 		);
+		this.props.onHide(e);
 	}
 
 	render() {
-		var t = {width:"100%", height: "300px"};
+		let s = {display: "block"};
+		var t = {width:"100%", height: "200px"};
+		if (! this.props.hide) {
+			return <div/>;
+		}
 
-		return <div className="normalheader"><div className="hpanel hblue">
-			<div className="panel-heading hbuilt">
-	          <div className="panel-tools">
-	            <div className="btn-group nm7">
-	              <button className="btn btn-default btn-hover-success" onClick={this.save.bind(this)}><i className="fa fa-arrow-up"></i>&nbsp;Import</button>
-	            </div>
-	          </div>
-				Import hours
-			</div>
-			<div className="panel-body">
-				<textarea id="import" style={t} onChange={this.update.bind(this)}></textarea>
-			</div>
-		</div></div>;
+  	return <div className="modal" style={s} tabindex="-1" role="dialog">
+      <div className="modal-dialog">
+        <div className="modal-content">
+          <div className="modal-header">
+            <button onClick={this.props.onHide} className="close" type="button" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true"> &times;</span>
+            </button>
+            <h4 className="modal-title">
+              <i className="fa fa-arrow-up"></i>
+              &nbsp;Import
+            </h4>
+          </div>
+          <div className="modal-body">
+		    <textarea id="import" style={t} onChange={this.update.bind(this)}></textarea>
+          </div>
+          <div className="modal-footer">
+            <a onClick={this.save.bind(this)} className="btn btn-primary" style="float:right"> Parse</a>
+          </div>
+        </div>
+      </div>
+    </div>;
 	}
 }
