@@ -30,7 +30,8 @@ export default class HourEdit extends React.Component<{}, IHourState> {
       import: false,
 
       Lines: [],
-      Name: ""
+      Name: "",
+      Project: ""
     };
   }
 
@@ -124,6 +125,13 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     if (elem.id === "hour-day") {
       this.setState({day: Moment(e.target.value)});
     }
+    if (elem.id === "hour-project") {
+      let prevMonth = Moment().subtract(1, 'months');
+      this.setState({
+        Project: e.target.value,
+        Name: "[" + e.target.value + "] " + prevMonth.format("YYYY-MM")
+      });
+    }
   }
 
   private lineRemove(key: number) {
@@ -216,7 +224,14 @@ export default class HourEdit extends React.Component<{}, IHourState> {
           Sum ({sum.toFixed(2).toString()} hours)
         </div>
         <div className="panel-body">
-          <input type="text" id="hour-name" className="form-control" placeholder="Hour name" value={this.state.Name} onChange={this.update.bind(this)}/>
+          <div className="row">
+            <div className="col-sm-6">
+              <input type="text" id="hour-project" className="form-control" placeholder="Project name" value={this.state.Project} onChange={this.update.bind(this)}/>
+            </div>
+            <div className="col-sm-6">
+              <input type="text" id="hour-name" className="form-control" placeholder="Hour name" value={this.state.Name} onChange={this.update.bind(this)}/>
+            </div>
+          </div>
           <table className="table table-striped">
             <thead>
               <tr>

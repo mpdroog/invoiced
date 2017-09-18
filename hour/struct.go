@@ -1,6 +1,7 @@
 package hour
 
 type Hour struct {
+	Project string `validate:"slug,nonzero"`
 	Name  string `validate:"slug,nonzero"`
 	Lines []struct {
 		Day         string  `validate:"date,nonzero"`
