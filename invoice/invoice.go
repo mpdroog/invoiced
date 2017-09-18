@@ -102,14 +102,10 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		u.Meta.Status = "FINAL"
 
 		if u.Meta.Invoiceid == "" {
-			// Create invoiceid
-			// TODO?????
-			var idx uint64 = 22
-			/*idx, e := b.NextSequence()
+			idx, e := NextInvoiceID(fmt.Sprintf("%s/%s", entity, year), t)
 			if e != nil {
 				return e
-			}*/
-
+			}
 			u.Meta.Invoiceid = utils.CreateInvoiceId(time.Now(), idx)
 			if config.Verbose {
 				log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
