@@ -15,7 +15,9 @@ type Project struct {
 	Debtor string
 	BillingEmail []string
 	NoteAdd string
-	HourRate string
+	HourRate float64
+	DueDays int
+	PO string
 }
 
 func ProjectSearch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -45,4 +47,19 @@ func ProjectSearch(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	if e := writer.Encode(w, r, out); e != nil {
 		log.Printf("entities.ProjectSearch " + e.Error())
 	}
+}
+
+func GetProject(t *db.Txn, entity, prj string) (*Project, error) {
+	var projectList map[string]Project
+	if e := t.Open(fmt.Sprintf("%s/projects.toml", entity), &projectList); e != nil {
+		return nil, e
+	}
+
+	for name, project := range projectList {
+		if name == prj {
+			return &project, nil
+		}
+	}
+
+	return nil, nil
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/writer"
 	"github.com/mpdroog/invoiced/utils"
+	"github.com/mpdroog/invoiced/invoice"
+	"time"
 )
 
 func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -60,6 +62,7 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Message: fmt.Sprintf("Save concept hour %s", u.Name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
+		u.Status = "CONCEPT"
 		return t.Save(fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, u.Name), u)
 	})
 	if e != nil {
@@ -69,6 +72,47 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	if e := writer.Encode(w, r, u); e != nil {
 		log.Printf("hour.Save " + e.Error())
+	}
+}
+
+func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
+	name := ps.ByName("id")
+
+	change := db.Commit{
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
+		Message: fmt.Sprintf("Bill hours from %s", name),
+	}
+
+	u := new(Hour)
+	path := fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, name)
+	bucketTo := fmt.Sprintf("Q%d", utils.YearQuarter(time.Now()))
+	pathTo := fmt.Sprintf("%s/%s/%s/hours/%s.toml", entity, year, bucketTo, name)
+
+	e := db.Update(change, func(t *db.Txn) error {
+		// Move from concept to finalized quarter
+		if e := t.Open(path, u); e != nil {
+			return e
+		}
+		u.Status = "FINAL"
+		if e := t.Save(pathTo, u); e != nil {
+			return e
+		}
+		if e := t.Remove(path); e != nil {
+			return e
+		}
+		// Next create concept invoice
+		return invoice.HourToInvoice(entity, year, u.Project, name, u.Total, change.Email, t)
+	})
+	if e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "hour.Bill fail", http.StatusInternalServerError)
+	}
+
+	if e := writer.Encode(w, r, u); e != nil {
+		log.Printf("hour.Bill " + e.Error())
 	}
 }
 

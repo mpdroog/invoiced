@@ -19,6 +19,9 @@ interface IHourState {
   day?: Moment.Moment
   Lines?: IHourLineState[]
   Name?: string
+  Project?: string
+  Status?: string
+  Total?: string
 }
 export default class HourEdit extends React.Component<{}, IHourState> {
   constructor(props) {
@@ -33,7 +36,9 @@ export default class HourEdit extends React.Component<{}, IHourState> {
 
       Lines: [],
       Name: "",
-      Project: ""
+      Project: "",
+      Status: "NEW",
+      Total: "0"
     };
   }
 
@@ -56,6 +61,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
   }
 
   private importLine(lines) {
+    let total = new Big("0.00");
     let out = this.state.Lines;
     for (let i = 0; i < lines.length; i++) {
       let day = lines[i];
@@ -72,11 +78,13 @@ export default class HourEdit extends React.Component<{}, IHourState> {
           Description: day.text,
           Day: day.day
         });
+        total = total.plus(sum);
       }
     }
 
     this.setState({
-      Lines: out
+      Lines: out,
+      Total: total.toFixed(2).toString()
     });
   }
 
@@ -92,6 +100,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     let sum = stop.subtract(start);
     console.log("Start=" + start + " Stop=" + stop + " to hours=" + sum.humanize());
 
+    let total = new Big(this.state.Total);
     this.state.Lines.push({
       Start: this.state.start,
       Stop: this.state.stop,
@@ -100,12 +109,21 @@ export default class HourEdit extends React.Component<{}, IHourState> {
       Day: this.state.day.format("YYYY-MM-DD")
     });
     this.setState({
-      Lines: this.state.Lines
+      Lines: this.state.Lines,
+      Total: total.plus(sum.asHours()).toFixed(2).toString()
     });
   }
 
   private updateDate(date: Moment.Moment) {
     this.setState({day: date});
+  }
+
+  private updateTotal() {
+    let total = new Big("0.00");
+    this.state.Lines.forEach(function(val) {
+      total = total.plus(val.Hours);
+    });
+    return total.toFixed(2).toString();
   }
 
   private update(e: InputEvent) {
@@ -131,7 +149,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
       let prevMonth = Moment().subtract(1, 'months');
       this.setState({
         Project: e.target.value,
-        Name: "[" + e.target.value + "] " + prevMonth.format("YYYY-MM")
+        Name: e.target.value + "-" + prevMonth.format("YYYY-MM")
       });
     }
   }
@@ -141,7 +159,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     let prevMonth = Moment().subtract(1, 'months');
     this.setState({
        Project: prj.Name,
-       Name: "[" + prj.Name + "] " + prevMonth.format("YYYY-MM"),
+       Name: prj.Name + "-" + prevMonth.format("YYYY-MM"),
        hourrate: prj.HourRate
     });
   }
@@ -154,7 +172,24 @@ export default class HourEdit extends React.Component<{}, IHourState> {
 
   private save(e: BrowserEvent) {
     e.preventDefault();
-    Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts`, this.state)
+    let req = this.state;
+    req.Total = this.updateTotal();
+
+    Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts`, req)
+    .then(res => {
+      console.log(res.data);
+      this.props.id = res.data.Name;
+      history.replaceState({}, "", `#${this.props.entity}/${this.props.year}/hours/edit/concepts/${res.data.Name}`);
+    })
+    .catch(err => {
+      handleErr(err);
+    });
+  }
+
+  private bill(e: BrowserEvent) {
+    e.preventDefault();
+    let args = this.state;
+    Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts/${args.Name}/bill`, args)
     .then(res => {
       console.log(res.data);
       this.props.id = res.data.Name;
@@ -184,9 +219,9 @@ export default class HourEdit extends React.Component<{}, IHourState> {
 	render() {
     let lines: React.JSX.Element[] = [];
     let that = this;
-    let sum = new Big("0.00");
+    let isEditable = this.state.Status === "NEW" || this.state.Status === "CONCEPT";
+
     this.state.Lines.forEach(function(item:IHourLineState, idx:number) {
-      sum = sum.plus(item.Hours);
       lines.push(<tr key={idx}>
         <td><button className="btn btn-default btn-hover-danger faa-parent animated-hover" onClick={that.lineRemove.bind(that, idx)}><i className="fa fa-trash faa-flash"></i></button></td>
         <td>{item.Day}</td>
@@ -229,11 +264,12 @@ export default class HourEdit extends React.Component<{}, IHourState> {
         <div className="panel-heading hbuilt">
           <div className="panel-tools">
             <div className="btn-group nm7">
-              <button className="btn btn-default btn-hover-success" onClick={this.toggleImport.bind(this)}><i className="fa fa-arrow-up"></i>&nbsp;Import</button>
-              <button className="btn btn-default btn-hover-success" onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i>&nbsp;Save</button>
+              <button className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.toggleImport.bind(this)}><i className="fa fa-arrow-up"></i>&nbsp;Import</button>
+              <button className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i>&nbsp;Save</button>
+              <button className="btn btn-default btn-hover-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fa fa-share"></i>&nbsp;Bill</button>
             </div>
           </div>
-          Sum ({sum.toFixed(2).toString()} hours/{sum * this.state.hourrate } EUR)
+          Sum ({this.state.Total} hours/{this.state.Total * this.state.hourrate } EUR)
         </div>
         <div className="panel-body">
           <div className="row">

@@ -48,3 +48,18 @@ func Search(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("entities.Search " + e.Error())
 	}
 }
+
+func GetDebtor(t *db.Txn, entity, debname string) (*Debtor, error) {
+	var debtorList map[string]Debtor
+	if e := t.Open(fmt.Sprintf("%s/debtors.toml", entity), &debtorList); e != nil {
+		return nil, e
+	}
+
+	for name, debtor := range debtorList {
+		if name == debname {
+			return &debtor, nil
+		}
+	}
+
+	return nil, nil
+}

@@ -28,6 +28,7 @@ func init() {
 	validator.SetValidationFunc("uint", uintFn)
 	validator.SetValidationFunc("iban", iban)
 	validator.SetValidationFunc("price", price)
+	validator.SetValidationFunc("qty", price)
 }
 
 func strCheck(rule string, v interface{}, param string) error {
