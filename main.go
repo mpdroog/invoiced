@@ -125,6 +125,7 @@ func main() {
 	router.GET("/api/v1/entities/:entity/details", entities.Details)
 
 	router.GET("/api/v1/debtors/:entity/search", entities.Search)
+	router.GET("/api/v1/projects/:entity/search", entities.ProjectSearch)
 
 	router.GET("/api/v1/metrics/:entity/:year", metrics.Dashboard)
 
