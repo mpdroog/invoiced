@@ -20,10 +20,6 @@
 	padding-top: 8px;
 }
 
-.react-datepicker__input-container {
-	display: initial !important;
-}
-
 /* Align save/finalize/pdf buttons */
 .nm7 {
 	margin-top: -7px;
