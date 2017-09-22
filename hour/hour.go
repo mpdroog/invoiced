@@ -15,7 +15,6 @@ import (
 func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
-	//bucket := ps.ByName("bucket")
 	name := ps.ByName("id")
 	if name == "" {
 		http.Error(w, "Please supply a name to delete", 400)
@@ -47,10 +46,6 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		http.Error(w, "invoice.Save failed decoding input", 400)
 		return
 	}
-	/*if u.Name == "" {
-		http.Error(w, "invoice.Save err, no Name given", http.StatusInternalServerError)
-		return
-	}*/
 	if e := validator.Validate(u); e != nil {
 		http.Error(w, fmt.Sprintf("invoice.Save failed validate=%s", e), 400)
 		return
