@@ -18,7 +18,7 @@ type Sess struct {
 }
 
 type Entities struct {
-	IV string
+	IV string `json:"-"`
 	Version int
 
 	Company map[string]Entity
@@ -35,7 +35,7 @@ type Entity struct {
 }
 type User struct {
 	Email string
-	Hash string
+	Hash string `json:"-"`
 	Company []string
 	Name string
 	Address1 string
