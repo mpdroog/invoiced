@@ -67,17 +67,25 @@ export class Autocomplete extends React.Component<{}, {}> {
     });
   }
 
-  toggleDropdown() {
-  	let that = this;
+  onFocus(e) {
+    this.setState({show: true});
+  }
+
+  onBlur(e) {
+    let currentTarget = e.currentTarget;
+    let that = this;
     window.setTimeout(function() {
-	    that.setState({show: !that.state.show});
-    }, 100);
+      if (! currentTarget.contains(document.activeElement)) {
+        that.setState({show: false});
+      }
+    }, 0);  
   }
 
   onSelect(e) {
   	e.preventDefault();
   	let data = this.state.suggestions[ e.target.dataset["key"] ];
-	this.props.onSelect(data);
+	  this.props.onSelect(data);
+    this.setState({show: false});
   }
 
   render() {
@@ -107,8 +115,8 @@ export class Autocomplete extends React.Component<{}, {}> {
 		</div>;
 	}
 
-	return <div style={p}>
-		<input type="text" className="form-control" onFocus={this.toggleDropdown.bind(this)} onBlur={this.toggleDropdown.bind(this)} onChange={this.lookup.bind(this)} value={this.props.value} disabled={this.props.disabled} placeholder={this.props.placeholder} data-key={this.props['data-key']} id={this.props.id} autoComplete="off" />
+	return <div style={p} tabIndex="1" onFocusOut={this.onBlur.bind(this)}>
+		<input type="text" className="form-control" onFocus={this.onFocus.bind(this)} onChange={this.lookup.bind(this)} value={this.props.value} disabled={this.props.disabled} placeholder={this.props.placeholder} data-key={this.props['data-key']} id={this.props.id} autoComplete="off" />
 		{suggest}
 		</div>;
 	}
