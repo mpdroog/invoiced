@@ -90,6 +90,12 @@ func Init(path string) error {
 			return e
 		}
 		Repo = repo
+
+		// revert any unchanged files
+		// (added to support application crash)
+		if e := revert(); e != nil {
+			return e
+		}
 	}
 
 	tree, e := Repo.Worktree()
