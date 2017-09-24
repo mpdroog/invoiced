@@ -17,6 +17,7 @@ import (
 	"time"
 	"github.com/mpdroog/invoiced/config"
 	"sync"
+	"io"
 )
 
 var (
@@ -170,6 +171,21 @@ func Remotes() ([]string, error) {
 
 	return out, nil
 }*/
+
+func (t *Txn) OpenRaw(path string) (io.ReadCloser, error) {
+	if !pathFilter(path) {
+		return nil, fmt.Errorf("Path hack attempt: %s", path)
+	}
+	if AlwaysLowercase {
+		path = strings.ToLower(path)
+	}
+
+	tree, e := Repo.Worktree()
+	if e != nil {
+		return nil, e
+	}
+	return tree.Filesystem.Open(path)
+}
 
 func (t *Txn) Open(path string, out interface{}) (error) {
 	if !pathFilter(path) {

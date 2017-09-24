@@ -14,6 +14,7 @@ import (
 	"github.com/jung-kurt/gofpdf"
 	"github.com/mpdroog/invoiced/writer"
 	"github.com/mpdroog/invoiced/utils"
+	"io"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -369,6 +370,50 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	if e := writer.Encode(w, r, res); e != nil {
 		log.Printf("invoice.List " + e.Error())
+	}
+}
+
+func Text(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	name := ps.ByName("id")
+	bucket := ps.ByName("bucket")
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
+	if config.Verbose {
+		log.Printf("invoice.Text with id=%s", name)
+	}
+
+	paths := []string{
+		fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name),
+		fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name),
+	}
+
+	u := new(Invoice)
+	e := db.View(func(t *db.Txn) error {
+		e := t.OpenFirst(paths, u)
+		if e != nil {
+			return e
+		}
+		path := u.Meta.HourFile
+		if path == "" {
+			http.Error(w, fmt.Sprintf("Invoice has no hourfile"), 404)
+			return nil
+		}
+
+		f, e := t.OpenRaw(path)
+		if e != nil {
+			return e
+		}
+		defer f.Close()
+
+		if _, e := io.Copy(w, f); e != nil {
+			return e
+		}
+		return nil
+	})
+	if e != nil {
+		log.Printf("invoice.Text " + e.Error())
+		http.Error(w, fmt.Sprintf("invoice.Text failed loading hourfile"), 400)
+		return
 	}
 }
 
