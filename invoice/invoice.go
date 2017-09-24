@@ -100,7 +100,7 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		u.Meta.Status = "FINAL"
 
 		if u.Meta.Invoiceid == "" {
-			idx, e := NextInvoiceID(fmt.Sprintf("%s/%s", entity, year), t)
+			idx, e := NextInvoiceID(entity, t)
 			if e != nil {
 				return e
 			}

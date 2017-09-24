@@ -9,9 +9,9 @@ type Counter struct {
 	InvoiceID uint64
 }
 
-func NextInvoiceID(entityYear string, t *db.Txn) (uint64, error) {
+func NextInvoiceID(entity string, t *db.Txn) (uint64, error) {
 	c := &Counter{}
-	path := fmt.Sprintf("%s/counters.toml", entityYear)
+	path := fmt.Sprintf("%s/counters.toml", entity)
 	if e := t.Open(path, c); e != nil {
 		return 0, e
 	}
