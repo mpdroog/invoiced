@@ -17,10 +17,6 @@ func parseWildcards(paths []string) ([]string, error) {
 		if !pathFilter(path) {
 			return nil, fmt.Errorf("Path hack attempt: %s", path)
 		}
-		//abs := Path + path
-		//if !strings.HasSuffix(abs, "/") {
-		//	abs += "/"
-		//}
 
 		/* all-parser */
 		if !strings.Contains(path, "{all}") {

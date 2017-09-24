@@ -47,7 +47,10 @@ func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, 
 		if !strings.HasSuffix(p, "/") {
 			p += "/"
 		}
-		pfPath = append(pfPath, Path+p)
+		if AlwaysLowercase {
+			p = strings.ToLower(p)
+		}
+		pfPath = append(pfPath, Path + p)
 	}
 
 	paths, e := parseWildcards(pfPath)
