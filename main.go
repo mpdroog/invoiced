@@ -97,6 +97,7 @@ func main() {
 		log.Printf("DB=%s\n", config.DbPath)
 	}
 
+	db.AlwaysLowercase = true
 	if e := db.Init(config.DbPath); e != nil {
 		panic(e)
 	}
