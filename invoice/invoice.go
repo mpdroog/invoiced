@@ -11,7 +11,6 @@ import (
 	"time"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/config"
-	"strings"
 	"github.com/jung-kurt/gofpdf"
 	"github.com/mpdroog/invoiced/writer"
 	"github.com/mpdroog/invoiced/utils"
@@ -33,12 +32,11 @@ func randStringBytesRmndr(n int) string {
 }
 
 func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := strings.ToLower(ps.ByName("id"))
+	name := ps.ByName("id")
 	if name == "" {
 		http.Error(w, "Please supply a name to delete", 400)
 		return
 	}
-	// TODO: read from cookie?
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 
@@ -72,7 +70,7 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 // Lock invoice for changes and set invoiceid
 func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := strings.ToLower(ps.ByName("id"))
+	name := ps.ByName("id")
 	if name == "" {
 		http.Error(w, "Please supply a name to finalize", 400)
 		return
@@ -141,8 +139,8 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := strings.ToLower(ps.ByName("id"))
-	bucket := ps.ByName("bucket") // 2017Q3
+	name := ps.ByName("id")
+	bucket := ps.ByName("bucket")
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 	if config.Verbose {
@@ -187,8 +185,8 @@ func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 // Mark invoice as paid
 func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := strings.ToLower(ps.ByName("id"))
-	bucket := ps.ByName("bucket") // 2017Q3
+	name := ps.ByName("id")
+	bucket := ps.ByName("bucket")
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 	if config.Verbose {
@@ -229,7 +227,6 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// IF POST create InvoiceID = 2016Q3-0001
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 
@@ -277,19 +274,20 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	//args := r.URL.Query()
 	name := ps.ByName("id")
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 	bucket := ps.ByName("bucket")
 	log.Printf("invoice.Load with conceptid=%s", name)
 
-	paths := []string{
-		fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name),
-		fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name),
-	}
+	var paths []string
 	if (bucket == "concepts") {
 		paths = []string{fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name)}
+	} else {
+		paths = []string{
+			fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name),
+			fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name),
+		}
 	}
 
 	u := new(Invoice)
@@ -311,7 +309,6 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 	args := r.URL.Query()
-	//bucket := args.Get("bucket")
 
 	paths := []string{
 		fmt.Sprintf("%s/%s/concepts/sales-invoices", entity, year),
@@ -371,13 +368,10 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := strings.ToLower(ps.ByName("id"))
+	name := ps.ByName("id")
 	bucket := ps.ByName("bucket")
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
-	/*if bucket == "" {
-		bucket = "invoices"
-	}*/
 	if config.Verbose {
 		log.Printf("invoice.Pdf with id=%s", name)
 	}
