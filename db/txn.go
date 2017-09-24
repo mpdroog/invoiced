@@ -10,6 +10,7 @@ import (
 	"time"
 	"path"
 	"strings"
+	"gopkg.in/src-d/go-billy.v3"
 )
 
 type Commit struct {
@@ -18,7 +19,7 @@ type Commit struct {
 	Message string
 }
 
-func (t *Txn) Save(file string, in interface{}) error {
+func (t *Txn) Save(file string, isNew bool, in interface{}) error {
 	if !t.Write {
 		panic("DevErr: Save-func only allowed in Update")
 	}
@@ -28,7 +29,6 @@ func (t *Txn) Save(file string, in interface{}) error {
 	if AlwaysLowercase {
 		file = strings.ToLower(file)
 	}
-
 
 	tree, e := Repo.Worktree()
 	if e != nil {
@@ -40,10 +40,17 @@ func (t *Txn) Save(file string, in interface{}) error {
 		return e
 	}
 
-	// TODO: Flag to determine if overwrite is allowed? isNew?
-
-	// overwrite file
-	f, e := tree.Filesystem.OpenFile(file, os.O_RDWR|os.O_CREATE, 0755)
+	var (
+		f billy.File
+	)
+	if isNew {
+		if _, e := tree.Filesystem.Stat(file); !os.IsNotExist(e) {
+			return fmt.Errorf("File already exists %s", file)
+		}
+		f, e = tree.Filesystem.OpenFile(file, os.O_RDWR|os.O_CREATE, 0755)
+	} else {
+		f, e = tree.Filesystem.OpenFile(file, os.O_RDWR, 0755)
+	}
 	if e != nil {
 		return e
 	}

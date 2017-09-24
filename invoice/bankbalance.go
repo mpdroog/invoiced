@@ -115,7 +115,7 @@ func balanceSetPaid(t *db.Txn, entity, year, name, payDate, amount string) (bool
 	}
 	u.Meta.Paydate = payDate
 
-	if e := t.Save(to, u); e != nil {
+	if e := t.Save(to, false, u); e != nil {
 		return false, e
 	}
 	if e := t.Remove(from); e != nil {

@@ -61,9 +61,15 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Email: r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Save concept hour %s", u.Name),
 	}
+
+	isNew := true
+	if u.Status != "NEW" {
+		isNew = false
+	}
+
 	e := db.Update(change, func(t *db.Txn) error {
 		u.Status = "CONCEPT"
-		return t.Save(fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, u.Name), u)
+		return t.Save(fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, u.Name), isNew, u)
 	})
 	if e != nil {
 		log.Printf(e.Error())
@@ -97,7 +103,7 @@ func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return e
 		}
 		u.Status = "FINAL"
-		if e := t.Save(pathTo, u); e != nil {
+		if e := t.Save(pathTo, true, u); e != nil {
 			return e
 		}
 		if e := t.Remove(path); e != nil {

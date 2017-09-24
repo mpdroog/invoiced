@@ -118,7 +118,7 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 		bucketTo = fmt.Sprintf("Q%d", utils.YearQuarter(now))
 		to := fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucketTo, name)
-		if e := t.Save(to, u); e != nil {
+		if e := t.Save(to, true, u); e != nil {
 			return e
 		}
 		if e := t.Remove(from); e != nil {
@@ -163,7 +163,7 @@ func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 		to = fmt.Sprintf("%s/%s/%s/sales-invoices/%s.toml", entity, year, bucketTo, u.Meta.Conceptid)
 		u.Meta.Status = "CONCEPT"
-		if e := t.Save(to, u); e != nil {
+		if e := t.Save(to, true, u); e != nil {
 			return e
 		}
 		if e := t.Remove(from); e != nil {
@@ -207,7 +207,7 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return e
 		}
 		u.Meta.Paydate = time.Now().Format("2006-01-02")
-		if e := t.Save(to, u); e != nil {
+		if e := t.Save(to, false, u); e != nil {
 			return e
 		}
 		if e := t.Remove(from); e != nil {
@@ -245,6 +245,11 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	isNew := true
+	if u.Meta.Status != "NEW" {
+		isNew = false
+	}
+
 	if u.Meta.Conceptid == "" {
 		u.Meta.Conceptid = fmt.Sprintf("concept-%s", randStringBytesRmndr(12))
 		log.Printf("invoice.Save create conceptId=%s", u.Meta.Conceptid)
@@ -259,7 +264,7 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Message: fmt.Sprintf("Update invoice %s", u.Meta.Conceptid),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
-		return t.Save(fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, u.Meta.Conceptid), u)
+		return t.Save(fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, u.Meta.Conceptid), isNew, u)
 	})
 	if e != nil {
 		log.Printf("invoice.Save " + e.Error())

@@ -17,7 +17,7 @@ func NextInvoiceID(entity string, t *db.Txn) (uint64, error) {
 	}
 
 	c.InvoiceID++
-	if e := t.Save(path, c); e != nil {
+	if e := t.Save(path, false, c); e != nil {
 		return 0, e
 	}
 
