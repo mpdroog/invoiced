@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"bufio"
 	git "gopkg.in/src-d/go-git.v4"
-	//"gopkg.in/src-d/go-git.v4/plumbing/transport"
 	"github.com/BurntSushi/toml"
 	"time"
 )
@@ -20,7 +19,7 @@ type Commit struct {
 
 func (t *Txn) Save(file string, in interface{}) error {
 	if !t.Write {
-		panic("DevErr: Call You call Move in View, please use Update!")
+		panic("DevErr: Save-func only allowed in Update")
 	}
 	if !pathFilter(file) {
 		return fmt.Errorf("Path hack attempt: %s", file)
@@ -62,12 +61,11 @@ func (t *Txn) Save(file string, in interface{}) error {
 
 func (t *Txn) Remove(path string) error {
 	if !t.Write {
-		panic("DevErr: Call You call Move in View, please use Update!")
+		panic("DevErr: Remove-func only allowed in Update")
 	}
 	if !pathFilter(path) {
 		return fmt.Errorf("Path hack attempt: %s", path)
 	}
-	//abs := Path+path
 
 	// commit on git
 	tree, e := Repo.Worktree()
@@ -82,7 +80,7 @@ func (t *Txn) Remove(path string) error {
 
 func (t *Txn) Move(from, to string) error {
 	if !t.Write {
-		panic("DevErr: Call You call Move in View, please use Update!")
+		panic("DevErr: Move-func only allowed in Update")
 	}
 	if !pathFilter(from) {
 		return fmt.Errorf("Path hack attempt: %s", from)
