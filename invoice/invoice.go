@@ -17,7 +17,7 @@ import (
 	"github.com/mpdroog/invoiced/utils"
 )
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -249,7 +249,7 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	if u.Meta.Conceptid == "" {
-		u.Meta.Conceptid = fmt.Sprintf("CONCEPT-%s", randStringBytesRmndr(6))
+		u.Meta.Conceptid = fmt.Sprintf("concept-%s", randStringBytesRmndr(12))
 		log.Printf("invoice.Save create conceptId=%s", u.Meta.Conceptid)
 	} else {
 		log.Printf("invoice.Save update conceptId=%s", u.Meta.Conceptid)
