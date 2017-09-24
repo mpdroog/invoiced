@@ -32,7 +32,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
       description: "",
       day: Moment(),
       import: false,
-      hourrate: 0,
+      hourRate: 0,
 
       Lines: [],
       Name: "",
@@ -158,7 +158,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     this.setState({
        Project: prj.Name,
        Name: prj.Name + "-" + prevMonth.format("YYYY-MM"),
-       hourrate: prj.HourRate
+       hourRate: prj.HourRate
     });
   }
 
@@ -176,6 +176,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     .then(res => {
       console.log(res.data);
       this.props.id = res.data.Name;
+      this.setState(res.data);
       history.replaceState({}, "", `#${this.props.entity}/${this.props.year}/hours/edit/concepts/${res.data.Name}`);
     })
     .catch(err => {
@@ -188,8 +189,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     let args = this.state;
     Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts/${args.Name}/bill`, args)
     .then(res => {
-      this.props.id = res.data.Name;
-      history.replaceState({}, "", `#${this.props.entity}/${this.props.year}/hours/edit/${res.data.Name}`);
+      location.href = `#${this.props.entity}/${this.props.year}/invoices/edit/concepts/${res.headers["x-redirect-invoice"]}`
     })
     .catch(err => {
       handleErr(err);
@@ -265,7 +265,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
               <button className="btn btn-default btn-hover-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fa fa-share"></i>&nbsp;Bill</button>
             </div>
           </div>
-          Sum ({this.state.Total} hours/{this.state.Total * this.state.hourrate } EUR)
+          Sum ({this.state.Total} hours/{this.state.Total * this.state.hourRate } EUR)
         </div>
         <div className="panel-body">
           <div className="row">

@@ -32,7 +32,8 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
         Issuedate: null,
         Ponumber: "",
         Duedate: Moment().add(14, 'days').format('YYYY-MM-DD'),
-        Paydate: null
+        Paydate: null,
+        HourFile: ""
       },
       Lines: [{
         Description: "",

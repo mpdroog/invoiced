@@ -21,39 +21,39 @@ func today() time.Time {
 }
 
 // Convert hours to concept invoice
-func HourToInvoice(entity, year, project, name, hourStr, email string, t *db.Txn) error {
+func HourToInvoice(entity, year, project, name, hourStr, email, hourFile string, t *db.Txn) (string, error) {
 	prj, e := entities.GetProject(t, entity, project)
 	if e != nil {
-		return e
+		return "", e
 	}
 	if prj == nil {
-		return fmt.Errorf("No such project %s", project)
+		return "", fmt.Errorf("No such project %s", project)
 	}
 	debtor, e := entities.GetDebtor(t, entity, prj.Debtor)
 	if e != nil {
-		return e
+		return "", e
 	}
 	if debtor == nil {
-		return fmt.Errorf("No such debtor %s", prj.Debtor)
+		return "", fmt.Errorf("No such debtor %s", prj.Debtor)
 	}
 
 	company := middleware.CompanyByName(entity)
 	if company == nil {
-		return fmt.Errorf("No such company %s", entity)		
+		return "", fmt.Errorf("No such company %s", entity)		
 	}
 	user := middleware.UserByEmail(email)
 	if user == nil {
-		return fmt.Errorf("No such email %s", email)		
+		return "", fmt.Errorf("No such email %s", email)		
 	}
 
 	d, e := time.ParseDuration(fmt.Sprintf("%dh", 24 * prj.DueDays))
 	if e != nil {
-		return e
+		return "", e
 	}
 
 	hours, e := decimal.NewFromString(hourStr)
 	if e != nil {
-		return e
+		return "", e
 	}
 	extotal := decimal.NewFromFloat(prj.HourRate).Mul(hours)
 
@@ -85,6 +85,7 @@ func HourToInvoice(entity, year, project, name, hourStr, email string, t *db.Txn
 			Issuedate: today.Format("2006-01-02"),
 			Ponumber: prj.PO,
 			Duedate: today.Add(d).Format("2006-01-02"),
+			HourFile: hourFile,
 		},
 		Lines: []InvoiceLine{InvoiceLine{
 			Description: name,
@@ -106,5 +107,5 @@ func HourToInvoice(entity, year, project, name, hourStr, email string, t *db.Txn
 	}
 
 	path := fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, c.Meta.Conceptid)
-	return t.Save(path, c)
+	return c.Meta.Conceptid, t.Save(path, true, c)
 }

@@ -23,6 +23,7 @@ type InvoiceMeta struct {
 	Duedate   string `validate:"nonzero,date"`
 	Paydate   string `validate:"date"`
 	Freefield string
+	HourFile  string
 }
 type InvoiceLine struct {
 	Description string `validate:"nonzero"`

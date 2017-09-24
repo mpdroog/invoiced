@@ -92,6 +92,7 @@ func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Message: fmt.Sprintf("Bill hours from %s", name),
 	}
 
+	invoiceId := ""
 	u := new(Hour)
 	path := fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, name)
 	bucketTo := fmt.Sprintf("Q%d", utils.YearQuarter(time.Now()))
@@ -110,13 +111,16 @@ func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return e
 		}
 		// Next create concept invoice
-		return invoice.HourToInvoice(entity, year, u.Project, name, u.Total, change.Email, t)
+		var e error
+		invoiceId, e = invoice.HourToInvoice(entity, year, u.Project, name, u.Total, change.Email, pathTo, t)
+		return e
 	})
 	if e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "hour.Bill fail", http.StatusInternalServerError)
 	}
 
+	w.Header().Set("X-Redirect-Invoice", invoiceId)
 	if e := writer.Encode(w, r, u); e != nil {
 		log.Printf("hour.Bill " + e.Error())
 	}
