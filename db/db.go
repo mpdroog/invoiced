@@ -13,7 +13,6 @@ import (
 	"log"
 	"strings"
 	"fmt"
-	"io/ioutil"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 	"time"
 	"github.com/mpdroog/invoiced/config"
@@ -23,13 +22,15 @@ import (
 var (
 	Repo *git.Repository
 	Path string
+	AlwaysLowercase bool // Force disk I/O in lowercase for better OSX compatibility
+
 	canPush chan struct{}
 	pathRegex *regexp.Regexp
 	lock *sync.RWMutex
 )
 
 type Txn struct {
-	Write bool
+	Write bool // Don't toggle this bool but use the Update instead of View-func
 }
 type Fn func(*Txn) error
 
@@ -77,6 +78,8 @@ func Init(path string) error {
 		if _, e = Repo.CreateRemote(cfg); e != nil {
 			return e
 		}
+
+		// TODO: create basic file structure?
 
 	} else {
 		if config.Verbose {
@@ -166,9 +169,15 @@ func (t *Txn) Open(path string, out interface{}) (error) {
 	if !pathFilter(path) {
 		return fmt.Errorf("Path hack attempt: %s", path)
 	}
+	if AlwaysLowercase {
+		path = strings.ToLower(path)
+	}
 
-	abs := Path+path
-	file, e := os.Open(abs)
+	tree, e := Repo.Worktree()
+	if e != nil {
+		return e
+	}
+	file, e := tree.Filesystem.Open(path)
 	if e != nil {
 		return e
 	}
@@ -183,12 +192,7 @@ func (t *Txn) Open(path string, out interface{}) (error) {
 
 func (t *Txn) OpenFirst(paths []string, out interface{}) (error) {
 	for _, path := range paths {
-		if !pathFilter(path) {
-			return fmt.Errorf("Path hack attempt: %s", path)
-		}
-
-		abs := Path+path
-		file, e := os.Open(abs)
+		e := t.Open(path, out)
 		if e != nil {
 			if os.IsNotExist(e) {
 				// try next file!
@@ -196,42 +200,10 @@ func (t *Txn) OpenFirst(paths []string, out interface{}) (error) {
 			}
 			return e
 		}
-		defer file.Close()
-
-		buf := bufio.NewReader(file)
-		if _, e := toml.DecodeReader(buf, out); e != nil {
-			return e
-		}
 		return nil
 	}
 
-	return fmt.Errorf("No file found")
-}
-
-// Find file
-// TODO: Remove this hack..
-func (t *Txn) Lookup(path, fileName string) (string, error) {
-	if !pathFilter(path) {
-		return "", fmt.Errorf("Path hack attempt: %s", path)
-	}
-	abs := Path+path
-
-	files, e := ioutil.ReadDir(abs)
-	if e != nil {
-		return "", e
-	}
-
-	out := ""
-	for _, file := range files {
-		p := fmt.Sprintf("%s/%s/%s.toml", abs, file, fileName)
-		if _, e := os.Stat(p); e == nil {
-			if out != "" {
-				return "", fmt.Errorf("Duplicate filename=" + fileName)
-			}
-			out = p
-		}
-	}
-	return out, nil
+	return fmt.Errorf("File not in any given path %+v", paths)
 }
 
 func View(fn Fn) error {

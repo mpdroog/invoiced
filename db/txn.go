@@ -2,13 +2,14 @@ package db
 
 import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	"path"
 	"os"
 	"fmt"
 	"bufio"
 	git "gopkg.in/src-d/go-git.v4"
 	"github.com/BurntSushi/toml"
 	"time"
+	"path"
+	"strings"
 )
 
 type Commit struct {
@@ -24,17 +25,25 @@ func (t *Txn) Save(file string, in interface{}) error {
 	if !pathFilter(file) {
 		return fmt.Errorf("Path hack attempt: %s", file)
 	}
+	if AlwaysLowercase {
+		file = strings.ToLower(file)
+	}
 
-	abs := Path+file
-	// ensure dir exists
-	if e := os.MkdirAll(path.Dir(abs), os.ModePerm); e != nil {
+
+	tree, e := Repo.Worktree()
+	if e != nil {
+		return e
+	}
+
+	// Ensure dirs exist
+	if e := tree.Filesystem.MkdirAll(path.Dir(file), os.ModePerm); e != nil {
 		return e
 	}
 
 	// TODO: Flag to determine if overwrite is allowed? isNew?
 
 	// overwrite file
-	f, e := os.OpenFile(abs, os.O_RDWR|os.O_CREATE, 0755)
+	f, e := tree.Filesystem.OpenFile(file, os.O_RDWR|os.O_CREATE, 0755)
 	if e != nil {
 		return e
 	}
@@ -49,10 +58,6 @@ func (t *Txn) Save(file string, in interface{}) error {
 	}
 
 	// commit on git
-	tree, e := Repo.Worktree()
-	if e != nil {
-		return e
-	}
 	if _, e := tree.Add(file); e != nil {
 		return e
 	}
@@ -65,6 +70,9 @@ func (t *Txn) Remove(path string) error {
 	}
 	if !pathFilter(path) {
 		return fmt.Errorf("Path hack attempt: %s", path)
+	}
+	if AlwaysLowercase {
+		path = strings.ToLower(path)
 	}
 
 	// commit on git
@@ -87,6 +95,10 @@ func (t *Txn) Move(from, to string) error {
 	}
 	if !pathFilter(to) {
 		return fmt.Errorf("Path hack attempt: %s", to)
+	}
+	if AlwaysLowercase {
+		from = strings.ToLower(from)
+		to = strings.ToLower(to)
 	}
 
 	tree, e := Repo.Worktree()
