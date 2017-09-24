@@ -66,12 +66,16 @@ function hashChange() {
       } else {
             page = React.createElement(inject.default, props);
       }
+      console.log("ReactDOM.render()", props);
       ReactDOM.render(page, root);
 }
 
 try {
       let splash = document.getElementById("js-splash");
       let root = document.getElementById('root');
+      if (root === null) {
+            throw "document.getElementById(root) returned null?";
+      }
 
       hashChange();
       splash && splash.remove();

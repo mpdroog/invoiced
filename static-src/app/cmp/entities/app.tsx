@@ -82,7 +82,6 @@ export default class Entities extends React.Component<{}, IMetrics> {
   private ajax() {
     Axios.get('/api/v1/entities', {})
     .then(res => {
-    	console.log(res.data);
       	this.setState({entities: res.data});
     })
     .catch(err => {

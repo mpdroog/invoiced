@@ -43,9 +43,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
   }
 
   componentDidMount() {
-    console.log("componentDidMount", this.props);
     if (this.props.id) {
-      console.log("Load hour name=" + this.props.id);
       this.ajax(this.props.id);
     }
   }
@@ -165,8 +163,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
   }
 
   private lineRemove(key: number) {
-    console.log(`Remove hour line with key=${key}`);
-    console.log("Deleted idx ", this.state.Lines.splice(key, 1)[0]);
+    console.log(`Deleted ${key} idx `, this.state.Lines.splice(key, 1)[0]);
     this.setState({Lines: this.state.Lines});
   }
 
@@ -191,7 +188,6 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     let args = this.state;
     Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts/${args.Name}/bill`, args)
     .then(res => {
-      console.log(res.data);
       this.props.id = res.data.Name;
       history.replaceState({}, "", `#${this.props.entity}/${this.props.year}/hours/edit/${res.data.Name}`);
     })

@@ -57,7 +57,6 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
   componentDidMount() {
     let params = this.props;
     if (params.id) {
-      console.log(`Load invoice name=${params.id} from bucket=${params.bucket}`);
       this.ajax(params["bucket"], params.id);
     } else {
       this.ajaxDefaults(params.entity);
