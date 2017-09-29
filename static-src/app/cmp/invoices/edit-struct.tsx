@@ -26,6 +26,7 @@ export interface IInvoiceMeta {
   Duedate?: string
   Paydate?: Moment.Moment
   Freefield?: string
+  HourFile: string
 }
 export interface IInvoiceLine {
   Description: string

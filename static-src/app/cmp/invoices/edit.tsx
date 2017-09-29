@@ -3,6 +3,7 @@ import Axios from "axios";
 import * as Moment from "moment";
 import {Autocomplete, LockedInput} from "../../shared/components";
 import {InvoiceLineEdit} from "./edit-line";
+import {InvoiceMail} from "./edit-mail";
 import * as Big from "big.js";
 import * as Struct from "./edit-struct";
 
@@ -51,6 +52,9 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
         Vat: "",
         Coc: "",
         Iban: ""
+      },
+      State: {
+        email: false
       }
     };
   }
@@ -230,6 +234,10 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
     });
   }
 
+  private email() {
+    this.setState({State: {email: !this.state.State.email}});
+  }
+
 	render() {
     let inv = this.state;
     let that = this;
@@ -242,6 +250,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
                 <button className="btn btn-default btn-hover-success" disabled={this.revisions.length === 0 || inv.Meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i> Save</button>
                 <button className="btn btn-default btn-hover-danger" disabled={inv.Meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fa fa-lock"></i> Finalize</button>
                 <a className="btn btn-default btn-hover-success" disabled={inv.Meta.Status !== "FINAL"} onClick={this.pdf.bind(this)}><i className="fa fa-file-pdf-o"></i> PDF</a>
+                <a className="btn btn-default btn-hover-success" disabled={inv.Meta.Status !== "FINAL"} onClick={this.email.bind(this)}><i className="fa fa-send"></i> E-mail</a>
 
                 <button className="btn btn-default btn-hover-danger" disabled={inv.Meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fa fa-unlock"></i> Reset</button>
 
@@ -334,6 +343,6 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
 
 	        </div>
 		    </div>
-    </div></form>;
+    </div><InvoiceMail parent={this} onHide={this.email.bind(this)} hide={this.state.State.email} /></form>;
 	}
 }

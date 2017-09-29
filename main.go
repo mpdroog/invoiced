@@ -76,11 +76,15 @@ func Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 func main() {
-	var wg sync.WaitGroup
+	var (
+		wg sync.WaitGroup
+		path string
+	)
 	flag.BoolVar(&config.Local, "l", true, "Local-mode (only 127, no https)")
 	flag.BoolVar(&config.Verbose, "v", false, "Verbose-mode (log more)")
 	flag.StringVar(&config.DbPath, "d", "billingdb", "Path to database")
 	flag.StringVar(&config.HTTPListen, "h", "localhost:9999", "HTTP listening port")
+	flag.StringVar(&path, "c", "./config.toml", "Path to config")
 	flag.Parse()
 
 	if !config.Local {
@@ -95,6 +99,10 @@ func main() {
 	if config.Verbose {
 		log.Printf("Curdir=%s\n", config.CurDir)
 		log.Printf("DB=%s\n", config.DbPath)
+	}
+
+	if e := config.Open(path); e != nil {
+		log.Fatal(e)
 	}
 
 	db.AlwaysLowercase = true
@@ -139,6 +147,7 @@ func main() {
 	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/text", invoice.Text)
 	//router.GET("/api/v1/invoice/:id/credit", invoice.Credit)
 	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/paid", invoice.Paid)
+	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/email", invoice.Email)
 	router.POST("/api/v1/invoice-balance/:entity/:year", invoice.Balance)
 	router.DELETE("/api/v1/invoice/:entity/:year/:bucket/:id", invoice.Delete)
 
