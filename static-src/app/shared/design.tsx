@@ -32,10 +32,16 @@ function Menu ({ company, year }) {
                             <i className="fa fa-money"></i>
                         </a>
                     </li>
+                    <li>
+                        <a href={"#"+company+"/"+year+"/taxes"} id="js-taxes">
+                            <i className="fa fa-bank"></i>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </nav>
-    </div>);
+      </div>
+    );
 }
 
 export function calendar({ year }) {

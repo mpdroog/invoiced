@@ -12,6 +12,7 @@ import (
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
+	"github.com/mpdroog/invoiced/taxes"
 	"github.com/mpdroog/invoiced/middleware"
 	"github.com/mpdroog/invoiced/rules"
 	"github.com/mpdroog/invoiced/metrics"
@@ -156,6 +157,8 @@ func main() {
 	router.GET("/api/v1/hour/:entity/:year/:bucket/:id", hour.Load)
 	router.POST("/api/v1/hour/:entity/:year/:bucket/:id/bill", hour.Bill)
 	router.DELETE("/api/v1/hour/:entity/:year/:bucket/:id", hour.Delete)
+
+	router.POST("/api/v1/taxes/:entity/:year/:quarter", taxes.Tax)
 
 	router.ServeFiles("/static/*filepath", http.Dir(config.CurDir+"/static"))
 

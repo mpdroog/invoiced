@@ -48,6 +48,10 @@ function hashChange() {
                         }
                         break;
 
+                  case "taxes":
+                        inject = require("./cmp/taxes/list");
+                        break;
+
                   case "":
                   case undefined:
                         inject = require("./cmp/dashboard/app");
