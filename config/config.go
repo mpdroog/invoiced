@@ -29,6 +29,7 @@ type ConfigQueue struct {
 	FromReply string
 	Display  string
 	Subject  string
+	BCC      []string
 }
 type Config struct {
 	Queues    map[string]ConfigQueue

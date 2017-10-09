@@ -123,6 +123,7 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		msg.SetHeader("Reply-To", fmt.Sprintf("%s <%s>", conf.Display, conf.FromReply))
 
 		msg.SetHeader("To", job.To...)
+		msg.SetHeader("Bcc", conf.BCC...)
 		msg.SetHeader("Subject", conf.Subject + job.Subject)
 		msg.SetBody("text/plain", job.Text)
 
