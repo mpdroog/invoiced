@@ -219,14 +219,14 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	e := db.Update(change, func(t *db.Txn) error {
 		if e := t.Open(from, u); e != nil {
-			return e
+			return fmt.Errorf("Paid::Open %v", e)
 		}
 		u.Meta.Paydate = time.Now().Format("2006-01-02")
-		if e := t.Save(to, false, u); e != nil {
-			return e
+		if e := t.Save(to, true, u); e != nil {
+			return fmt.Errorf("Paid::Save %v", e)
 		}
 		if e := t.Remove(from); e != nil {
-			return e
+			return fmt.Errorf("Paid::Remove %v", e)
 		}
 		return nil
 	})
