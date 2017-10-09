@@ -28,10 +28,11 @@ export class InvoiceMail extends React.Component<{}, {}> {
     }
     let s = {display: "block"};
     let a = {float: "left", width: "350px", textAlign: "left"};
+    let parent = this.props.parent;
     let parentState = this.props.parent.state;
     let hourFile = <div/>;
     if (parentState.Meta.HourFile.length > 0) {
-      hourFile = <p><a href={"/api/v1/invoice/rootdev/2017/Q3/" + parentState.Meta.Conceptid + "/text"} target="_blank"><i className="fa fa-file-o" />&nbsp;hours.txt</a></p>;
+      hourFile = <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentState.Meta.Conceptid + "/text"} target="_blank"><i className="fa fa-file-o" />&nbsp;hours.txt</a></p>;
     }
 
   	return <div className="modal" style={s} tabindex="-1" role="dialog">
@@ -67,7 +68,7 @@ export class InvoiceMail extends React.Component<{}, {}> {
           </div>
           <div className="modal-footer">
             <div style={a}>
-              <p><a href={"/api/v1/invoice/rootdev/2017/Q3/" + parentState.Meta.Conceptid + "/pdf"} target="_blank"><i className="fa fa-file-pdf-o" />&nbsp;{parentState.Meta.Invoiceid}.pdf</a></p>
+              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentState.Meta.Conceptid + "/pdf"} target="_blank"><i className="fa fa-file-pdf-o" />&nbsp;{parentState.Meta.Invoiceid}.pdf</a></p>
               {hourFile}
             </div>
             <a onClick={this.send.bind(this)} className="btn btn-primary" style="float:right"> Send</a>
