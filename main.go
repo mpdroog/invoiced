@@ -106,7 +106,7 @@ func main() {
 		log.Fatal(e)
 	}
 
-	db.AlwaysLowercase = true
+	//db.AlwaysLowercase = true
 	if e := db.Init(config.DbPath); e != nil {
 		panic(e)
 	}
