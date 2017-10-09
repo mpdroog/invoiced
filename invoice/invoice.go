@@ -49,9 +49,6 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Message: fmt.Sprintf("Delete concept invoice %s", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
-		fmt.Printf(
-			"%s/%s/concepts/sales-invoices/%s.toml", entity, year, name,
-		)
 		return t.Remove(fmt.Sprintf(
 			"%s/%s/concepts/sales-invoices/%s.toml", entity, year, name,
 		))
@@ -269,7 +266,7 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	if u.Meta.Conceptid == "" {
-		u.Meta.Conceptid = fmt.Sprintf("concept-%s", randStringBytesRmndr(12))
+		u.Meta.Conceptid = randStringBytesRmndr(12)
 		log.Printf("invoice.Save create conceptId=%s", u.Meta.Conceptid)
 	} else {
 		log.Printf("invoice.Save update conceptId=%s", u.Meta.Conceptid)

@@ -88,7 +88,7 @@ func HourToInvoice(entity, year, project, name, hourStr, email, hourFile, from s
 			Coc: debtor.COC,
 		},
 		Meta: InvoiceMeta{
-			Conceptid: fmt.Sprintf("concept-%s", randStringBytesRmndr(12)),
+			Conceptid: randStringBytesRmndr(12),
 			Status: "CONCEPT",
 			Invoiceid: "",
 			Issuedate: today.Format("2006-01-02"),
