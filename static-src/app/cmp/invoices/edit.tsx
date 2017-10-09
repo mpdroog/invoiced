@@ -55,6 +55,12 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
       },
       State: {
         email: false
+      },
+      Mail: {
+        From: "",
+        Subject: "",
+        To: "",
+        Body: ""
       }
     };
   }

@@ -2,6 +2,12 @@ package invoice
 
 import 	"github.com/mpdroog/invoiced/db"
 
+type InvoiceMail struct {
+	From string
+	Subject string
+	To string
+	Body string
+}
 type InvoiceEntity struct {
 	Name    string `validate:"nonzero"`
 	Street1 string `validate:"nonzero"`
@@ -51,6 +57,7 @@ type Invoice struct {
 	Notes string
 	Total InvoiceTotal
 	Bank InvoiceBank
+	Mail InvoiceMail
 }
 
 type ListReply struct {

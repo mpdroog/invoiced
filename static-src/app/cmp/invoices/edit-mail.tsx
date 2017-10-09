@@ -4,29 +4,17 @@ import Axios from "axios";
 export class InvoiceMail extends React.Component<{}, {}> {
   constructor(props) {
     super(props);
-
-    this.state = {
-      From: "support",
-      Body: `Dear customer,
-
-Please find attached the latest invoice + hour specification.
-
-With kind regards,
-Mark Droog
-RootDev`,
-      Subject: "[SpyOFF] Invoice September-2017",
-      To: "pw.droog@quicknet.nl"
-    };
   }
 
   send(e) {
-    let req = JSON.parse(JSON.stringify(this.state));
-    console.log("Send!", req);
-
     let that = this;
     let parent = this.props.parent;
+    let req = JSON.parse(JSON.stringify(parent.state.Mail));
+    console.log("Send!", req);
+
     Axios.post('/api/v1/invoice/'+parent.props.entity+'/'+parent.props.year+'/'+parent.props.bucket+'/'+parent.state.Meta.Conceptid+'/email', req)
     .then(res => {
+      parent.setState({Mail: that.state});
       that.props.onHide(e);
     })
     .catch(err => {
@@ -59,8 +47,8 @@ RootDev`,
 	              <i className="fa fa-send"></i>
           		</div>
 	          	<div className="col-sm-10">
-	              <input type="text" className="form-control" value={this.state.Subject}/>
-  	          	  <input type="text" className="form-control" value="Reply-To: rootdev@gmail.com" disabled={true}/>
+	              <input type="text" className="form-control" value={parentState.Mail.Subject}/>
+  	          	  <input type="text" className="form-control" value={"Reply-To: " + parentState.Mail.From} disabled={true}/>
 	            </div>
 	            </div>
             </h4>
@@ -71,11 +59,11 @@ RootDev`,
           			To
           		</div>
 	          	<div className="col-sm-11">
-		          	<input type="text" className="form-control" value={this.state.To}/>
+		          	<input type="text" className="form-control" value={parentState.Mail.To}/>
 		        </div>
 		    </div>
 
-            <textarea className="form-control h140">{this.state.Body}</textarea>
+            <textarea className="form-control h140">{parentState.Mail.Body}</textarea>
           </div>
           <div className="modal-footer">
             <div style={a}>

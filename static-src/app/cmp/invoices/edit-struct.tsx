@@ -44,6 +44,12 @@ export interface IInvoiceBank {
   Coc: string
   Iban: string
 }
+export interface IInvoiceMail {
+  From: string
+  Subject: string
+  To: string
+  Body: string
+}
 export interface IInvoiceState {
   Company?: string
   Entity?: IInvoiceEntity
@@ -53,4 +59,5 @@ export interface IInvoiceState {
   Notes?: string
   Total?: IInvoiceTotal
   Bank?: IInvoiceBank
+  Mail?: IInvoiceMail
 }

@@ -18,13 +18,6 @@ import (
 	"os"
 )
 
-type Mail struct {
-	From string
-	Subject string
-	To string
-	Body string
-}
-
 type Job struct {
 	To []string
 	Subject string
@@ -42,7 +35,7 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		http.Error(w, "Please send a request body", 400)
 		return
 	}
-	m := new(Mail)
+	m := new(InvoiceMail)
 	if e := writer.Decode(r, m); e != nil {
 		log.Printf("invoice.Email " + e.Error())
 		http.Error(w, "invoice.Email failed to decode input", 400)
@@ -78,7 +71,6 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if e != nil {
 			return e
 		}
-		// TODO: read hourfile
 
 		buf := new(bytes.Buffer)
 		if e := f.Output(buf); e != nil {
@@ -96,7 +88,6 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return e
 		}
 
-		//enc := base64.StdEncoding
 		job := &Job{
 			To: strings.Split(m.To, ","),
 			Subject: m.Subject,
@@ -117,9 +108,10 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return e
 		}
 
-		conf, ok := config.C.Queues[m.From]
-		if !ok {
-			return fmt.Errorf("No such from=" + m.From)
+		var conf config.ConfigQueue
+		for _, conf = range config.C.Queues {
+			// TODO: Nasty hack to get first item...
+			break
 		}
 
 		msg := gomail.NewMessage()
