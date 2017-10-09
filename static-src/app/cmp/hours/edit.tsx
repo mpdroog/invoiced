@@ -76,7 +76,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
           Description: day.text,
           Day: day.day
         });
-        total = total.plus(sum);
+        total = total.plus(sum.asHours());
       }
     }
 
