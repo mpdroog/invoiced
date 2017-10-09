@@ -18,6 +18,7 @@ type Project struct {
 	HourRate float64
 	DueDays int
 	PO string
+	Street1 string
 }
 
 func ProjectSearch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

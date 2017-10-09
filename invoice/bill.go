@@ -82,7 +82,7 @@ func HourToInvoice(entity, year, project, name, hourStr, email, hourFile, from s
 		},
 		Customer: InvoiceCustomer{
 			Name: debtor.Name,
-			Street1: debtor.Street1,
+			Street1: debtor.Street1 + " " + prj.Street1,
 			Street2: debtor.Street2,
 			Vat: debtor.VAT,
 			Coc: debtor.COC,
