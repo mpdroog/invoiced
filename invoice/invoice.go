@@ -113,6 +113,7 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 				return e
 			}
 			u.Meta.Invoiceid = utils.CreateInvoiceId(time.Now(), idx)
+			u.Mail.Subject += " #" + u.Meta.Invoiceid
 			if config.Verbose {
 				log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
 			}
