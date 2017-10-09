@@ -15,9 +15,11 @@ import (
 	"github.com/mpdroog/invoiced/writer"
 	"github.com/mpdroog/invoiced/utils"
 	"io"
+	"strings"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
+const EUTaxComment = "VAT Reverse charge"
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -69,6 +71,14 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 }
 
+func vatCountry(nr string) string {
+	country := "nl"
+	if len(nr) > 3 {
+		country = strings.ToLower(nr[0:2])
+	}
+	return country
+}
+
 // Lock invoice for changes and set invoiceid
 func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
@@ -108,6 +118,13 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			u.Meta.Invoiceid = utils.CreateInvoiceId(time.Now(), idx)
 			if config.Verbose {
 				log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
+			}
+
+			if vatCountry(u.Customer.Vat) != "nl" && !strings.Contains(u.Notes, EUTaxComment) {
+				if len(u.Notes) > 0 {
+					u.Notes += "\n\n"
+				}
+				u.Notes += EUTaxComment
 			}
 		}
 
