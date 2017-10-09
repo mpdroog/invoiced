@@ -1,6 +1,7 @@
 package invoice
 
 import (
+	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/entities"
 	"github.com/mpdroog/invoiced/middleware"
@@ -8,6 +9,7 @@ import (
 	"fmt"
 	"github.com/shopspring/decimal"
 	"strconv"
+	"strings"
 )
 
 // Get start of day
@@ -21,7 +23,7 @@ func today() time.Time {
 }
 
 // Convert hours to concept invoice
-func HourToInvoice(entity, year, project, name, hourStr, email, hourFile string, t *db.Txn) (string, error) {
+func HourToInvoice(entity, year, project, name, hourStr, email, hourFile, from string, t *db.Txn) (string, error) {
 	prj, e := entities.GetProject(t, entity, project)
 	if e != nil {
 		return "", e
@@ -63,6 +65,13 @@ func HourToInvoice(entity, year, project, name, hourStr, email, hourFile string,
 	}
 	total := extotal.Add(tax)
 
+	// random mail queue
+	mailQueue := ""
+	for key, _ := range config.C.Queues {
+		mailQueue = key
+		break
+	}
+
 	today := today()
 	c := &Invoice{
 		Company: company.Name,
@@ -103,6 +112,16 @@ func HourToInvoice(entity, year, project, name, hourStr, email, hourFile string,
 			Vat: company.VAT,
 			Coc: company.COC,
 			Iban: company.IBAN,
+		},
+		Mail: InvoiceMail{
+			From: mailQueue,
+			Subject: "Invoice " + prj.Name,
+			To: strings.Join(prj.BillingEmail, ", "),
+			Body: `Dear customer,
+
+Please find attached the latest invoice + hour specification.
+
+With kind regards,` + "\n" + from + "\n" + company.Name + "\n",
 		},
 	}
 

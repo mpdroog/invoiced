@@ -112,7 +112,7 @@ func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 		// Next create concept invoice
 		var e error
-		invoiceId, e = invoice.HourToInvoice(entity, year, u.Project, name, u.Total, change.Email, pathTo, t)
+		invoiceId, e = invoice.HourToInvoice(entity, year, u.Project, name, u.Total, change.Email, pathTo, r.Header.Get("X-User-Name"), t)
 		return e
 	})
 	if e != nil {
