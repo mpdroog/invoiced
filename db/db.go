@@ -203,13 +203,13 @@ func (t *Txn) Open(path string, out interface{}) (error) {
 	if e != nil {
 		return e
 	}
-	defer file.Close()
 
 	buf := bufio.NewReader(file)
 	if _, e := toml.DecodeReader(buf, out); e != nil {
+		file.Close() /* ignore err, write err takes precedence */
 		return e
 	}
-	return nil
+	return file.Close()
 }
 
 func (t *Txn) OpenFirst(paths []string, out interface{}) (error) {

@@ -105,18 +105,19 @@ func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, 
 				if e != nil {
 					return e
 				}
-				defer file.Close()
 
 				buf := bufio.NewReader(file)
 				if _, e := toml.DecodeReader(buf, mem); e != nil {
+					file.Close() /* ignore err, write err takes precedence */
 					return e
 				}
 				title := filepath.Base(file.Name())
 				if e := f(title[0:strings.LastIndex(title, ".")], file.Name(), path); e != nil {
+					file.Close() /* ignore err, write err takes precedence */
 					return e
 				}
 				i++
-				return nil
+				return file.Close()
 			}()
 			if e != nil {
 				return page, e
