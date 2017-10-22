@@ -52,7 +52,7 @@ func Init(path string) error {
 	if !strings.HasSuffix(Path, "/") {
 		Path += "/"
 	}
-	pathRegex = regexp.MustCompile(`^[A-Za-z0-9_\-\/{}]+(.toml)?$`)
+	pathRegex = regexp.MustCompile(`^[A-Za-z0-9\._\-\/{}]+$`)
 	canPush = make(chan struct{}, 10) // non-blocking
 
 	if !pathFilter(Path) {

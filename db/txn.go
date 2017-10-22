@@ -57,17 +57,17 @@ func (t *Txn) Save(file string, isNew bool, in interface{}) error {
 
 	buf := bufio.NewWriter(f)
 	if e := toml.NewEncoder(buf).Encode(in); e != nil {
-		file.Close() /* ignore err, write err takes precedence */
+		f.Close() /* ignore err, write err takes precedence */
 		return e
 	}
 	if e := buf.Flush(); e != nil {
-		file.Close() /* ignore err, write err takes precedence */
+		f.Close() /* ignore err, write err takes precedence */
 		return e
 	}
 
 	// commit on git
 	if _, e := tree.Add(file); e != nil {
-		file.Close() /* ignore err, write err takes precedence */
+		f.Close() /* ignore err, write err takes precedence */
 		return e
 	}
 	return f.Close()
