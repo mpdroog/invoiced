@@ -9,6 +9,7 @@ What makes us better than the competition (non-technical):
 * Searching for an old invoice? We got a powersearch, so finding it should be a breeze!
 * We're FAST, instantly loading pages :D
 * Completely free! (But if you pay 1EUR/month we'll give you backups)
+* Quick keys, you don't need to use your mouse all the time :)
 
 What makes us better than the competition (technical):
 
