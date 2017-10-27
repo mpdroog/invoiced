@@ -35,12 +35,13 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     e.preventDefault();
     let node = DOM.eventFilter(e, "A");
     let id = node.dataset["target"];
+    let bucket = node.dataset.bucket;
     if (node.dataset["status"] === 'FINAL') {
       console.log("Cannot delete finalized invoices.");
       return;
     }
 
-    Axios.delete(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${id}`)
+    Axios.delete(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${id}`)
     .then(res => {
       location.reload();
     })
@@ -79,6 +80,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
   }
 
   private finishedLine(key: string, inv: IInvoiceState, bucket: string): React.JSX.Element {
+    console.log(bucket);
     return <tr key={key}>
       <td>{key}</td>
       <td>{inv.Meta.Invoiceid}</td>
@@ -116,6 +118,11 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     });
   }
 
+  // TODO: Ugly hack...
+  private bucket(invoiceId) {
+    return 'Q' + invoiceId.split("-")[0].split("Q")[1];
+  }
+
 	render() {
     let res:React.JSX.Element[] = [];
     if (this.props.items) {
@@ -128,9 +135,12 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
         this.props.items[dir].forEach((inv) => {
           let key: string = inv.Meta.Conceptid;
           if (this.props.bucket === "concepts" || this.props.bucket === "sales-invoices-unpaid") {
+            if (this.props.bucket === "sales-invoices-unpaid") {
+              bucket = this.bucket(inv.Meta.Invoiceid);
+            }
             res.push(this.conceptLine(key, inv, bucket));
           } else {
-            res.push(this.finishedLine(key, inv, bucket));
+            res.push(this.finishedLine(key, inv, this.bucket(inv.Meta.Invoiceid)));
           }
         });
       }
