@@ -77,25 +77,26 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return e
 		}
 
-		f, e := t.OpenRaw(u.Meta.HourFile)
-		if e != nil {
-			return e
-		}
-		defer f.Close()
-
-		hourbuf := new(bytes.Buffer)
-		if _, e := io.Copy(hourbuf, f); e != nil {
-			return e
-		}
-
 		job := &Job{
 			To: strings.Split(m.To, ","),
 			Subject: m.Subject,
 			Text: m.Body,
 			Files: []string{
 				paths[1], // TODO: assumption
-				u.Meta.HourFile,
 			},
+		}
+
+		hourbuf := new(bytes.Buffer)
+		if len(u.Meta.HourFile) > 0 {
+			f, e := t.OpenRaw(u.Meta.HourFile)
+			if e != nil {
+				return e
+			}
+			defer f.Close()
+			if _, e := io.Copy(hourbuf, f); e != nil {
+				return e
+			}
+			job.Files = append(job.Files, u.Meta.HourFile)
 		}
 
 		rnd := randStringBytesRmndr(8)
@@ -132,11 +133,13 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			MimeType: "application/pdf",
 			Content: buf.Bytes(),
 		})
-		msg.Attach(&gomail.File{
-			Name: "hours.txt",
-			MimeType: "plain/text",
-			Content: hourbuf.Bytes(),
-		})
+		if hourbuf.Len() > 0 {
+			msg.Attach(&gomail.File{
+				Name: "hours.txt",
+				MimeType: "plain/text",
+				Content: hourbuf.Bytes(),
+			})
+		}
 
 		if config.Verbose {
 			log.Printf("Email=%+v\n", msg)
