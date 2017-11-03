@@ -25,6 +25,7 @@ const monthMap = {
 	"september": "09",
 	"sept": "09",
 	"october": "10",
+	"okt": "10",
 	"november": "11",
 	"december": "12",
 }
