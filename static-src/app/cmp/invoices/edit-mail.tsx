@@ -22,6 +22,13 @@ export class InvoiceMail extends React.Component<{}, {}> {
     });
   }
 
+  private update(e) {
+    const id = e.target.id;
+    var mail = this.props.parent.state.Mail;
+    mail[id] = e.target.value;
+    this.props.parent.setState({Mail: mail});
+  }
+
   render() {
     if (! this.props.hide) {
       return <div/>
@@ -48,8 +55,8 @@ export class InvoiceMail extends React.Component<{}, {}> {
 	              <i className="fa fa-send"></i>
           		</div>
 	          	<div className="col-sm-10">
-	              <input type="text" className="form-control" value={parentState.Mail.Subject}/>
-  	          	  <input type="text" className="form-control" value={"Reply-To: " + parentState.Mail.From} disabled={true}/>
+	              <input type="text" className="form-control" onChange={this.update.bind(this)} id="Subject" value={parentState.Mail.Subject}/>
+  	          	  <input type="text" className="form-control" onChange={this.update.bind(this)} id="From" value={"Reply-To: " + parentState.Mail.From} disabled={true}/>
 	            </div>
 	            </div>
             </h4>
@@ -60,11 +67,11 @@ export class InvoiceMail extends React.Component<{}, {}> {
           			To
           		</div>
 	          	<div className="col-sm-11">
-		          	<input type="text" className="form-control" value={parentState.Mail.To}/>
+		          	<input type="text" className="form-control" onChange={this.update.bind(this)} id="To" value={parentState.Mail.To}/>
 		        </div>
 		    </div>
 
-            <textarea className="form-control h140">{parentState.Mail.Body}</textarea>
+            <textarea onChange={this.update.bind(this)} id="Body" className="form-control h140">{parentState.Mail.Body}</textarea>
           </div>
           <div className="modal-footer">
             <div style={a}>
