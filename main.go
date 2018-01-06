@@ -133,6 +133,7 @@ func main() {
 
 	router.GET("/api/v1/entities", entities.List)
 	router.GET("/api/v1/entities/:entity/details", entities.Details)
+	router.GET("/api/v1/entities/:entity/open/:year", entities.Open)
 
 	router.GET("/api/v1/debtors/:entity/search", entities.Search)
 	router.GET("/api/v1/projects/:entity/search", entities.ProjectSearch)
