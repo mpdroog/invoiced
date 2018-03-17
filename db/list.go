@@ -66,6 +66,10 @@ func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, 
 		// TODO: pagination??
 
 		files, e := ioutil.ReadDir(path)
+		if os.IsNotExist(e) {
+			// No such folder (git only tracks folders when they have content)
+			continue
+		}
 		if e != nil {
 			return page, e
 		}
