@@ -71,7 +71,7 @@ func Init(path string) error {
 
 		cfg := &gitconfig.RemoteConfig{
 		    Name: "github",
-		    URL:  "https://github.com/mpdroog/acct.git",
+		    URLs:  []string{"https://github.com/mpdroog/acct.git"},
 		}
 		if e := cfg.Validate(); e != nil {
 			return e
@@ -103,7 +103,7 @@ func Init(path string) error {
 	if e != nil {
 		return e
 	}
-	opts := &git.PullOptions{RemoteName: "github", Auth: http.NewBasicAuth("mpdroog", "2dqqR24m")}
+	opts := &git.PullOptions{RemoteName: "github", Auth: &http.BasicAuth{Username: "mpdroog", Password: "2dqqR24m"}}
 	if e := opts.Validate(); e != nil {
 		return e
 	}
@@ -138,7 +138,7 @@ func Init(path string) error {
 				if config.Verbose {
 					log.Printf("Push to %s", repo.Config().Name)
 				}
-				opts := &git.PushOptions{RemoteName: repo.Config().Name, Auth: http.NewBasicAuth("mpdroog", "2dqqR24m")}
+				opts := &git.PushOptions{RemoteName: repo.Config().Name, Auth: &http.BasicAuth{Username: "mpdroog", Password: "2dqqR24m"}}
 				if e := opts.Validate(); e != nil {
 					log.Printf("[Git] Push validate=%s", e.Error())
 					err()
