@@ -20,6 +20,7 @@ func init() {
 	regex["date"] = regexp.MustCompile(`^(19|20)[0-9]{2}-(01|02|03|04|05|06|07|08|09|10|11|12)-(01|02|03|04|05|06|07|08|09|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31)$`)
 	regex["time"] = regexp.MustCompile(`^([0-9]{2}|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$`)
 	regex["uint"] = regexp.MustCompile(`^[0-9]+$`)
+	regex["qty"] = regexp.MustCompile(`^[0-9]+\.[0-9]+$`)
 	regex["price"] = regexp.MustCompile(`^-?[0-9]+\.[0-9]+$`)
 
 	validator.SetValidationFunc("slug", slug)
@@ -28,7 +29,7 @@ func init() {
 	validator.SetValidationFunc("uint", uintFn)
 	validator.SetValidationFunc("iban", iban)
 	validator.SetValidationFunc("price", price)
-	validator.SetValidationFunc("qty", price)
+	validator.SetValidationFunc("qty", qty)
 }
 
 func strCheck(rule string, v interface{}, param string) error {
@@ -70,12 +71,42 @@ func time(v interface{}, param string) error {
 	return e
 }
 func uintFn(v interface{}, param string) error {
-	return strCheck("uint", v, param)
+	st := reflect.ValueOf(v)
+	if st.Kind() == reflect.String {
+		return strCheck("uint", v, param)
+	}
+	if st.Kind() == reflect.Uint {
+		return nil
+	}
+	if st.Kind() == reflect.Float64 {
+		n := st.Float();
+		if n <= 0 {
+			return fmt.Errorf("uint negative not allowed. Given="+st.String())
+		}
+		return nil
+	}
+	return fmt.Errorf("uint no validator for reflect kind=%s", st.Kind())
 }
 func price(v interface{}, param string) error {
 	return strCheck("price", v, param)
 }
-
+func qty(v interface{}, param string) error {
+	st := reflect.ValueOf(v)
+	if st.Kind() == reflect.String {
+		return strCheck("qty", v, param)
+	}
+	if st.Kind() == reflect.Uint {
+		return nil
+	}
+	if st.Kind() == reflect.Float64 {
+		n := st.Float();
+		if n <= 0 {
+			return fmt.Errorf("qty negative not allowed. Given="+st.String())
+		}
+		return nil
+	}
+	return fmt.Errorf("qty no validator for reflect kind=%s", st.Kind())
+}
 func Init() error {
 	// Do nothing, just get this file included..
 	return nil
