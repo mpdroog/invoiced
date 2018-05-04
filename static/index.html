@@ -112,7 +112,8 @@
 </script>
 <script async>
     document.addEventListener("keyup", function(e) {
-      var node = e.path[0].nodeName;
+      var node = e && e.path && e.path.length > 0 ? e.path[0].nodeName : null;
+      node = node ? node : e.target.nodeName;
       if (node === "INPUT" || node === "TEXTAREA") {
         // only use shortcuts when not focussed on user input-fields
         return;
