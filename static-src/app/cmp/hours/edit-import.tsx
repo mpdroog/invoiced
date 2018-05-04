@@ -169,7 +169,7 @@ export default class HourImport extends React.Component<IImportProps, {}> {
 		    <textarea id="import" style={t} onChange={this.update.bind(this)}></textarea>
           </div>
           <div className="modal-footer">
-            <a onClick={this.save.bind(this)} className="btn btn-primary" style="float:right"> Parse</a>
+            <a onClick={this.save.bind(this)} className="btn btn-primary" style={{float:"right"}}> Parse</a>
           </div>
         </div>
       </div>
