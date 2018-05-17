@@ -78,7 +78,7 @@ export class InvoiceMail extends React.Component<{}, {}> {
               <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentState.Meta.Conceptid + "/pdf"} target="_blank"><i className="fa fa-file-pdf-o" />&nbsp;{parentState.Meta.Invoiceid}.pdf</a></p>
               {hourFile}
             </div>
-            <a onClick={this.send.bind(this)} className="btn btn-primary" style="float:right"> Send</a>
+            <a onClick={this.send.bind(this)} className="btn btn-primary" style={{float:"right"}}> Send</a>
           </div>
         </div>
       </div>

@@ -33,7 +33,7 @@ type InvoiceMeta struct {
 }
 type InvoiceLine struct {
 	Description string `validate:"nonzero"`
-	Quantity    string `validate:"nonzero,int"`
+	Quantity    string `validate:"nonzero,qty"`
 	Price       string `validate:"nonzero,price"`
 	Total       string `validate:"nonzero,price"`
 }

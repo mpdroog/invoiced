@@ -99,7 +99,7 @@ func HourToInvoice(entity, year, project, name, hourStr, email, hourFile, from s
 		Lines: []InvoiceLine{InvoiceLine{
 			Description: name,
 			Quantity: hourStr,
-			Price: strconv.FormatFloat(prj.HourRate, 'f', -1, 64),
+			Price: strconv.FormatFloat(prj.HourRate, 'f', 2, 64),
 			Total: extotal.StringFixed(2),
 		}},
 		Notes: prj.NoteAdd,
