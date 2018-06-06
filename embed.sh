@@ -1,0 +1,3 @@
+#!/bin/bash
+go get -u github.com/jteeuwen/go-bindata/...
+go-bindata -pkg embed -o ./embed/embed.go ./embed/invoice.xml
