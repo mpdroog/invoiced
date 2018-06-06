@@ -76,6 +76,7 @@ export class InvoiceMail extends React.Component<{}, {}> {
           <div className="modal-footer">
             <div style={a}>
               <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentState.Meta.Conceptid + "/pdf"} target="_blank"><i className="fa fa-file-pdf-o" />&nbsp;{parentState.Meta.Invoiceid}.pdf</a></p>
+              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentState.Meta.Conceptid + "/xml"} target="_blank"><i className="fa fa-bank" />&nbsp;{parentState.Meta.Invoiceid}.xml</a></p>
               {hourFile}
             </div>
             <a onClick={this.send.bind(this)} className="btn btn-primary" style={{float:"right"}}> Send</a>

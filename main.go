@@ -147,6 +147,7 @@ func main() {
 	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/reset", invoice.Reset)
 	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/pdf", invoice.Pdf)
 	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/text", invoice.Text)
+	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/xml", invoice.Xml)
 	//router.GET("/api/v1/invoice/:id/credit", invoice.Credit)
 	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/paid", invoice.Paid)
 	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/email", invoice.Email)

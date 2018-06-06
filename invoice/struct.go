@@ -46,6 +46,7 @@ type InvoiceBank struct {
 	Vat  string `validate:"nonzero"`
 	Coc  string `validate:"nonzero"`
 	Iban string `validate:"nonzero,iban"`
+	Bic string `validate:"nonzero"`	
 }
 
 type Invoice struct {

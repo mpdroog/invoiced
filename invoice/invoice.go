@@ -1,6 +1,7 @@
 package invoice
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/validator.v2"
@@ -467,6 +468,45 @@ func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if e := f.Output(w); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Pdf fail", http.StatusInternalServerError)
+		return
+	}
+}
+
+func Xml(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	name := ps.ByName("id")
+	bucket := ps.ByName("bucket")
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
+	if config.Verbose {
+		log.Printf("invoice.Xml with id=%s", name)
+	}
+
+	paths := []string{
+		fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name),
+		fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name),
+	}
+
+	var ubl *bytes.Buffer
+	u := new(Invoice)
+	e := db.View(func(t *db.Txn) error {
+		e := t.OpenFirst(paths, u)
+		if e != nil {
+			return e
+		}
+		ubl, e = UBL(u)
+		return e
+	})
+	if e != nil {
+		log.Printf("invoice.Xml " + e.Error())
+		http.Error(w, fmt.Sprintf("invoice.Xml failed loading file from disk"), 400)
+		return
+	}
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.pdf"`, u.Meta.Invoiceid))
+	w.Header().Set("Content-Type", "application/xml")
+	if _, e := w.Write(ubl.Bytes()); e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "invoice.Xml fail", http.StatusInternalServerError)
 		return
 	}
 }

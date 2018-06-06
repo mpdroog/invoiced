@@ -99,6 +99,11 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			job.Files = append(job.Files, u.Meta.HourFile)
 		}
 
+		ubl, e := UBL(u)
+		if e != nil {
+			return e
+		}
+
 		rnd := randStringBytesRmndr(8)
 		if e := t.Save(fmt.Sprintf("%s/%s/%s/mails/%s.toml", entity, year, bucket, rnd), true, job); e != nil {
 			return e
@@ -132,6 +137,11 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			Name: u.Meta.Invoiceid + ".pdf",
 			MimeType: "application/pdf",
 			Content: buf.Bytes(),
+		})
+		msg.Attach(&gomail.File{
+			Name: u.Meta.Invoiceid + ".xml",
+			MimeType: "application/xml",
+			Content: ubl.Bytes(),
 		})
 		if hourbuf.Len() > 0 {
 			msg.Attach(&gomail.File{
