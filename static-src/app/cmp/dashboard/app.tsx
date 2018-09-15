@@ -1,7 +1,6 @@
 import * as React from "react";
 import Axios from "axios";
-//import {DOM} from "../lib/dom";
-import { LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
+import ChartistGraph from 'react-chartist';
 
 interface IDictionary {
 [index: string]: IMetricDay;
@@ -15,9 +14,19 @@ interface IMetrics {
   metrics?: IDictionary
 }
 
+var formatMoney = function(n, c, d, t){
+var c = isNaN(c = Math.abs(c)) ? 2 : c, 
+    d = d == undefined ? "." : d, 
+    t = t == undefined ? "," : t, 
+    s = n < 0 ? "-" : "", 
+    i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c))), 
+    j = (j = i.length) > 3 ? j % 3 : 0;
+   return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+};
+
 export default class Dashboard extends React.Component<{}, IMetrics> {
-  constructor() {
-    super();
+  constructor(p, s) {
+    super(p, s);
     this.state = {
       "metrics": {}
     };
@@ -26,9 +35,11 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 	render() {
 	    let items:React.JSX.Element[] = [];
 		let sorted:string[] = Object.keys(this.state.metrics).sort();
+		let revstats = {labels: [], series: [[]]};
+		let hourstats = {labels: [], series: [[]]};
 
 		let pref:string = "0.00";
-		let years = {"2016": 0, "2017": 0};
+		let sum:number = 0;
 		for (var i = 0; i < sorted.length; i++) {
 			let key:string = sorted[i];
 			let revenue:number = this.state.metrics[key].RevenueEx;
@@ -40,18 +51,13 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			}
 			items.push(<tr key={key}><td>{key}</td><td>&euro; {revenue}</td><td style={change}>&euro; {delta}</td><td>{hours}</td></tr>);
 
-			pref = revenue;
-			years[ key.substr(0, key.indexOf("-")) ] += revenue*100;
-		}
+			revstats.labels.push(key);
+			revstats.series[0].push(parseInt(revenue));
+			hourstats.labels.push(key);
+			hourstats.series[0].push(parseInt(hours));
 
-		let stats = [];
-		for (var i = 0; i < sorted.length; i++) {
-			let key = sorted[i];
-			let vals = this.state.metrics[key];
-			vals.RevenueEx = parseInt(vals.RevenueEx);
-			vals.Hours = parseInt(vals.Hours);
-			vals.name = key;
-			stats.push(vals);
+			pref = revenue;
+			sum += revenue*100;
 		}
 
 		let smallHead = {
@@ -61,6 +67,13 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			padding: "10px",
 			marginLeft: "5px"
 		};
+		let options = {
+	      axisX: {
+	        labelInterpolationFnc: function(value, index) {
+	          return index % 2 === 0 ? value : null;
+	        }
+	      }
+	    };
 		return <div>
 			<div className="normalheader col-md-6">
 			    <div className="hpanel">
@@ -68,8 +81,7 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			            <h2 className="font-light m-b-xs">
 			                <i className="fa fa-bank"></i>
 			                Revenue
-			                <span style={smallHead}>2017: &euro; {years[2017]/100}</span>
-			                <span style={smallHead}>2016: &euro; {years[2016]/100}</span>
+			                <span style={smallHead}>2017: &euro; {formatMoney(sum/100, '.', ',', ' ')}</span>
 			            </h2>
 			            <table className="table">
 			            	<thead>
@@ -84,15 +96,11 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			<div className="normalheader col-md-6">
 			    <div className="hpanel">
 			        <div className="panel-body">
-			            <h2 className="font-light m-b-xs pa">
+			            <h2 className="font-light m-b-xs">
 			            	<i className="fa fa-area-chart"></i>
 			                Revenue Graph
 			            </h2>
-			            <LineChart width={600} height={200} data={stats}>
-							<XAxis dataKey="name"/>
-							<Line type="monotone" dataKey="RevenueEx" stroke='#82ca9d' fill='#82ca9d' />
-							<Tooltip/>
-						</LineChart>
+			            <ChartistGraph data={revstats} options={options} type={"Line"} />
 			        </div>
 			    </div>
 			</div>
@@ -100,15 +108,11 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			<div className="normalheader col-md-6">
 			    <div className="hpanel">
 			        <div className="panel-body">
-			            <h2 className="font-light m-b-xs pa">
+			            <h2 className="font-light m-b-xs">
 			            	<i className="fa fa-area-chart"></i>
 			                Hour Graph
 			            </h2>
-			            <LineChart width={600} height={200} data={stats}>
-							<XAxis dataKey="name"/>
-							<Line type="monotone" dataKey="Hours" stroke='#82ca9d' fill='#82ca9d' />
-							<Tooltip/>
-						</LineChart>
+						<ChartistGraph data={hourstats} options={options} type={"Line"} />
 			        </div>
 			    </div>
 			</div>
@@ -117,11 +121,15 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 	}
 
   componentDidMount() {
+  	console.log('componentDidMount');
     this.ajax();
   }
 
   private ajax() {
-    Axios.get('/api/v1/metrics', {})
+  	let entity = this.props.entity;
+  	let year = this.props.year;
+
+    Axios.get('/api/v1/metrics/'+entity+'/'+year, {})
     .then(res => {
       this.setState({metrics: res.data});
     })

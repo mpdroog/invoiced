@@ -1,0 +1,54 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <!-- Page title -->
+    <title>Login - Boekhoud.cloud</title>
+
+    <link rel="stylesheet" href="/static/assets/bootstrap.css">
+    <link rel="stylesheet" href="/static/assets/font-awesome.css">
+    <link rel="stylesheet" href="/static/assets/font-awesome-animation.css">
+    <link rel="stylesheet" href="/static/assets/theme.css">
+    <link rel="stylesheet" href="/static/assets/app.css">
+    <link rel="stylesheet" href="/static/assets/main.css">
+</head>
+<body class="blank">
+<div style="top: 0; bottom: 0; right: 0; left:0; position: absolute; background-image: url('/static/assets/login-bg.jpg'); opacity: 0.1"></div>
+<div class="color-line"></div>
+
+<div class="login-container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="text-center m-b-md">
+                <h3><i class="fa fa-calculator"></i> Boekhoud.cloud</h3>
+                <small>Free and distributed accounting</small>
+            </div>
+            <div class="hpanel">
+                <div class="panel-body">
+                        <form action="/" method="POST">
+                            <div class="form-group">
+                                <input type="email" pattern="[^ @]*@[^ @]*" placeholder="you@domain.com" title="Please enter you username (e-mail)" required="" value="" name="email" id="email" class="form-control" autocomplete="email">
+                            </div>
+                            <div class="form-group">
+                                <input type="password" title="Please enter your password" placeholder="******" required="" value="" name="pass" id="pass" class="form-control">
+                            </div>
+                            <button class="btn btn-success btn-block">Login</button>
+                            <a class="btn btn-default btn-block" href="https://boekhoud.cloud">Home</a>
+                        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 text-center">
+            &copy; 2017 Copyright <a href="https://rootdev.nl">RootDev</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

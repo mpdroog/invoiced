@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-  <title>InvoiceD</title>
+  <title>Heroes - Boekhoud.cloud</title>
   <link rel="stylesheet" href="/static/assets/bootstrap.css">
   <link rel="stylesheet" href="/static/assets/font-awesome.css">
   <link rel="stylesheet" href="/static/assets/font-awesome-animation.css">
@@ -14,93 +14,23 @@
   <link rel="stylesheet" href="/static/assets/main.css">
 </head>
 <body class="fixed-navbar fixed-sidebar">
+
+<!-- Simple splash screen-->
+<div class="splash" id="js-splash"> <div class="color-line"></div><div class="splash-title"><h1>Boekhoud.cloud</h1><p>Free and hackable accounting</p><div class="spinner"> <div class="rect1"></div> <div class="rect2"></div> <div class="rect3"></div> <div class="rect4"></div> <div class="rect5"></div> </div> </div> </div>
+
 <!-- Header -->
 <div class="color-line"></div>
-<div id="header">
-    <div class="color-line">
-    </div>
-    <div id="logo" class="light-version">
-        <img src="/static/assets/logo.png" class="m-b" alt="logo">
-    </div>
-    <nav role="navigation">
-        <div style="margin-right: 15px; float: left">&nbsp;</div>
-
-        <form role="search" class="navbar-form-custom" method="post" action="#">
-            <div class="form-group">
-                <input type="text" placeholder="Search something special" class="form-control" name="search" id="js-search">
-            </div>
-        </form>
-        <div class="navbar-right">
-            <ul class="nav navbar-nav no-borders">
-                <li>
-                    <a href="#/" id="js-dashboard">
-                        <i class="fa fa-dashboard"></i>
-                    </a>
-                </li>
-                <li>
-                    <a href="#hours" id="js-hours">
-                        <i class="fa fa-clock-o"></i>
-                    </a>
-                </li>
-                <li>
-                    <a href="#invoices" id="js-invoices">
-                        <i class="fa fa-money"></i>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</div>
-
-<!-- Navigation
-<aside id="menu">
-    <div id="navigation">
-        <div class="profile-picture">
-            <a href="index.html">
-                <img src="/static/assets/logo.png" class="m-b" alt="logo">
-            </a>
-
-            <div class="stats-label text-color">
-                <span class="font-extra-bold font-uppercase">Mark Droog</span>
-                <div id="sparkline1" class="small-chart m-t-sm"></div>
-                <div>
-                    <h4 class="font-extra-bold m-b-xs">
-                        $260 104,200
-                    </h4>
-                    <small class="text-muted">Your income from the last year in sales product X.</small>
-                </div>
-            </div>
-        </div>
-
-        <ul class="nav" id="side-menu">
-            <li>
-                <a href="/"> <span class="nav-label">Dashboard</span></a>
-            </li>
-            <li>
-                <a href="#hours"> <span class="nav-label">Hours</span></a>
-            </li>
-            <li>
-                <a href="#entities"> <span class="nav-label">Entities</span></a>
-            </li>
-            <li>
-                <a href="#invoices"> <span class="nav-label">Invoices</span></a>
-            </li>
-        </ul>
-    </div>
-</aside -->
 
 <!-- Main Wrapper -->
-<div id="wrapper">
-  <div id="root">
-    <div class="loading">
-      <p><i class="fa fa-hourglass-o faa-spin animated"></i>
-      Loading JS..</p>
+<div id="root">
+  <div class="loading">
+    <p><i class="fa fa-hourglass-o faa-spin animated"></i>
+    Loading JS..</p>
 
-      <noscript>
-        <i class="fa fa-exclamation-triangle"></i>
-        Please enable JavaScript to use this website!
-      </noscript>
-    </div>
+    <noscript>
+      <i class="fa fa-exclamation-triangle"></i>
+      Please enable JavaScript to use this website!
+    </noscript>
   </div>
 </div>
 
@@ -131,7 +61,7 @@
   window.onerror = function(msg, url, lineNo, columnNo, error) {
     handleErr({
       name: "window.onerror",
-      line: msg,
+      message: msg,
       e: error
     });
   };
@@ -139,12 +69,13 @@
   function handleErr(e) {
     var errorData = {
       error: e.name, // e.g. ReferenceError
-      message: e.line, // e.g. x is undefined
+      //message: e.message, // e.g. x is undefined
       url: document.location.href,
-      page: window.location.hash,
-      errorObject: e,
-      stack: e.stack // stacktrace string; remember, different per-browser!
+      stack: e.e && e.e.stack ? e.e.stack : e.message
     };
+    var splash = document.getElementById("js-splash");
+    splash && splash.remove();
+
     document.getElementById("js-error-body").value = JSON.stringify(errorData);
     document.getElementById("js-dialog-error").classList.add('modal-open');
     document.getElementById("js-dialog-error").style.display = 'block';
@@ -181,14 +112,15 @@
 </script>
 <script async>
     document.addEventListener("keyup", function(e) {
-      var node = e.path[0].nodeName;
+      var node = e && e.path && e.path.length > 0 ? e.path[0].nodeName : null;
+      node = node ? node : e.target.nodeName;
       if (node === "INPUT" || node === "TEXTAREA") {
         // only use shortcuts when not focussed on user input-fields
         return;
       }
 
       var key = e.code;
-      var page = location.hash.substr(2);
+      var page = location.hash.substr(1).split("/")[2];
       //var shift = e.shiftKey;
       //var ctrl = e.ctrlKey;
 
@@ -205,6 +137,10 @@
           console.log("H Hours");
           document.getElementById("js-hours").click();
       }
+      if (key === 'KeyE') {
+          console.log("E Entities");
+          document.getElementById("js-entities").click();
+      }
       if (key === 'Slash') {
         console.log("/ search");
         document.getElementById("js-search").focus()
@@ -213,7 +149,7 @@
       // Page specific
       if (page === "hours" && key === "KeyN") {
         console.log("Hours New");
-        location.href = "#hour-add";
+        document.getElementById("js-new").click();
       }
       if (page === "hour-add" && key === "KeyN") {
         console.log("Hour-add New Entry");
@@ -221,12 +157,16 @@
       }
       if (page === "invoices" && key === "KeyN") {
         console.log("Invoices New");
-        location.href = "#invoice-add/invoices";
+        document.getElementById("js-new").click();
+      }
+      if (page === "invoices" && key === "KeyB") {
+        console.log("Invoices Balance");
+        document.getElementById("js-balance").click();
       }
 
     }, false);
 </script>
 <script src="/static/assets/vendor.js"></script>
-<script src="/static/assets/app.js" async></script>
+<script src="/static/assets/app.js"></script>
 </body>
 </html>

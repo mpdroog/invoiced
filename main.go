@@ -6,20 +6,17 @@ import (
 	"log"
 	"net/http"
 	"sync"
-	//"github.com/toqueteos/webbrowser"
 	"flag"
-	"github.com/boltdb/bolt"
-	//isql "github.com/mpdroog/invoiced/sql"
-	//"database/sql"
-	//_ "github.com/mattn/go-sqlite3"
-
+	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/entities"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
+	"github.com/mpdroog/invoiced/taxes"
 	"github.com/mpdroog/invoiced/middleware"
-	"github.com/mpdroog/invoiced/migrate"
 	"github.com/mpdroog/invoiced/rules"
 	"github.com/mpdroog/invoiced/metrics"
+	"time"
 )
 
 func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -28,16 +25,72 @@ func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		prefix = "https://"
 	}
 
+	if _, e := r.Cookie("sess"); e != nil {
+		// no session
+		http.Redirect(w, r, prefix+config.HTTPListen+"/static/auth.html", 302)
+		return
+	}
+	http.Redirect(w, r, prefix+config.HTTPListen+"/static/", 301)
+}
+
+func Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// Auth login
+	if e := r.ParseForm(); e != nil {
+		log.Printf("Login: %s\n", e.Error())
+		http.Error(w, "Parse form-failed", 400)
+		return
+	}
+
+	email := r.FormValue("email")
+	pass := r.FormValue("pass")
+	if len(email) == 0 || len(pass) == 0 {
+		http.Error(w, "Missing POST email/pass", 400)
+		return
+	}
+
+	sess, e := middleware.Login(email, pass)
+	if e != nil {
+		log.Printf("Login: %s\n", e.Error())
+		http.Error(w, "Login: Auth failed", 400)
+		return
+	}
+	if len(sess) == 0 {
+		http.Error(w, "Login: Invalid user/pass", 400)
+		return
+	}
+
+	// TODO: Somewhere general to share with logout?
+	http.SetCookie(w, &http.Cookie{
+		Name: "sess",
+		Value: sess,
+		Expires: time.Now().Add(time.Hour * 24 * 365),
+		HttpOnly: true,
+		Domain: config.HTTPListen,
+		Secure: config.HTTPSOnly,
+	})
+
+	prefix := "http://"
+	if config.HTTPSOnly {
+		prefix = "https://"
+	}
 	http.Redirect(w, r, prefix+config.HTTPListen+"/static/", 301)
 }
 
 func main() {
-	var wg sync.WaitGroup
+	var (
+		wg sync.WaitGroup
+		path string
+	)
+	flag.BoolVar(&config.Local, "l", true, "Local-mode (only 127, no https)")
 	flag.BoolVar(&config.Verbose, "v", false, "Verbose-mode (log more)")
-	flag.StringVar(&config.DbPath, "d", "./billing.db", "Path to BoltDB database")
+	flag.StringVar(&config.DbPath, "d", "billingdb", "Path to database")
 	flag.StringVar(&config.HTTPListen, "h", "localhost:9999", "HTTP listening port")
-	flag.BoolVar(&config.HTTPSOnly, "s", false, "HTTPS Only")
+	flag.StringVar(&path, "c", "./config.toml", "Path to config")
 	flag.Parse()
+
+	if !config.Local {
+		config.HTTPSOnly = true
+	}
 
 	var e error
 	config.CurDir, e = osext.ExecutableFolder()
@@ -46,19 +99,22 @@ func main() {
 	}
 	if config.Verbose {
 		log.Printf("Curdir=%s\n", config.CurDir)
-		log.Printf("BoltDB=%s\n", config.DbPath)
+		log.Printf("DB=%s\n", config.DbPath)
 	}
-	db, e := bolt.Open(config.DbPath, 0600, nil)
-	if e != nil {
-		log.Fatal(e)
-	}
-	defer db.Close()
 
-	if e := migrate.Convert(db); e != nil {
+	if e := config.Open(path); e != nil {
 		log.Fatal(e)
 	}
 
-	if e := invoice.Init(db); e != nil {
+	//db.AlwaysLowercase = true
+	if e := db.Init(config.DbPath); e != nil {
+		panic(e)
+	}
+	if e := middleware.Init(); e != nil {
+		panic(e)
+	}
+
+	/*if e := invoice.Init(db); e != nil {
 		log.Fatal(e)
 	}
 	if e := hour.Init(db); e != nil {
@@ -66,54 +122,56 @@ func main() {
 	}
 	if e := metrics.Init(db); e != nil {
 		log.Fatal(e)
-	}
-
+	}*/
 	if e := rules.Init(); e != nil {
 		log.Fatal(e)
 	}
 
-	/*log.Println(home + "/billing.sqlite")
-	  db, err := sql.Open("sqlite3", home + "/billing.sqlite")
-	  if err != nil {
-	      log.Fatal(err)
-	  }
-	  defer db.Close()*/
-
-	/*if e := isql.Init(db); e != nil {
-	    log.Fatal(err)
-	}*/
-
-	// TODO: Init db?
-
 	router := httprouter.New()
 	router.GET("/", Index)
+	router.POST("/", Login)
 
-	//router.GET("/api/sql/all", isql.GetAll)
-	//router.GET("/api/sql/row", isql.GetRow)
+	router.GET("/api/v1/entities", entities.List)
+	router.GET("/api/v1/entities/:entity/details", entities.Details)
+	router.GET("/api/v1/entities/:entity/open/:year", entities.Open)
 
-	router.GET("/api/v1/metrics", metrics.Dashboard)
+	router.GET("/api/v1/debtors/:entity/search", entities.Search)
+	router.GET("/api/v1/projects/:entity/search", entities.ProjectSearch)
 
-	router.GET("/api/v1/invoices", invoice.List)
-	router.POST("/api/v1/invoice", invoice.Save)
-	router.GET("/api/v1/invoice/:id", invoice.Load)
-	router.POST("/api/v1/invoice/:id/finalize", invoice.Finalize)
-	router.POST("/api/v1/invoice/:id/reset", invoice.Reset)
-	router.GET("/api/v1/invoice/:id/pdf", invoice.Pdf)
-	router.GET("/api/v1/invoice/:id/credit", invoice.Credit)
-	router.POST("/api/v1/invoice/:id/paid", invoice.Paid)
-	router.POST("/api/v1/invoice/:id/balance", invoice.Balance)
-	router.DELETE("/api/v1/invoice/:id", invoice.Delete)
+	router.GET("/api/v1/metrics/:entity/:year", metrics.Dashboard)
 
-	router.GET("/api/v1/hours", hour.List)
-	router.POST("/api/v1/hour", hour.Save)
-	router.GET("/api/v1/hour/:id", hour.Load)
-	router.DELETE("/api/v1/hour/:id", hour.Delete)
+	router.GET("/api/v1/invoices/:entity/:year", invoice.List)
+	router.POST("/api/v1/invoice/:entity/:year", invoice.Save)
+	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id", invoice.Load)
+	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/finalize", invoice.Finalize)
+	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/reset", invoice.Reset)
+	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/pdf", invoice.Pdf)
+	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/text", invoice.Text)
+	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/xml", invoice.Xml)
+	//router.GET("/api/v1/invoice/:id/credit", invoice.Credit)
+	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/paid", invoice.Paid)
+	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/email", invoice.Email)
+	router.POST("/api/v1/invoice-balance/:entity/:year", invoice.Balance)
+	router.DELETE("/api/v1/invoice/:entity/:year/:bucket/:id", invoice.Delete)
+
+	router.GET("/api/v1/hours/:entity/:year", hour.List)
+	router.POST("/api/v1/hour/:entity/:year/:bucket", hour.Save)
+	router.GET("/api/v1/hour/:entity/:year/:bucket/:id", hour.Load)
+	router.POST("/api/v1/hour/:entity/:year/:bucket/:id/bill", hour.Bill)
+	router.DELETE("/api/v1/hour/:entity/:year/:bucket/:id", hour.Delete)
+
+	router.POST("/api/v1/taxes/:entity/:year/:quarter", taxes.Tax)
 
 	router.ServeFiles("/static/*filepath", http.Dir(config.CurDir+"/static"))
 
 	wg.Add(1)
 	go func() {
 		var e error
+		var router http.Handler = router
+		if config.Local {
+			router = middleware.LocalOnly(router)
+		}
+		router = middleware.HTTPAuth(router)
 		if config.Verbose {
 			log.Printf("Listening on %s\n", config.HTTPListen)
 			e = http.ListenAndServe(config.HTTPListen, middleware.HTTPLog(router))

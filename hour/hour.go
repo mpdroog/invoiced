@@ -1,120 +1,185 @@
 package hour
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"github.com/boltdb/bolt"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/validator.v2"
 	"log"
 	"net/http"
+	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/config"
+	"github.com/mpdroog/invoiced/writer"
+	"github.com/mpdroog/invoiced/utils"
+	"github.com/mpdroog/invoiced/invoice"
+	"time"
 )
 
-var db *bolt.DB
-
-func Init(d *bolt.DB) error {
-	db = d
-	return db.Update(func(tx *bolt.Tx) error {
-		_, e := tx.CreateBucketIfNotExists([]byte("hours"))
-		return e
-	})
-}
-
 func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
 	name := ps.ByName("id")
 	if name == "" {
 		http.Error(w, "Please supply a name to delete", 400)
 		return
 	}
-	if e := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("hours"))
-		return b.Delete([]byte(name))
-	}); e != nil {
+
+	change := db.Commit{
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
+		Message: fmt.Sprintf("Delete concept hour %s", name),
+	}
+	e := db.Update(change, func(t *db.Txn) error {
+		return t.Remove(fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, name))
+	})
+	if e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "hour.Delete fail", http.StatusInternalServerError)
 	}
 }
 
-func Save(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if r.Body == nil {
 		http.Error(w, "Please send a request body", 400)
 		return
 	}
 	u := new(Hour)
-	if e := json.NewDecoder(r.Body).Decode(u); e != nil {
+	if e := writer.Decode(r, u); e != nil {
 		log.Printf(e.Error())
 		http.Error(w, "invoice.Save failed decoding input", 400)
 		return
 	}
-	/*if u.Name == "" {
-		http.Error(w, "invoice.Save err, no Name given", http.StatusInternalServerError)
-		return
-	}*/
 	if e := validator.Validate(u); e != nil {
 		http.Error(w, fmt.Sprintf("invoice.Save failed validate=%s", e), 400)
 		return
 	}
 
-	buf := new(bytes.Buffer)
-	if e := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("hours"))
-		if e := json.NewEncoder(buf).Encode(u); e != nil {
-			return e
-		}
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
 
-		return b.Put([]byte(u.Name), buf.Bytes())
-	}); e != nil {
-		log.Printf(e.Error())
-		http.Error(w, "invoice.Save fail", http.StatusInternalServerError)
+	change := db.Commit{
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
+		Message: fmt.Sprintf("Save concept hour %s", u.Name),
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if _, e := w.Write(buf.Bytes()); e != nil {
+	isNew := true
+	if u.Status != "NEW" {
+		isNew = false
+	}
+
+	e := db.Update(change, func(t *db.Txn) error {
+		u.Status = "CONCEPT"
+		return t.Save(fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, u.Name), isNew, u)
+	})
+	if e != nil {
 		log.Printf(e.Error())
+		http.Error(w, "hour.Delete fail", http.StatusInternalServerError)
+	}
+
+	if e := writer.Encode(w, r, u); e != nil {
+		log.Printf("hour.Save " + e.Error())
+	}
+}
+
+func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
+	name := ps.ByName("id")
+
+	change := db.Commit{
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
+		Message: fmt.Sprintf("Bill hours from %s", name),
+	}
+
+	invoiceId := ""
+	u := new(Hour)
+	path := fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, name)
+	bucketTo := fmt.Sprintf("Q%d", utils.YearQuarter(time.Now()))
+	pathTo := fmt.Sprintf("%s/%s/%s/hours/%s.toml", entity, year, bucketTo, name)
+
+	e := db.Update(change, func(t *db.Txn) error {
+		// Move from concept to finalized quarter
+		if e := t.Open(path, u); e != nil {
+			return e
+		}
+		u.Status = "FINAL"
+		if e := t.Save(pathTo, true, u); e != nil {
+			return e
+		}
+		if e := t.Remove(path); e != nil {
+			return e
+		}
+		// Next create concept invoice
+		var e error
+		invoiceId, e = invoice.HourToInvoice(entity, year, u.Project, name, u.Total, change.Email, pathTo, r.Header.Get("X-User-Name"), t)
+		return e
+	})
+	if e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "hour.Bill fail", http.StatusInternalServerError)
+	}
+
+	w.Header().Set("X-Redirect-Invoice", invoiceId)
+	if e := writer.Encode(w, r, u); e != nil {
+		log.Printf("hour.Bill " + e.Error())
 	}
 }
 
 func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
-	log.Printf("invoice.Load with id=%s", name)
-	e := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("hours"))
-		v := b.Get([]byte(name))
-		if v == nil {
-			http.Error(w, "invoice.Load no such name", http.StatusNotFound)
-			return nil
-		}
+	log.Printf("hour.Load with id=%s", name)
 
-		w.Header().Set("Content-Type", "application/json")
-		_, e := w.Write(v)
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
+	bucket := ps.ByName("bucket")
+
+	u := new(Hour)
+	e := db.View(func(t *db.Txn) error {
+		return t.Open(fmt.Sprintf("%s/%s/%s/hours/%s.toml", entity, year, bucket, name), u)
+	})
+	if e != nil {
+		log.Printf(e.Error())
+		http.Error(w, fmt.Sprintf("hour.Load failed loading file from disk"), 400)
+		return
+	}
+
+	if e := writer.Encode(w, r, u); e != nil {
+		log.Printf("entities.Load " + e.Error())
+	}
+}
+
+func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
+	dirs := []string{
+		fmt.Sprintf("%s/%s/concepts/hours", entity, year),
+		fmt.Sprintf("%s/%s/{all}/hours", entity, year),
+	}
+
+	var (
+		e error
+	)
+	mem := new(Hour)
+	list := make(map[string][]string)
+
+	e = db.View(func(t *db.Txn) error {
+		_, e := t.List(dirs, db.Pagination{From:0, Count:30}, mem, func(filename, file, fpath string) error {
+			k := utils.BucketDir(fpath)
+			list[k] = append(list[k], filename)
+			return nil
+		})
 		return e
 	})
 	if e != nil {
 		log.Printf(e.Error())
-		http.Error(w, "invoice.Save fail", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("hour.List failed scanning disk"), 400)
+		return	
 	}
-}
-
-func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	e := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("hours"))
-		c := b.Cursor()
-
-		var keys []string
-		for k, _ := c.First(); k != nil; k, _ = c.Next() {
-			keys = append(keys, string(k))
-		}
-		log.Printf("invoice.List count=%d", len(keys))
-
-		w.Header().Set("Content-Type", "application/json")
-		if e := json.NewEncoder(w).Encode(keys); e != nil {
-			return e
-		}
-		return nil
-	})
-	if e != nil {
-		log.Printf(e.Error())
-		http.Error(w, "invoice.Save fail", http.StatusInternalServerError)
+	if config.Verbose {
+		log.Printf("hour.List count=%d", len(list))
+	}
+	if e := writer.Encode(w, r, list); e != nil {
+		log.Printf("hour.List " + e.Error())
 	}
 }

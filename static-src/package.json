@@ -13,26 +13,22 @@
     "@types/react-dom": "^15.5.1",
     "@types/react-router": "^4.0.14",
     "brunch": "^2.10.10",
+    "csswring": "^6.0.0",
+    "postcss-brunch": "^2.0.5",
     "typescript": "^2.4.2",
     "typescript-brunch": "^2.3.0",
-    "uglify-js-brunch": "^2.10.0",
-    "csswring": "^6.0.0",
-    "postcss-brunch": "^2.0.5"
+    "uglify-js-brunch": "^2.10.0"
   },
   "private": true,
   "license": "BSD-2",
   "dependencies": {
     "axios": "^0.16.2",
     "big.js": "^3.1.3",
+    "chartist": "^0.11.0",
     "moment": "^2.18.1",
-    "react": "^15.6.1",
-    "react-datepicker": "^0.52.0",
-    "react-dom": "^15.6.1",
-    "react-redux": "^5.0.5",
-    "react-router": "^4.1.2",
-    "react-router-dom": "^4.1.2",
-    "recharts": "^1.0.0-alpha.2",
-    "redux": "^3.7.2"
+    "msgpack-lite": "^0.1.26",
+    "react-chartist": "^0.13.0",
+    "react-lite": "^0.15.38"
   },
   "version": "1.0.0",
   "repository": {

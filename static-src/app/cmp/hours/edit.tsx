@@ -1,11 +1,9 @@
 import * as React from "react";
-import {IInjectedProps} from "react-router";
 import Axios from "axios";
 import * as Big from "big.js";
 import * as Moment from "moment";
-import DatePicker from "react-datepicker";
-
 import Import from "./edit-import";
+import {Autocomplete, LockedInput} from "../../shared/components";
 
 interface IHourLineState {
   Hours: number
@@ -21,31 +19,37 @@ interface IHourState {
   day?: Moment.Moment
   Lines?: IHourLineState[]
   Name?: string
+  Project?: string
+  Status?: string
+  Total?: string
 }
-export default class HourEdit extends React.Component<IInjectedProps, IHourState> {
-  constructor(props: IInjectedProps) {
+export default class HourEdit extends React.Component<{}, IHourState> {
+  constructor(props) {
     super(props);
     this.state = {
       start: "",
       stop: "",
       description: "",
       day: Moment(),
+      import: false,
+      hourRate: 0,
 
       Lines: [],
-      Name: ""
+      Name: "",
+      Project: "",
+      Status: "NEW",
+      Total: "0"
     };
   }
 
   componentDidMount() {
-    console.log("componentDidMount", this.props.match.params["id"]);
-    if (this.props.match.params["id"]) {
-      console.log("Load hour name=" + this.props.match.params["id"]);
-      this.ajax(this.props.match.params["id"]);
+    if (this.props.id) {
+      this.ajax(this.props.id);
     }
   }
 
   private ajax(name: string) {
-    Axios.get(`/api/v1/hour/${name}`)
+    Axios.get(`/api/v1/hour/${this.props.entity}/${this.props.year}/${this.props.bucket}/${name}`)
     .then(res => {
       this.setState(res.data);
     })
@@ -55,6 +59,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
   }
 
   private importLine(lines) {
+    let total = new Big("0.00");
     let out = this.state.Lines;
     for (let i = 0; i < lines.length; i++) {
       let day = lines[i];
@@ -71,11 +76,13 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
           Description: day.text,
           Day: day.day
         });
+        total = total.plus(sum.asHours());
       }
     }
 
     this.setState({
-      Lines: out
+      Lines: out,
+      Total: total.toFixed(2).toString()
     });
   }
 
@@ -91,6 +98,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
     let sum = stop.subtract(start);
     console.log("Start=" + start + " Stop=" + stop + " to hours=" + sum.humanize());
 
+    let total = new Big(this.state.Total);
     this.state.Lines.push({
       Start: this.state.start,
       Stop: this.state.stop,
@@ -99,12 +107,21 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
       Day: this.state.day.format("YYYY-MM-DD")
     });
     this.setState({
-      Lines: this.state.Lines
+      Lines: this.state.Lines,
+      Total: total.plus(sum.asHours()).toFixed(2).toString()
     });
   }
 
   private updateDate(date: Moment.Moment) {
     this.setState({day: date});
+  }
+
+  private updateTotal() {
+    let total = new Big("0.00");
+    this.state.Lines.forEach(function(val) {
+      total = total.plus(val.Hours);
+    });
+    return total.toFixed(2).toString();
   }
 
   private update(e: InputEvent) {
@@ -126,21 +143,53 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
     if (elem.id === "hour-day") {
       this.setState({day: Moment(e.target.value)});
     }
+    if (elem.id === "hour-project") {
+      let prevMonth = Moment().subtract(1, 'months');
+      this.setState({
+        Project: e.target.value,
+        Name: e.target.value + "-" + prevMonth.format("YYYY-MM")
+      });
+    }
+  }
+
+  private selectProject(prj) {
+    console.log("Change", prj);
+    let prevMonth = Moment().subtract(1, 'months');
+    this.setState({
+       Project: prj.Name,
+       Name: prj.Name + "-" + prevMonth.format("YYYY-MM"),
+       hourRate: prj.HourRate
+    });
   }
 
   private lineRemove(key: number) {
-    console.log(`Remove hour line with key=${key}`);
-    console.log("Deleted idx ", this.state.Lines.splice(key, 1)[0]);
+    console.log(`Deleted ${key} idx `, this.state.Lines.splice(key, 1)[0]);
     this.setState({Lines: this.state.Lines});
   }
 
   private save(e: BrowserEvent) {
     e.preventDefault();
-    Axios.post('/api/v1/hour', this.state)
+    let req = this.state;
+    req.Total = this.updateTotal();
+
+    Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts`, req)
     .then(res => {
       console.log(res.data);
-      this.props.match.params["id"] = res.data.Name;
-      history.replaceState({}, "", `#/hour-add/${res.data.Name}`);
+      this.props.id = res.data.Name;
+      this.setState(res.data);
+      history.replaceState({}, "", `#${this.props.entity}/${this.props.year}/hours/edit/concepts/${res.data.Name}`);
+    })
+    .catch(err => {
+      handleErr(err);
+    });
+  }
+
+  private bill(e: BrowserEvent) {
+    e.preventDefault();
+    let args = this.state;
+    Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts/${args.Name}/bill`, args)
+    .then(res => {
+      location.href = `#${this.props.entity}/${this.props.year}/invoices/edit/concepts/${res.headers["x-redirect-invoice"]}`
     })
     .catch(err => {
       handleErr(err);
@@ -158,12 +207,17 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
     return str;
   }
 
+  private toggleImport(e) {
+    e.preventDefault();
+    this.setState({import: !this.state.import});
+  }
+
 	render() {
     let lines: React.JSX.Element[] = [];
     let that = this;
-    let sum = new Big("0.00");
+    let isEditable = this.state.Status === "NEW" || this.state.Status === "CONCEPT";
+
     this.state.Lines.forEach(function(item:IHourLineState, idx:number) {
-      sum = sum.plus(item.Hours);
       lines.push(<tr key={idx}>
         <td><button className="btn btn-default btn-hover-danger faa-parent animated-hover" onClick={that.lineRemove.bind(that, idx)}><i className="fa fa-trash faa-flash"></i></button></td>
         <td>{item.Day}</td>
@@ -179,12 +233,7 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
           </div>
           <div className="panel-body">
             <div className="col-sm-2">
-              <DatePicker
-                id="hour-day"
-                className="form-control"
-                dateFormat="YYYY-MM-DD"
-                selected={that.state.day}
-                onChange={this.updateDate.bind(this)} />
+              <input type="date" id="hour-day" className="form-control" value={this.state.day.format("YYYY-MM-DD")} onChange={this.update.bind(this)}/>
             </div>
             <div className="col-sm-2">
               <input type="text" id="hour-start" className="form-control" placeholder="HH:mm" value={this.state.start} onChange={this.update.bind(this)}/>
@@ -204,20 +253,29 @@ export default class HourEdit extends React.Component<IInjectedProps, IHourState
           </div>
 		    </div>
     </div>
-    <Import importFn={this.importLine.bind(this)} />
+    <Import hide={this.state.import} onHide={this.toggleImport.bind(this)} importFn={this.importLine.bind(this)} />
 
     <div className="normalheader">
       <div className="hpanel hblue">
         <div className="panel-heading hbuilt">
           <div className="panel-tools">
             <div className="btn-group nm7">
-              <button className="btn btn-default btn-hover-success" onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i>&nbsp;Save</button>
+              <button className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.toggleImport.bind(this)}><i className="fa fa-arrow-up"></i>&nbsp;Import</button>
+              <button className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i>&nbsp;Save</button>
+              <button className="btn btn-default btn-hover-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fa fa-share"></i>&nbsp;Bill</button>
             </div>
           </div>
-          Sum ({sum.toFixed(2).toString()} hours)
+          Sum ({this.state.Total} hours/{this.state.Total * this.state.hourRate } EUR)
         </div>
         <div className="panel-body">
-          <input type="text" id="hour-name" className="form-control" placeholder="Hour name" value={this.state.Name} onChange={this.update.bind(this)}/>
+          <div className="row">
+            <div className="col-sm-6">
+              <Autocomplete id="hour-project" onSelect={this.selectProject.bind(this)} onChange={this.update.bind(this)} placeholder="Project name" url={"/api/v1/projects/"+that.props.entity+"/search"} value={this.state.Project} />
+            </div>
+            <div className="col-sm-6">
+              <LockedInput type="text" id="hour-name" value={this.state.Name} placeholder="AUTOGENERATED" onChange={this.update.bind(this)} locked={true} />
+            </div>
+          </div>
           <table className="table table-striped">
             <thead>
               <tr>

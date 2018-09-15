@@ -1,10 +1,7 @@
 package invoice
 
 import (
-	"github.com/boltdb/bolt"
-	"encoding/json"
 	"fmt"
-
 	"bytes"
 	"net/http"
 	"github.com/julienschmidt/httprouter"
@@ -13,11 +10,21 @@ import (
 	"github.com/mpdroog/invoiced/config"
 	"strings"
 	"io"
+	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/writer"
 )
+
+type Reply struct {
+	OK int
+	ERR int
+}
 
 // Parse bankbalance in CAMT053-format
 func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-   var buf bytes.Buffer
+	entity := ps.ByName("entity")
+	year := ps.ByName("year")
+
+	var buf bytes.Buffer
     file, header, e := r.FormFile("file")
     if e != nil {
     	log.Printf(e.Error())
@@ -25,13 +32,19 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
     }
     defer file.Close()
+
     name := strings.Split(header.Filename, ".")
-    if name[1] != "xml" {
+    if strings.ToLower(name[1]) != "xml" {
     	http.Error(w, "Sorry, not an XML-file", 400)
 		return
     }
 
-    io.Copy(&buf, file)
+    if _, e := io.Copy(&buf, file); e != nil {
+    	log.Printf(e.Error())
+		http.Error(w, "Failed loading file into memory", 500)
+		return    	
+    }
+
 	p, e := camt053.FilterPaymentsReceived(&buf)
 	if e != nil {
     	log.Printf(e.Error())
@@ -39,85 +52,74 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	for _, payment := range p {
-		if config.Verbose {
-			log.Printf(
-				"Parse payments(%s) %sEUR with comment=%s from=%s(%s)",
-				payment.Id, payment.Amount, payment.Comment, payment.Name, payment.IBAN,
-			)
-		}
+	res := new(Reply)
+	change := db.Commit{
+		Name: r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
+		Message: fmt.Sprintf("Read CAMT053 bankbalance"),
+	}
+	e = db.Update(change, func(t *db.Txn) error {
+		for _, payment := range p {
+			if config.Verbose {
+				log.Printf(
+					"Parse payments(%s) %sEUR with comment=%s from=%s(%s)\n",
+					payment.Id, payment.Amount, payment.Comment, payment.Name, payment.IBAN,
+				)
+			}
 
-		ok, e := balanceSetPaid(payment.Comment, payment.Date, payment.Amount)
-		if e != nil {
-			log.Printf(e.Error())
-			http.Error(w, "Failed marking payments as paid", 500)
-			return
-		}
+			ok, e := balanceSetPaid(t, entity, year, payment.Comment, payment.Date, payment.Amount)
+			if e != nil {
+				return e
+			}
 
-		if !ok {
-			log.Printf("Failed marking payment(%s) as paid", payment.Comment)
-		} else if config.Verbose {
-			log.Printf("Marked payment(%s) as paid", payment.Comment)
+			if ok {
+				res.OK++
+			} else {
+				res.ERR++
+			}
+
+			if !ok {
+				log.Printf("Failed marking payment(%s) as paid\n", payment.Comment)
+			} else if config.Verbose {
+				log.Printf("Marked payment(%s) as paid\n", payment.Comment)
+			}
 		}
+		return nil
+	})
+	if e != nil {
+		log.Printf(e.Error())
+		http.Error(w, "Commit failed", 500)
+		return
+	}
+
+	if e := writer.Encode(w, r, res); e != nil {
+		log.Printf(e.Error())
 	}
 }
 
-func balanceSetPaid(name string, payDate string, amount string) (bool, error) {
-	count := 1000
-	ok := false
-	e := db.Update(func(tx *bolt.Tx) error {
-		u := new(Invoice)
-		found := false
+// TODO: Something cleaner?
+func balanceSetPaid(t *db.Txn, entity, year, name, payDate, amount string) (bool, error) {
+	b := strings.Index(name, "Q")
+	e := strings.Index(name, "-")
+	bucket := name[b+1:e]
+	from := fmt.Sprintf("%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)
+	to := fmt.Sprintf("%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name)
 
-		b := tx.Bucket([]byte("invoices"))
-		c := b.Cursor()
-		i := 0
-		for k, v := c.Last(); k != nil && i < count; k, v = c.Prev() {
-			if e := json.NewDecoder(bytes.NewBuffer(v)).Decode(u); e != nil {
-				return e
-			}
-			if u.Meta.Invoiceid == name {
-				// Found invoice!
-				found = true
-				break
-			}
-			i++
-		}
-		if !found {
-			// Skip not found
-			log.Printf("Invoice(%s) not found?", name)
-			return nil
-		}
+	u := new(Invoice)
+	if e := t.Open(from, u); e != nil {
+		return false, e
+	}
+	if u.Total.Total != amount {
+		log.Printf("WARN: Invoice(%s) amounts don't match %sEUR/%sEUR\n", name, u.Total.Total, amount)
+		return false, nil
+	}
+	u.Meta.Paydate = payDate
 
-		if u.Total.Total != amount {
-			log.Printf("WARN: Invoice(%s) amounts don't match %sEUR/%sEUR", name, u.Total.Total, amount)
-			return nil
-		}
-		if u.Meta.Status != "FINAL" {
-			return fmt.Errorf("invoice.balanceSetPaid can only set paid on FINAL-invoices")
-		}
-		u.Meta.Paydate = payDate
-
-		// Save any changes..
-		buf := new(bytes.Buffer)
-		if e := json.NewEncoder(buf).Encode(u); e != nil {
-			return e
-		}
-		b2, e := tx.CreateBucketIfNotExists([]byte("invoices-paid"))
-		if e != nil {
-			return e
-		}
-		if e := b2.Put([]byte(u.Meta.Conceptid), buf.Bytes()); e != nil {
-			return e
-		}
-
-		// Delete original
-		if e := b.Delete([]byte(u.Meta.Conceptid)); e != nil {
-			return e
-		}
-
-		ok = true
-		return nil
-	})
-	return ok, e
+	if e := t.Save(to, false, u); e != nil {
+		return false, e
+	}
+	if e := t.Remove(from); e != nil {
+		return false, e
+	}
+	return true, nil
 }
