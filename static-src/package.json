@@ -13,8 +13,8 @@
     "@types/react-dom": "^15.5.1",
     "@types/react-router": "^4.0.14",
     "brunch": "^2.10.10",
-    "csswring": "^6.0.0",
-    "postcss-brunch": "^2.0.5",
+    "csswring": "^6.0.3",
+    "postcss-brunch": "^2.1.0",
     "typescript": "^2.4.2",
     "typescript-brunch": "^2.3.0",
     "uglify-js-brunch": "^2.10.0"
@@ -27,8 +27,9 @@
     "chartist": "^0.11.0",
     "moment": "^2.18.1",
     "msgpack-lite": "^0.1.26",
-    "react-chartist": "^0.13.0",
-    "react-lite": "^0.15.38"
+    "npm": "^6.0.0",
+    "react-chartist": "^0.13.1",
+    "react-lite": "^0.15.39"
   },
   "version": "1.0.0",
   "repository": {
