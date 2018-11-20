@@ -132,6 +132,7 @@ func TestPrice(t *testing.T) {
 		"HELLO",
 		"12a",
 		"1,1",
+		"12"
 	}
 
 	for _, str := range valid {

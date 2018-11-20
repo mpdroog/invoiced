@@ -1,0 +1,10 @@
+[queues.support]
+User = "username@gmail.com"
+Pass = "password"
+Host = "smtp.gmail.com"
+Port = 465
+From = "username@gmail.com"
+FromReply = "username@gmail.com"
+Display = "Company"
+Subject = ""
+BCC = ["username@gmail.com"]
