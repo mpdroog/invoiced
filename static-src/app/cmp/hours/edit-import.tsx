@@ -29,6 +29,7 @@ const monthMap = {
 	"november": "11",
 	"december": "12",
 }
+var year = new Date().getFullYear();
 
 // Try parsing 2July, 1Aug into Date()
 // @return Date|bool
@@ -44,10 +45,10 @@ function parseDate(line) {
 	}
 	dayMonth[1] = dayMonth[1].toLowerCase();
 
-	let dateStr = "2017-" + monthMap[dayMonth[1]] + "-" + dayMonth[0];
+	let dateStr = year + "-" + monthMap[dayMonth[1]] + "-" + dayMonth[0];
 	let date = new Date(dateStr);
 	if (isNaN(date)) {
-		//console.log("2017-" + monthMap[dayMonth[1]] + "-" + dayMonth[0]);
+		//console.log(year + "-" + monthMap[dayMonth[1]] + "-" + dayMonth[0]);
 		return false;
 	}
 
