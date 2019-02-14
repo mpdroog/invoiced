@@ -74,6 +74,7 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 	        }
 	      }
 	    };
+	    let fullyear = new Date().getFullYear();
 		return <div>
 			<div className="normalheader col-md-6">
 			    <div className="hpanel">
@@ -81,7 +82,7 @@ export default class Dashboard extends React.Component<{}, IMetrics> {
 			            <h2 className="font-light m-b-xs">
 			                <i className="fa fa-bank"></i>
 			                Revenue
-			                <span style={smallHead}>2017: &euro; {formatMoney(sum/100, '.', ',', ' ')}</span>
+			                <span style={smallHead}>{fullyear}: &euro; {formatMoney(sum/100, '.', ',', ' ')}</span>
 			            </h2>
 			            <table className="table">
 			            	<thead>
