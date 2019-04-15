@@ -51,7 +51,8 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
       Bank: {
         Vat: "",
         Coc: "",
-        Iban: ""
+        Iban: "",
+        Bic: ""
       },
       State: {
         email: false
@@ -89,6 +90,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
           Vat: res.data.Entity.VAT,
           Coc: res.data.Entity.COC,
           Iban: res.data.Entity.IBAN,
+          Bic: res.data.Entity.BIC
         }
       });
     })
