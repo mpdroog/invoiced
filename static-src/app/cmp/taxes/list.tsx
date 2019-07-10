@@ -49,14 +49,47 @@ export default class TaxesPage extends React.Component<{}, {}> {
 		return <div className="normalheader">
       <div className="hpanel hblue">
         <div className="panel-heading hbuilt">
-          TAX Summary Generator
+          Dutch TAX Summary Generator
         </div>
         <div className="panel-body">
           <div className="row">
+          <div className="col-md-8">
             <input type="text" value={this.state.quarter} onChange={this.setQuarter.bind(this)} />
             <button type="submit" onClick={this.ajax.bind(this)}>Get numbers</button>
 
             {sum}
+          </div>
+          <div className="col-md-4">
+            <table className="table table-bordered">
+              <thead>
+                <tr><th>Quarter</th><th>F - T</th><th>From - To (including)</th><th>Deadline</th></tr>
+              </thead>
+              <tr>
+                <td>Q1</td>
+                <td>01-03</td>
+                <td>Januari - March</td>
+                <td>31 April</td>
+              </tr>
+              <tr>
+                <td>Q2</td>
+                <td>04-06</td>
+                <td>April - June</td>
+                <td>31 July</td>
+              </tr>
+              <tr>
+                <td>Q3</td>
+                <td>07-09</td>
+                <td>July - September</td>
+                <td>31 October</td>
+              </tr>
+              <tr>
+                <td>Q4</td>
+                <td>10-12</td>
+                <td>October - December</td>
+                <td>31 Januari</td>
+              </tr>
+            </table>
+          </div>
           </div>
         </div>
       </div>
