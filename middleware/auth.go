@@ -46,7 +46,11 @@ var entities Entities
 
 func Init() error {
 	return db.View(func(t *db.Txn) error {
-		return t.Open("entities.toml", &entities)
+		e := t.Open("entities.toml", &entities)
+		if config.Verbose {
+			fmt.Printf("entities=%+v\n", entities)
+		}
+		return e
 	})
 }
 
