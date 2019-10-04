@@ -7,14 +7,11 @@ import (
 	"os"
 	"bufio"
 	git "gopkg.in/src-d/go-git.v4"
-	gitconfig "gopkg.in/src-d/go-git.v4/config"
 	"github.com/BurntSushi/toml"
 	"regexp"
 	"log"
 	"strings"
 	"fmt"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
-	"time"
 	"github.com/mpdroog/invoiced/config"
 	"sync"
 	"io"
@@ -69,17 +66,6 @@ func Init(path string) error {
 		}
 		Repo = repo
 
-		cfg := &gitconfig.RemoteConfig{
-		    Name: "github",
-		    URLs:  []string{"https://github.com/mpdroog/acct.git"},
-		}
-		if e := cfg.Validate(); e != nil {
-			return e
-		}
-		if _, e = Repo.CreateRemote(cfg); e != nil {
-			return e
-		}
-
 		// TODO: create basic file structure?
 
 	} else {
@@ -92,64 +78,15 @@ func Init(path string) error {
 		}
 		Repo = repo
 
+		if config.Verbose {
+			log.Printf("Revert outstanding")
+		}
 		// revert any unchanged files
 		// (added to support application crash)
 		if e := revert(); e != nil {
 			return e
 		}
 	}
-
-	tree, e := Repo.Worktree()
-	if e != nil {
-		return e
-	}
-	opts := &git.PullOptions{RemoteName: "github", Auth: &http.BasicAuth{Username: "mpdroog", Password: "2dqqR24m"}}
-	if e := opts.Validate(); e != nil {
-		return e
-	}
-
-	// Async git push..
-	go func() {
-		// initial pull
-		if e := tree.Pull(opts); e != nil {
-			// ignore empty repo warnings
-			if e.Error() != "remote repository is empty" && e.Error() != "already up-to-date" {
-				log.Printf("[Git] Pull err=%s", e.Error())
-			}
-		}
-
-		// err = small fn to delay retry of push
-		err := func() {
-			time.Sleep(time.Minute * 3)
-			canPush <- struct{}{}
-		}
-		for {
-			if config.Verbose {
-				log.Printf("Git awaiting push")
-			}
-			<- canPush
-			repos, e := Repo.Remotes()
-			if e != nil {
-				log.Printf("[Git] Remotes fail=%s", e.Error())
-				err()
-				continue
-			}
-			for _, repo := range repos {
-				if config.Verbose {
-					log.Printf("Push to %s", repo.Config().Name)
-				}
-				opts := &git.PushOptions{RemoteName: repo.Config().Name, Auth: &http.BasicAuth{Username: "mpdroog", Password: "2dqqR24m"}}
-				if e := opts.Validate(); e != nil {
-					log.Printf("[Git] Push validate=%s", e.Error())
-					err()
-				}
-				if e := repo.Push(opts); e != nil {
-					log.Printf("[Git] Push fail=%s", e.Error())
-					err()
-				}
-			}
-		}
-	}()
 
 	return nil
 }
