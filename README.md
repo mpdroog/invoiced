@@ -122,9 +122,25 @@ DueDays=14
 PO=""
 Street1="AdditionalText"
 <<
+git add .
+git commit -m "Initial commit"
 
 cd -
+vi config.toml
+>>
+[queues.support]
+User = "myemail@gmail.com"
+Pass = "supersecret"
+Host = "smtp.gmail.com"
+Port = 465
+From = "myemail@gmail.com"
+FromReply = "myemail@gmail.com"
+Display = "MyCompany"
+Subject = ""
+BCC = ["myemail@gmail.com"]
+>>
+
 ./invoiced -v -d=~/billingdb
-open "http://localhost:9999/static"
+open "http://localhost:9999"
 ```
 
