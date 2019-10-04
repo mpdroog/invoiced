@@ -94,14 +94,12 @@ Address1="Street houseno"
 Address2="Postal City"
 <<
 
-mkdir name
-cd name
-mkdir $(date +\%Y) # mkdir 2019
-vi counters.toml
+mkdir -p name/$(date +\%Y) # mkdir name/2019
+vi name/counters.toml
 >>
 InvoiceID = 1
 <<
-vi debtors.toml
+vi name/debtors.toml
 >>
 [debtorname]
 Name="Debtorname B.V."
@@ -113,7 +111,7 @@ TAX="NL21"
 NoteAdd=""
 BillingEmail=["finance@yourcustomer.nl"]
 <<
-vi projects.toml
+vi name/projects.toml
 >>
 [projectname]
 Debtor="debtorname"
