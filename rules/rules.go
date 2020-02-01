@@ -22,6 +22,7 @@ func init() {
 	regex["uint"] = regexp.MustCompile(`^[0-9]+$`)
 	regex["qty"] = regexp.MustCompile(`^[0-9]+\.[0-9]+$`)
 	regex["price"] = regexp.MustCompile(`^-?[0-9]+\.[0-9]+$`)
+	regex["bic"] = regexp.MustCompile(`[a-zA-Z]{6}[2-9a-zA-Z][0-9a-nA-Np-zP-Z]([a-zA-Z0-9]{3}|x{3})?`)
 
 	validator.SetValidationFunc("slug", slug)
 	validator.SetValidationFunc("date", date)
@@ -30,6 +31,7 @@ func init() {
 	validator.SetValidationFunc("iban", iban)
 	validator.SetValidationFunc("price", price)
 	validator.SetValidationFunc("qty", qty)
+	validator.SetValidationFunc("bic", bic)
 }
 
 func strCheck(rule string, v interface{}, param string) error {
@@ -106,6 +108,9 @@ func qty(v interface{}, param string) error {
 		return nil
 	}
 	return fmt.Errorf("qty no validator for reflect kind=%s", st.Kind())
+}
+func bic(v interface{}, param string) error {
+	return strCheck("bic", v, param)
 }
 func Init() error {
 	// Do nothing, just get this file included..

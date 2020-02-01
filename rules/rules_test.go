@@ -132,7 +132,7 @@ func TestPrice(t *testing.T) {
 		"HELLO",
 		"12a",
 		"1,1",
-		"12"
+		"12",
 	}
 
 	for _, str := range valid {
@@ -142,6 +142,33 @@ func TestPrice(t *testing.T) {
 	}
 	for _, str := range invalid {
 		if e := price(str, ""); e == nil {
+			t.Errorf("str should fail but didn't, input=%s", str)
+		}
+	}
+}
+
+func TestBIC(t *testing.T) {
+	valid := []string{
+		"CMFGUS33XXX", // US Community Federal Savings bank
+		"INGBNL2AXXX",
+		"RABONL2U",
+		"RABONL2UXXX", // Same as above
+	}
+	invalid := []string{
+		"HE LLO",
+		"HELLO",
+		"12a",
+		"1,1",
+		"12",
+	}
+
+	for _, str := range valid {
+		if e := bic(str, ""); e != nil {
+			t.Errorf("match %s failed with e=%s", str, e)
+		}
+	}
+	for _, str := range invalid {
+		if e := bic(str, ""); e == nil {
 			t.Errorf("str should fail but didn't, input=%s", str)
 		}
 	}
