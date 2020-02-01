@@ -112,6 +112,7 @@ func HourToInvoice(entity, year, project, name, hourStr, email, hourFile, from s
 			Vat: company.VAT,
 			Coc: company.COC,
 			Iban: company.IBAN,
+			Bic: company.BIC,
 		},
 		Mail: InvoiceMail{
 			From: mailQueue,
