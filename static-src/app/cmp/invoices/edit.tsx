@@ -148,6 +148,8 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
   }
 
   private lineUpdate(line: IInvoiceLine) {
+    line.Quantity = line.Quantity.replace(/,/g, ".");
+    line.Price = line.Price.replace(/,/g, ".");
     line.Total = new Big(line.Price).times(line.Quantity).round(2).toFixed(2).toString();
     return line;
   }
