@@ -160,6 +160,9 @@ func TestBIC(t *testing.T) {
 		"12a",
 		"1,1",
 		"12",
+		"abcdefxx",
+		"aaaa11xxyyy",
+		"AAAA11XXYYY",
 	}
 
 	for _, str := range valid {

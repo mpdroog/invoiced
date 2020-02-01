@@ -22,7 +22,7 @@ func init() {
 	regex["uint"] = regexp.MustCompile(`^[0-9]+$`)
 	regex["qty"] = regexp.MustCompile(`^[0-9]+\.[0-9]+$`)
 	regex["price"] = regexp.MustCompile(`^-?[0-9]+\.[0-9]+$`)
-	regex["bic"] = regexp.MustCompile(`[a-zA-Z]{6}[2-9a-zA-Z][0-9a-nA-Np-zP-Z]([a-zA-Z0-9]{3}|x{3})?`)
+	regex["bic"] = regexp.MustCompile(`[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}`)
 
 	validator.SetValidationFunc("slug", slug)
 	validator.SetValidationFunc("date", date)
