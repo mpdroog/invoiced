@@ -40,6 +40,9 @@ export default class InvoicesPage extends React.Component<{}, {}> {
         }
       }
       s.commits = res.data.Commits;
+      window.rootdev = {
+        invoiced: s
+      };
       this.setState(s);
     })
     .catch(err => {

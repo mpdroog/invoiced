@@ -32,6 +32,9 @@ module.exports = {
     aliases: {
       'react': 'react-lite',
       'react-dom': 'react-lite'
+    },
+    globals: {
+      'Big': 'big.js'
     }
   }
 };

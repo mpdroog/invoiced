@@ -35,6 +35,9 @@ export default class Hours extends React.Component<{}, IHourState> {
     .then(res => {
       res.data = Msgpack.decode(new Uint8Array(res.data));
       this.setState({hours: res.data});
+      window.rootdev = {
+        invoiced: res.data
+      };
     })
     .catch(err => {
       handleErr(err);
