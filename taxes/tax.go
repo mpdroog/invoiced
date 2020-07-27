@@ -17,6 +17,7 @@ type Sum struct {
 	Ex string
 	Tax string
 	EUEx string  // TOOODOOO
+	EUCompany map[string]string
 }
 
 func addValue(sum, add string, dec int) (string, error) {
@@ -43,6 +44,7 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	quarter := ps.ByName("quarter")
 
 	sum := &Sum{}
+	sum.EUCompany = make(map[string]string)
 
 	e := db.View(func(t *db.Txn) error {
 		// invoice
@@ -58,6 +60,11 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			}
 			if strings.Contains(u.Notes, "VAT Reverse charge") {
 				sum.EUEx, e = addValue(sum.EUEx, u.Total.Ex, 2)
+				custvat, ok := sum.EUCompany[u.Customer.Vat]
+				if !ok {
+					custvat = "0.00"
+				}
+				sum.EUCompany[u.Customer.Vat], e = addValue(custvat, u.Total.Total, 2)
 			} else {
 				sum.Ex, e = addValue(sum.Ex, u.Total.Ex, 2)
 			}
@@ -74,9 +81,13 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		panic(e)
 	}
 
+	// Remove decimals (Belastingdienst wants all numbers rounded)
 	sum.EUEx, e = addValue(sum.EUEx, "0", 0)
 	sum.Ex, e = addValue(sum.Ex, "0", 0)
-	sum.Tax, e = addValue(sum.Tax, "0", 0)	
+	sum.Tax, e = addValue(sum.Tax, "0", 0)
+	for k, v := range sum.EUCompany {
+		sum.EUCompany[k], e = addValue(v, "0", 0)
+	}
 
 	if e := writer.Encode(w, r, sum); e != nil {
 		log.Printf("taxes.Tax " + e.Error())

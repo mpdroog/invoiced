@@ -30,7 +30,19 @@ export default class TaxesPage extends React.Component<{}, {}> {
 	render() {
     let sum = null;
     if (this.state.data) {
-      sum = <table className="table">
+      let icp = [];
+      for (let vat in this.state.data.EUCompany) {
+        if (! this.state.data.EUCompany.hasOwnProperty(vat)) {
+          continue;
+        }
+        icp.push(<tr key={"icp"+vat}>
+          <td>3a. Intracommunautaire leveringen en diensten</td>
+          <td>{vat}</td>
+          <td>&euro; {this.state.data.EUCompany[vat]}</td>
+        </tr>);
+      };
+
+      sum = <div><div><h2>Aangifte omzetbelasting</h2><table className="table">
         <thead>
           <tr><th>Rubriek</th><th>Omzet</th><th>Omzetbelasting</th></tr>
         </thead>
@@ -43,7 +55,14 @@ export default class TaxesPage extends React.Component<{}, {}> {
           <td>3b. Leveringen naar of diensten in landen binnen de EU</td>
           <td>&euro; {this.state.data.EUEx}</td>
         </tr>
-      </table>;
+      </table></div><div>
+        <h2>Aangifte Intracommunautaire prestaties</h2><table className="table">
+        <thead>
+          <tr><th>Rubriek</th><th>BTW-nummer</th><th>Levering</th></tr>
+        </thead>
+        {icp}
+      </table>
+      </div></div>;
     }
 
 		return <div className="normalheader">
