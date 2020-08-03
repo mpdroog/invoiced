@@ -34,7 +34,8 @@ module.exports = {
       'react-dom': 'react-lite'
     },
     globals: {
-      'Big': 'big.js'
+      'Big': 'big.js',
+      'Moment': 'moment'
     }
   }
 };
