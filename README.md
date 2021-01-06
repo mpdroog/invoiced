@@ -71,7 +71,7 @@ cd -
 # Init db (~ is your homedir)
 mkdir ~/billingdb
 cd ~/billingdb
-git init
+git clone https://github.com/mpdroog/acct-example .
 vi entities.toml
 >>
 IV="PASTE_IV_HERE"
@@ -94,36 +94,8 @@ Address1="Street houseno"
 Address2="Postal City"
 <<
 
-mkdir -p name/$(date +\%Y) # mkdir name/2019
-vi name/counters.toml
->>
-InvoiceID = 1
-<<
-vi name/debtors.toml
->>
-[debtorname]
-Name="Debtorname B.V."
-Street1="Street Houseno"
-Street2="Postal City"
-VAT=""
-COC=""
-TAX="NL21"
-NoteAdd=""
-BillingEmail=["finance@yourcustomer.nl"]
-<<
-vi name/projects.toml
->>
-[projectname]
-Debtor="debtorname"
-BillingEmail=["accounting@importantcustomer.de"]
-NoteAdd="Comment on invoice"
-HourRate=20.00
-DueDays=14
-PO=""
-Street1="AdditionalText"
-<<
 git add .
-git commit -m "Initial commit"
+git commit -m "Update company/auth details"
 
 cd -
 vi config.toml
