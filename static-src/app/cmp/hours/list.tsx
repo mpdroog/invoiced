@@ -20,7 +20,7 @@ export default class Hours extends React.Component<{}, IHourState> {
         "from": 0,
         "count": 50
       },
-      "hours": []
+      "hours": null
     };
   }
 
@@ -60,14 +60,18 @@ export default class Hours extends React.Component<{}, IHourState> {
   render() {
     let res:React.JSX.Element[] = [];
     let that = this;
+    let items = 0;
     console.log("hours=",this.state.hours);
-    if (this.state.hours.length > 0) {
+
+    if (this.state.hours) {
       for (let bucket in this.state.hours) {
         if (! this.state.hours.hasOwnProperty(bucket)) {
           continue;
         }
+        items++;
         this.state.hours[bucket].forEach(function(elem) {
           res.push(<tr key={bucket+elem}>
+            <td>{bucket}</td>
             <td>{elem}</td>
             <td>
               <a className="btn btn-default btn-hover-primary" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+bucket+"/"+elem}><i className="fa fa-pencil"></i></a>
@@ -75,8 +79,9 @@ export default class Hours extends React.Component<{}, IHourState> {
             </td></tr>);
         });
       }
-    } else {
-      res.push(<tr key="empty"><td colSpan={4}>No hours yet :)</td></tr>);
+    }
+    if (items === 0) {
+      res.push(<tr key="empty"><td colSpan={5}>No hours yet :)</td></tr>);
     }
 
     return <div className="normalheader">
@@ -91,7 +96,7 @@ export default class Hours extends React.Component<{}, IHourState> {
           </div>
           <div className="panel-body">
             <table className="table table-striped">
-              <thead><tr><th>Name</th><th>I/O</th></tr></thead>
+              <thead><tr><th>Bucket</th><th>Name</th><th>I/O</th></tr></thead>
               <tbody>{res}</tbody>
             </table>
           </div>
