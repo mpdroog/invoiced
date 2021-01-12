@@ -20,7 +20,7 @@ export default class Hours extends React.Component<{}, IHourState> {
         "from": 0,
         "count": 50
       },
-      "hours": null
+      "hours": []
     };
   }
 
@@ -61,7 +61,7 @@ export default class Hours extends React.Component<{}, IHourState> {
     let res:React.JSX.Element[] = [];
     let that = this;
     console.log("hours=",this.state.hours);
-    if (this.state.hours) {
+    if (this.state.hours.length > 0) {
       for (let bucket in this.state.hours) {
         if (! this.state.hours.hasOwnProperty(bucket)) {
           continue;
