@@ -153,7 +153,6 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 	dirs := []string{
-		fmt.Sprintf("%s/%s/concepts/hours", entity, year),
 		fmt.Sprintf("%s/%s/{all}/hours", entity, year),
 	}
 
