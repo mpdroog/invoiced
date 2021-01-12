@@ -101,22 +101,30 @@ export default class HourEdit extends React.Component<{}, IHourState> {
       return;
     }
 
-    let start = Moment.duration(this.state.start);
-    let stop = Moment.duration(this.state.stop);
-    let sum = stop.subtract(start);
-    console.log("Start=" + start + " Stop=" + stop + " to hours=" + sum.humanize());
+    let start = Moment(this.state.start, 'HH:mm')
+    let stop = Moment(this.state.stop, 'HH:mm');
+    if (! start.isValid()) {
+      throw new Error("Failed parsing start=" + this.state.start);
+    }
+    if (! stop.isValid()) {
+      throw new Error("Failed parsing stop=" + this.state.stop);
+    }
+    // Momentjs fails us, do the math ourselves..
+    let sum = stop.diff(start)/1000/60/60;
+
+    console.log("Start=" + start + " Stop=" + stop + " to hours=" + sum);
 
     let total = new Big(this.state.Total);
     this.state.Lines.push({
       Start: this.state.start,
       Stop: this.state.stop,
-      Hours: sum.asHours(),
+      Hours: sum,
       Description: this.state.description,
       Day: this.state.day.format("YYYY-MM-DD")
     });
     this.setState({
       Lines: this.state.Lines,
-      Total: total.plus(sum.asHours()).toFixed(2).toString()
+      Total: total.plus(sum).toFixed(2).toString()
     });
   }
 
