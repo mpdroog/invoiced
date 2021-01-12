@@ -116,8 +116,9 @@ func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return e
 	})
 	if e != nil {
-		log.Printf(e.Error())
-		http.Error(w, "hour.Bill fail", http.StatusInternalServerError)
+		log.Printf("invoice.HourToInvoice: " + e.Error())
+		http.Error(w, "Failed converting hours to invoice, error=" + e.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("X-Redirect-Invoice", invoiceId)
