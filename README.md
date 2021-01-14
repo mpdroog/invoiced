@@ -112,7 +112,7 @@ Subject = ""
 BCC = ["myemail@gmail.com"]
 >>
 
-./invoiced -v -d=~/billingdb
+./invoiced -v -d ~/billingdb
 open "http://localhost:9999"
 ```
 
