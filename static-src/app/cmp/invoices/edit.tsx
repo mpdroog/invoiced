@@ -38,7 +38,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
       },
       Lines: [{
         Description: "",
-        Quantity: "0",
+        Quantity: "0.00",
         Price: "0.00",
         Total: "0.00"
       }],

@@ -18,7 +18,7 @@ export class InvoiceLineEdit extends React.Component<{}, {}> {
     console.log("Add invoice line");
     parent.state.Lines.push({
       Description: "",
-      Quantity: "0",
+      Quantity: "0.00",
       Price: "0.00",
       Total: "0.00"
     });
@@ -37,7 +37,7 @@ export class InvoiceLineEdit extends React.Component<{}, {}> {
     }
     let line: IInvoiceLine = parent.state.Lines[key];
     let isEmpty = line.Description === ""
-      && line.Quantity === "0"
+      && line.Quantity === "0.00"
       && line.Price === "0.00"
       && line.Total === "0.00";
     let isOk = !isEmpty && confirm(`Are you sure you want to remove the invoiceline with description '${line.Description}'?`);
