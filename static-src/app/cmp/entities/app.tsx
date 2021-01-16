@@ -85,6 +85,11 @@ export default class Entities extends React.Component<{}, IMetrics> {
       	this.setState({entities: res.data});
     })
     .catch(err => {
+      if (err.response && err.response.status === 401) {
+        // Session expired
+        location.href = '/';
+        return;
+      }
       handleErr(err);
     });
   }
