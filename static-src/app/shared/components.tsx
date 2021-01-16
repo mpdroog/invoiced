@@ -115,8 +115,13 @@ export class Autocomplete extends React.Component<{}, {}> {
 		</div>;
 	}
 
+  var req = null;
+  if (this.props.required) {
+    req = <i className="fa fa-asterisk text-danger fa-input"></i>;
+  }
 	return <div style={p} tabIndex="1" onFocusOut={this.onBlur.bind(this)}>
 		<input type="text" className="form-control" onFocus={this.onFocus.bind(this)} onChange={this.lookup.bind(this)} value={this.props.value} disabled={this.props.disabled} placeholder={this.props.placeholder} data-key={this.props['data-key']} id={this.props.id} autoComplete="off" />
+    {req}
 		{suggest}
 		</div>;
 	}

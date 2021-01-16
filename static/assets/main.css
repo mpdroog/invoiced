@@ -32,3 +32,13 @@
 .pa {
     position: absolute;
 }
+
+.fa-input {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 8px;
+}
+.pr {
+    position: relative;
+}

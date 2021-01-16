@@ -292,9 +292,9 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
       Invoice For
     </div>
     <div className="col-sm-3">
-      <Autocomplete data-key="Customer.Name" onSelect={that.selectCustomer.bind(that)} onChange={that.handleChange.bind(that)} placeholder="Company Name" url={"/api/v1/debtors/"+that.props.entity+"/search"} value={inv.Customer.Name} />
-      <input className="form-control" type="text" data-key="Customer.Street1" onChange={that.handleChange.bind(this)} value={inv.Customer.Street1} placeholder="Street1" />
-      <input className="form-control" type="text" data-key="Customer.Street2" onChange={that.handleChange.bind(this)} value={inv.Customer.Street2} placeholder="Street2" />
+      <Autocomplete data-key="Customer.Name" onSelect={that.selectCustomer.bind(that)} onChange={that.handleChange.bind(that)} required={true} placeholder="Company Name" url={"/api/v1/debtors/"+that.props.entity+"/search"} value={inv.Customer.Name} />
+      <div className="pr"><input className="form-control" type="text" data-key="Customer.Street1" onChange={that.handleChange.bind(this)} value={inv.Customer.Street1} placeholder="Street1" /><i className="fa fa-asterisk text-danger fa-input"></i></div>
+      <div className="pr"><input className="form-control" type="text" data-key="Customer.Street2" onChange={that.handleChange.bind(this)} value={inv.Customer.Street2} placeholder="Street2" /><i className="fa fa-asterisk text-danger fa-input"></i></div>
 
       <input className="form-control" type="text" data-key="Customer.Vat" onChange={that.handleChange.bind(this)} value={inv.Customer.Vat} placeholder="VAT-number"/>
       <input className="form-control" type="text" data-key="Customer.Coc" onChange={that.handleChange.bind(this)} value={inv.Customer.Coc} placeholder="Chamber Of Commerce (CoC)"/>
@@ -342,9 +342,9 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
     <div className="col-sm-4">
       <p>Banking details</p>
       <table className="table"><tbody>
-        <tr><td className="text">VAT</td><td><input className="form-control" type="text" data-key="Bank.Vat" onChange={this.handleChange.bind(this)} value={inv.Bank.Vat}/></td></tr>
-        <tr><td className="text">CoC</td><td><input className="form-control" type="text" data-key="Bank.Coc" onChange={this.handleChange.bind(this)} value={inv.Bank.Coc}/></td></tr>
-        <tr><td className="text">IBAN</td><td><input className="form-control" type="text" data-key="Bank.Iban" onChange={this.handleChange.bind(this)} value={inv.Bank.Iban}/></td></tr>
+        <tr><td className="text">VAT</td><td className="pr"><input className="form-control" type="text" data-key="Bank.Vat" onChange={this.handleChange.bind(this)} value={inv.Bank.Vat}/><i className="fa fa-asterisk text-danger fa-input"></i></td></tr>
+        <tr><td className="text">CoC</td><td className="pr"><input className="form-control" type="text" data-key="Bank.Coc" onChange={this.handleChange.bind(this)} value={inv.Bank.Coc}/><i className="fa fa-asterisk text-danger fa-input"></i></td></tr>
+        <tr><td className="text">IBAN</td><td className="pr"><input className="form-control" type="text" data-key="Bank.Iban" onChange={this.handleChange.bind(this)} value={inv.Bank.Iban}/><i className="fa fa-asterisk text-danger fa-input"></i></td></tr>
       </tbody></table>
     </div>
   </div>

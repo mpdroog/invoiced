@@ -57,9 +57,9 @@ export class InvoiceLineEdit extends React.Component<{}, {}> {
       lines.push(
         <tr key={"line"+idx}>
           <td><button disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? 'btn-hover-danger faa-parent animated-hover' : '')} onClick={that.lineRemove.bind(that)} data-idx={idx}><i className="fa fa-trash faa-flash"></i></button></td>
-          <td><input className="form-control" type="text" data-key={"Lines."+idx+".Description"} onChange={parent.handleChange.bind(parent)} value={line.Description}/></td>
-          <td><input className="form-control" type="text" data-key={"Lines."+idx+".Quantity"} onChange={parent.handleChange.bind(parent)} value={line.Quantity}/></td>
-          <td><input className="form-control" type="text" data-key={"Lines."+idx+".Price"} onChange={parent.handleChange.bind(parent)} value={line.Price}/></td>
+          <td className="pr"><input className="form-control" type="text" data-key={"Lines."+idx+".Description"} onChange={parent.handleChange.bind(parent)} value={line.Description}/><i className="fa fa-asterisk text-danger fa-input"></i></td>
+          <td className="pr"><input className="form-control" type="text" data-key={"Lines."+idx+".Quantity"} onChange={parent.handleChange.bind(parent)} value={line.Quantity}/><i className="fa fa-asterisk text-danger fa-input"></i></td>
+          <td className="pr"><input className="form-control" type="text" data-key={"Lines."+idx+".Price"} onChange={parent.handleChange.bind(parent)} value={line.Price}/><i className="fa fa-asterisk text-danger fa-input"></i></td>
           <td><input className="form-control" readOnly={true} disabled={true} type="text" data-key={"Lines."+idx+".Total"} value={line.Total}/></td>
         </tr>
       );
