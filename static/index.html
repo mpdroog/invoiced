@@ -34,6 +34,26 @@
   </div>
 </div>
 
+<div id="js-dialog-conn-error" tabindex="-1" role="dialog" class="modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">
+          😵 Oops! Internet down?
+        </h4>
+      </div>
+      <div class="modal-body">
+        <p>Failed contacting the server, please check if:</p>
+        <ol><li>Your internet connection is down</li>
+        <li>The server is down/crashed.</li></ol>
+      </div>
+      <div class="modal-footer">
+        <!-- a class="js-modal-hide btn btn-default">Ignore</a -->
+        <!-- a style="float:right" class="btn btn-primary">Report</a -->
+      </div>
+    </div>
+  </div>
+</div>
 <div id="js-dialog-error" tabindex="-1" role="dialog" class="modal">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -77,6 +97,14 @@
     };
     var splash = document.getElementById("js-splash");
     splash && splash.remove();
+
+    if (e.request && !e.status) {
+      // Connection error
+      document.getElementById("js-dialog-conn-error").classList.add('modal-open');
+      document.getElementById("js-dialog-conn-error").style.display = 'block';
+      document.getElementById("js-dialog-backdrop").classList.remove('hidden');
+      return;
+    }
 
     document.getElementById("js-error-body").value = JSON.stringify(errorData);
     document.getElementById("js-dialog-error").classList.add('modal-open');
