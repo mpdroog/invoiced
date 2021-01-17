@@ -33,6 +33,7 @@
     position: absolute;
 }
 
+/* invoice screen */
 .fa-input {
     position: absolute;
     right: 10px;
@@ -41,4 +42,7 @@
 }
 .pr {
     position: relative;
+}
+.mb0 {
+    margin-bottom: 0;
 }

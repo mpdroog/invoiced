@@ -341,11 +341,13 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
   <div className="row banking">
     <div className="col-sm-4">
       <p>Banking details</p>
-      <table className="table"><tbody>
-        <tr><td className="text">VAT</td><td className="pr"><input className="form-control" type="text" data-key="Bank.Vat" onChange={this.handleChange.bind(this)} value={inv.Bank.Vat}/><i className="fa fa-asterisk text-danger fa-input"></i></td></tr>
-        <tr><td className="text">CoC</td><td className="pr"><input className="form-control" type="text" data-key="Bank.Coc" onChange={this.handleChange.bind(this)} value={inv.Bank.Coc}/><i className="fa fa-asterisk text-danger fa-input"></i></td></tr>
-        <tr><td className="text">IBAN</td><td className="pr"><input className="form-control" type="text" data-key="Bank.Iban" onChange={this.handleChange.bind(this)} value={inv.Bank.Iban}/><i className="fa fa-asterisk text-danger fa-input"></i></td></tr>
+      <table className="table mb0"><tbody>
+        <tr><td className="text">VAT</td><td className="pr">
+          <LockedInput type="text" value={inv.Bank.Vat} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Vat" required={true} /></td></tr>
+        <tr><td className="text">CoC</td><td className="pr"><LockedInput type="text" value={inv.Bank.Coc} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Coc" required={true} /></td></tr>
+        <tr><td className="text">IBAN</td><td className="pr"><LockedInput type="text" value={inv.Bank.Iban} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Iban" required={true} /></td></tr>
       </tbody></table>
+      <small><i className="fa fa-info"></i> Edit these from your settings file.</small>
     </div>
   </div>
 </div>
