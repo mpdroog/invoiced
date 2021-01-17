@@ -152,6 +152,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
       return "0.00";
     }
     val = val.replace(/,/g, ".");
+    val = val.replace(/[^\d.]/g, '')
 
     let idx = val.indexOf(".");
     if (idx === -1) {
