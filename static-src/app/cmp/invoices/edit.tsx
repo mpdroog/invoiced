@@ -379,6 +379,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
           <LockedInput type="text" value={inv.Bank.Vat} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Vat" required={true} /></td></tr>
         <tr><td className="text">CoC</td><td className="pr"><LockedInput type="text" value={inv.Bank.Coc} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Coc" required={true} /></td></tr>
         <tr><td className="text">IBAN</td><td className="pr"><LockedInput type="text" value={inv.Bank.Iban} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Iban" required={true} /></td></tr>
+        <tr><td className="text">BIC</td><td className="pr"><LockedInput type="text" value={inv.Bank.Bic} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Bic" required={true} /></td></tr>
       </tbody></table>
       <small><i className="fa fa-info"></i> Edit these from your settings file.</small>
     </div>
