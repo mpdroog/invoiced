@@ -369,6 +369,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
 
   <div className="row notes col-sm-12">
     <p>Notes</p>
+    <small><i className="fa fa-info"></i> This text is added to the invoice</small>
     <textarea className="form-control" data-key="Notes" onChange={this.handleChange.bind(this)} value={inv.Notes}/>
   </div>
   <div className="row banking">
