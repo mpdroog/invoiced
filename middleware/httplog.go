@@ -45,10 +45,6 @@ func HTTPAuth(next http.Handler) http.Handler {
 					Domain: config.HTTPListen,
 					Secure: config.HTTPSOnly,
 				})
-
-				w.WriteHeader(403)
-				w.Write([]byte("Invalid auth creds"))
-				return
 			}
 		}
 
