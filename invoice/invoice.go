@@ -467,7 +467,7 @@ func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if e != nil {
 			return e
 		}
-		f, e = pdf(u)
+		f, e = pdf(db.Path + entity, u)
 		return e
 	})
 	if e != nil {
