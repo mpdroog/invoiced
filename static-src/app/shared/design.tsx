@@ -1,11 +1,10 @@
 import * as React from "react";
 
 function Menu ({ company, year }) {
-    var logo = "/static/assets/"+company+".png";
     var s = {marginRight: "15px", float: "left"};
     return (<div id="header">
         <div id="logo" className="light-version">
-            <a href="/" id="js-entities"><img src={logo} className="m-b" alt="logo"/></a>
+            <a href="/" id="js-entities"><img src={"/api/v1/entities/" + company + "/logo"} className="m-b" alt="logo"/></a>
         </div>
         <nav role="navigation">
             <div style={s}>&nbsp;</div>
