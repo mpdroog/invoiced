@@ -150,6 +150,10 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
   private lineUpdate(line: IInvoiceLine) {
     line.Quantity = line.Quantity.replace(/,/g, ".");
     line.Price = line.Price.replace(/,/g, ".");
+    // default to 0.00 to ensure user cannot cause Bigjs to crash
+    if (line.Price === "") line.Price = "0.00";
+    if (line.Quantity === "") line.Quantity = "0.00";
+
     line.Total = new Big(line.Price).times(line.Quantity).round(2).toFixed(2).toString();
     return line;
   }
