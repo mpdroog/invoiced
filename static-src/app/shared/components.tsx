@@ -55,7 +55,7 @@ export class Autocomplete extends React.Component<{}, {}> {
     this.lookupQuery = txt;
 
     let that = this;
-	console.log("lookup", this.props.url, txt);
+    console.log("lookup", this.props.url, txt);
 
     Axios.get(this.props.url, {params: {"query": txt}})
     .then(res => {
@@ -97,7 +97,8 @@ export class Autocomplete extends React.Component<{}, {}> {
 		top: "30px",
 		left: "0",
 		right: "0",
-		backgroundColor: "gray"
+		backgroundColor: "gray",
+    zIndex: "2"
 	};
 	let i = {
 		padding: "10px",
