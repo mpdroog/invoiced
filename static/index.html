@@ -38,6 +38,9 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
+        <button type="button" data-dismiss="modal" aria-label="Close" class="close">
+          <span class="js-modal-hide" aria-hidden="true">&times;</span>
+        </button>
         <h4 class="modal-title">
           😵 Oops! Internet down?
         </h4>
@@ -98,7 +101,7 @@
     var splash = document.getElementById("js-splash");
     splash && splash.remove();
 
-    if (e.request && !e.status) {
+    if (e.request && !e.response) {
       // Connection error
       document.getElementById("js-dialog-conn-error").classList.add('modal-open');
       document.getElementById("js-dialog-conn-error").style.display = 'block';
@@ -117,6 +120,8 @@
     m.onclick = function() {
       document.getElementById("js-dialog-error").classList.remove("modal-open");
       document.getElementById("js-dialog-error").style.display = 'none';
+      document.getElementById("js-dialog-conn-error").classList.remove("modal-open");
+      document.getElementById("js-dialog-conn-error").style.display = 'none';
       document.getElementById("js-dialog-backdrop").classList.add('hidden');
     };
   });
