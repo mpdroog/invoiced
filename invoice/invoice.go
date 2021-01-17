@@ -22,6 +22,11 @@ import (
 const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
 const EUTaxComment = "VAT Reverse charge"
 
+type InputError struct {
+	Error string
+	Fields validator.ErrorMap
+}
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
@@ -258,7 +263,15 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 	if e := validator.Validate(u); e != nil {
-		http.Error(w, fmt.Sprintf("invoice.Save failed validate=%s", e), 400)
+		// Errors as JSON
+		w.WriteHeader(http.StatusExpectationFailed)
+		input := InputError{
+			Error: "Input invalid",
+			Fields: e.(validator.ErrorMap),
+		}
+		if e := writer.Encode(w, r, input); e != nil {
+			log.Printf("invoice.Save writer.Encode=" + e.Error())
+		}
 		return
 	}
 

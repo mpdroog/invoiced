@@ -64,7 +64,7 @@
         <button type="button" data-dismiss="modal" aria-label="Close" class="close">
           <span class="js-modal-hide" aria-hidden="true">&times;</span>
         </button>
-        <h4 class="modal-title">
+        <h4 class="modal-title" id="js-error-title">
           😱 Oops! Something went wrong...
         </h4>
       </div>
@@ -74,7 +74,7 @@
       </div>
       <div class="modal-footer">
         <!-- a class="js-modal-hide btn btn-default">Ignore</a -->
-        <!-- a style="float:right" class="btn btn-primary">Report</a -->
+        <!-- a style="float:right" class="btn btn-primary js-report">Report</a -->
       </div>
     </div>
   </div>
@@ -88,6 +88,24 @@
       e: error
     });
   };
+
+  function prettyErr(res) {
+    let msg = "";
+    for (const key in res.Fields) {
+      if (! res.Fields.hasOwnProperty(key)) {
+        continue;
+      }
+
+      let line = res.Fields[key];
+      msg += "Field (" + key + ") invalid=" + line.join(", ") + "\n";
+    }
+
+    document.getElementById("js-error-title").innerText = res.Error;
+    document.getElementById("js-error-body").value = msg;
+    document.getElementById("js-dialog-error").classList.add('modal-open');
+    document.getElementById("js-dialog-error").style.display = 'block';
+    document.getElementById("js-dialog-backdrop").classList.remove('hidden');
+  }
 
   function handleErr(e) {
     var errorData = {
@@ -109,6 +127,7 @@
       return;
     }
 
+    document.getElementById("js-error-title").innerText = "😱 Oops! Something went wrong...";
     document.getElementById("js-error-body").value = JSON.stringify(errorData);
     document.getElementById("js-dialog-error").classList.add('modal-open');
     document.getElementById("js-dialog-error").style.display = 'block';
