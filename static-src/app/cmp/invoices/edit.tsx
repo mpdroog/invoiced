@@ -147,12 +147,32 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
     this.revisions.push({}); // TODO :)
   }
 
+  private defaultDecimal(val) {
+    if (val === "") {
+      return "0.00";
+    }
+    val = val.replace(/,/g, ".");
+
+    let idx = val.indexOf(".");
+    if (idx === -1) {
+      return val + ".00";
+    }
+    if (idx === 0) {
+      val = "0" + val;
+    }
+
+    if (val.length - idx === 1) {
+      return val + "0";
+    }
+    if (val.length - idx === 2) {
+      return val + "0";
+    }
+    return val;
+  }
+
   private lineUpdate(line: IInvoiceLine) {
-    line.Quantity = line.Quantity.replace(/,/g, ".");
-    line.Price = line.Price.replace(/,/g, ".");
-    // default to 0.00 to ensure user cannot cause Bigjs to crash
-    if (line.Price === "") line.Price = "0.00";
-    if (line.Quantity === "") line.Quantity = "0.00";
+    line.Quantity = this.defaultDecimal(line.Quantity);
+    line.Price = this.defaultDecimal(line.Price);
 
     line.Total = new Big(line.Price).times(line.Quantity).round(2).toFixed(2).toString();
     return line;
