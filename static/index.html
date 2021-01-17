@@ -108,6 +108,12 @@
   }
 
   function handleErr(e) {
+    if (e.response && e.response.status === 401) {
+      // Auth needed
+      location.href = '/';
+      return;
+    }
+
     var errorData = {
       pageErrorType: e.name, // e.g. ReferenceError
       pageMessage: e.message, // e.g. x is undefined
