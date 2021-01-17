@@ -269,6 +269,10 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
         Street2: data.Street2,
         Vat: data.VAT,
         Coc: data.COC
+      },
+      Notes: data.NoteAdd,
+      Mail: {
+        To: data.BillingEmail.join(", ")
       }
     });
   }
