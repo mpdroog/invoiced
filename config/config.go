@@ -13,8 +13,6 @@ var (
 	DbPath     string
 	HTTPListen string
 	CurDir     string
-	HTTPSOnly  bool
-	Local      bool
 
 	Hostname   string
 	C          Config

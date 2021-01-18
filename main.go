@@ -20,17 +20,9 @@ import (
 )
 
 func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	prefix := "http://"
-	if config.HTTPSOnly {
-		prefix = "https://"
-	}
-
-	if _, e := r.Cookie("sess"); e != nil {
-		// no session
-		http.Redirect(w, r, prefix+config.HTTPListen+"/static/auth.html", 302)
-		return
-	}
-	http.Redirect(w, r, prefix+config.HTTPListen+"/static/", 301)
+	url := r.URL
+	url.Path = "/static/index.html"
+	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
 func Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -65,15 +57,13 @@ func Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Value: sess,
 		Expires: time.Now().Add(time.Hour * 24 * 365),
 		HttpOnly: true,
-		Domain: config.HTTPListen,
-		Secure: config.HTTPSOnly,
+		Domain: r.URL.Host,
+		//Secure: config.HTTPSOnly,
 	})
 
-	prefix := "http://"
-	if config.HTTPSOnly {
-		prefix = "https://"
-	}
-	http.Redirect(w, r, prefix+config.HTTPListen+"/static/", 301)
+	url := r.URL
+	url.Path = "/static/index.html"
+	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
 func main() {
@@ -81,16 +71,11 @@ func main() {
 		wg sync.WaitGroup
 		path string
 	)
-	flag.BoolVar(&config.Local, "l", true, "Local-mode (only 127, no https)")
 	flag.BoolVar(&config.Verbose, "v", false, "Verbose-mode (log more)")
-	flag.StringVar(&config.DbPath, "d", "billingdb", "Path to database")
+	flag.StringVar(&config.DbPath, "d", "acct", "Path to database")
 	flag.StringVar(&config.HTTPListen, "h", "localhost:9999", "HTTP listening port")
 	flag.StringVar(&path, "c", "./config.toml", "Path to config")
 	flag.Parse()
-
-	if !config.Local {
-		config.HTTPSOnly = true
-	}
 
 	var e error
 	config.CurDir, e = osext.ExecutableFolder()
@@ -169,7 +154,7 @@ func main() {
 	go func() {
 		var e error
 		var router http.Handler = router
-		if config.Local {
+		if config.HTTPListen == "localhost:9999" {
 			router = middleware.LocalOnly(router)
 		}
 		router = middleware.HTTPAuth(router)

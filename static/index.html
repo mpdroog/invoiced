@@ -110,7 +110,7 @@
   function handleErr(e) {
     if (e.response && e.response.status === 401) {
       // Auth needed
-      location.href = '/';
+      location.href = '/static/auth.html';
       return;
     }
 

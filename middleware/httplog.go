@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"github.com/itshosted/webutils/encrypt"
-	"github.com/mpdroog/invoiced/config"
 	"log"
 	"net/http"
 	"time"
@@ -42,8 +41,8 @@ func HTTPAuth(next http.Handler) http.Handler {
 					Value: "",
 					Expires: time.Now().Add(-1 * time.Hour),
 					HttpOnly: true,
-					Domain: config.HTTPListen,
-					Secure: config.HTTPSOnly,
+					Domain: r.URL.Host,
+					//Secure: config.HTTPSOnly,
 				})
 			}
 		}
