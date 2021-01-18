@@ -36,8 +36,9 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     let node = DOM.eventFilter(e, "A");
     let id = node.dataset["target"];
     let bucket = node.dataset.bucket;
-    if (node.dataset["status"] === 'FINAL') {
-      console.log("Cannot delete finalized invoices.");
+
+    if (node.attributes.disabled) {
+      console.log("btn disabled");
       return;
     }
 
@@ -56,6 +57,11 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     let id = node.dataset.id;
     let bucket = node.dataset.bucket;
 
+    if (node.attributes.disabled) {
+      console.log("btn disabled");
+      return;
+    }
+
     Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${id}/paid`, {})
     .then(res => {
       location.reload();
@@ -73,7 +79,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td>&euro; {inv.Total.Total}</td>
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
-        <a disabled={inv.Meta.Status === 'FINAL'} className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
+        <a disabled={inv.Meta.Status === 'FINAL' || inv.Meta.Invoiceid.length > 0} className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
         <a disabled={bucket === 'concepts'} className="btn btn-default btn-hover-danger faa-parent animated-hover" data-id={key} data-bucket={bucket} onClick={this.setPaid.bind(this)}><i className="fa fa-check faa-flash"></i></a>
       </td>
     </tr>;
