@@ -55,13 +55,22 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Message: fmt.Sprintf("Delete concept invoice %s", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
+		from := fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name)
+		u := new(Invoice)
+		if e := t.Open(from, u); e != nil {
+			return e
+		}
+		if len(u.Meta.Invoiceid) > 0 {
+			return fmt.Errorf("Reject deleting finalized invoice (this will break your accounting history)")
+		}
+
 		return t.Remove(fmt.Sprintf(
 			"%s/%s/concepts/sales-invoices/%s.toml", entity, year, name,
 		))
 	})
 	if e != nil {
-		log.Printf("invoice.Delete " + e.Error())
-		http.Error(w, "invoice.Delete fail", http.StatusInternalServerError)
+		log.Printf("invoice.Delete e=" + e.Error())
+		http.Error(w, e.Error(), http.StatusInternalServerError)
 		return		
 	}
 
