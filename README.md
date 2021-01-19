@@ -1,3 +1,5 @@
+[Want to support? buy me a coffee](https://www.buymeacoffee.com/mpdroog)
+
 InvoiceD
 ===========
 Simple hour registration + invoice generator.
