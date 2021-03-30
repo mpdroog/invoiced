@@ -1,4 +1,6 @@
-[Want to support? buy me a coffee](https://www.buymeacoffee.com/mpdroog)
+<a href="https://www.buymeacoffee.com/mpdroog">
+    <img alt="Buy me a coffee" src="https://img.shields.io/static/v1.svg?label=%20&message=Buy%20me%20a%20coffee&color=579fbf&logo=buy%20me%20a%20coffee&logoColor=white"/>
+</a>
 
 InvoiceD
 ===========
