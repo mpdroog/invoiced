@@ -1,9 +1,9 @@
 package db
 
 import (
-	"os"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 )
 

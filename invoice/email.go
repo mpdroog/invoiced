@@ -2,27 +2,27 @@ package invoice
 
 import (
 	"github.com/julienschmidt/httprouter"
-	"net/http"
 	"github.com/jung-kurt/gofpdf"
+	"net/http"
 	//"encoding/base64"
 	"bytes"
-	"github.com/mpdroog/invoiced/writer"
+	"fmt"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
-	"log"
-	"gopkg.in/validator.v2"
-	"fmt"
-	"io"
-	"strings"
+	"github.com/mpdroog/invoiced/writer"
 	"gopkg.in/gomail.v1"
+	"gopkg.in/validator.v2"
+	"io"
+	"log"
 	"os"
+	"strings"
 )
 
 type Job struct {
-	To []string
+	To      []string
 	Subject string
-	Text string
-	Files []string
+	Text    string
+	Files   []string
 }
 
 func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -58,8 +58,8 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	u := new(Invoice)
 
 	change := db.Commit{
-		Name: r.Header.Get("X-User-Name"),
-		Email: r.Header.Get("X-User-Email"),
+		Name:    r.Header.Get("X-User-Name"),
+		Email:   r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Email invoice %s to %s", name, m.To),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
@@ -67,7 +67,7 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if e != nil {
 			return e
 		}
-		f, e = pdf(db.Path + entity, u)
+		f, e = pdf(db.Path+entity, u)
 		if e != nil {
 			return e
 		}
@@ -78,9 +78,9 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 
 		job := &Job{
-			To: strings.Split(m.To, ","),
+			To:      strings.Split(m.To, ","),
 			Subject: m.Subject,
-			Text: m.Body,
+			Text:    m.Body,
 			Files: []string{
 				paths[1], // TODO: assumption
 			},
@@ -130,24 +130,24 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 		msg.SetHeader("To", job.To...)
 		msg.SetHeader("Bcc", conf.BCC...)
-		msg.SetHeader("Subject", conf.Subject + job.Subject)
+		msg.SetHeader("Subject", conf.Subject+job.Subject)
 		msg.SetBody("text/plain", job.Text)
 
 		msg.Attach(&gomail.File{
-			Name: u.Meta.Invoiceid + ".pdf",
+			Name:     u.Meta.Invoiceid + ".pdf",
 			MimeType: "application/pdf",
-			Content: buf.Bytes(),
+			Content:  buf.Bytes(),
 		})
 		msg.Attach(&gomail.File{
-			Name: u.Meta.Invoiceid + ".xml",
+			Name:     u.Meta.Invoiceid + ".xml",
 			MimeType: "application/xml",
-			Content: ubl.Bytes(),
+			Content:  ubl.Bytes(),
 		})
 		if hourbuf.Len() > 0 {
 			msg.Attach(&gomail.File{
-				Name: "hours.txt",
+				Name:     "hours.txt",
 				MimeType: "plain/text",
-				Content: hourbuf.Bytes(),
+				Content:  hourbuf.Bytes(),
 			})
 		}
 

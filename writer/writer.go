@@ -4,9 +4,9 @@ package writer
 
 import (
 	"encoding/json"
+	"fmt"
 	"gopkg.in/vmihailenco/msgpack.v2"
 	"net/http"
-	"fmt"
 	"strings"
 )
 
@@ -30,10 +30,10 @@ func Decode(r *http.Request, d interface{}) error {
 
 	if ctype == "application/json" {
 		defer r.Body.Close()
-		return json.NewDecoder(r.Body).Decode(d);
+		return json.NewDecoder(r.Body).Decode(d)
 	} else if ctype == "application/x-msgpack" {
 		defer r.Body.Close()
-		return msgpack.NewDecoder(r.Body).Decode(d);
+		return msgpack.NewDecoder(r.Body).Decode(d)
 	} else {
 		return fmt.Errorf("Invalid Content-Type=%s", ctype)
 	}

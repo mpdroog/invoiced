@@ -1,16 +1,16 @@
 package entities
 
 import (
+	"bufio"
+	"bytes"
+	"fmt"
+	"github.com/julienschmidt/httprouter"
 	"github.com/mpdroog/invoiced/db"
+	"io"
+	"log"
+	"net/http"
 	"strconv"
 	"strings"
-	"bytes"
-	"net/http"
-	"github.com/julienschmidt/httprouter"
-	"log"
-	"fmt"
-	"io"
-	"bufio"
 )
 
 func Logo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -37,8 +37,8 @@ func Logo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	w.Header().Set("Content-Type", "image/jpeg")
-    w.Header().Set("Content-Length", strconv.Itoa(buffer.Len()))
-    if _, err := w.Write(buffer.Bytes()); err != nil {
-        log.Println("unable to write image.")
-    }
+	w.Header().Set("Content-Length", strconv.Itoa(buffer.Len()))
+	if _, err := w.Write(buffer.Bytes()); err != nil {
+		log.Println("unable to write image.")
+	}
 }

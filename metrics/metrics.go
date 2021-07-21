@@ -1,24 +1,24 @@
 package metrics
 
 import (
+	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"log"
-	"net/http"
-	"github.com/mpdroog/invoiced/invoice"
+	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/hour"
-	"github.com/mpdroog/invoiced/config"
-	"github.com/shopspring/decimal"
-	"strings"
-	"strconv"
-	"fmt"
+	"github.com/mpdroog/invoiced/invoice"
 	"github.com/mpdroog/invoiced/writer"
+	"github.com/shopspring/decimal"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
 )
 
 type DashboardMetric struct {
 	RevenueTotal string
-	RevenueEx string
-	Hours string
+	RevenueEx    string
+	Hours        string
 }
 
 func addValue(sum, add string) (string, error) {
@@ -51,7 +51,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		// invoice
 		paths := []string{fmt.Sprintf("%s/%s/{all}/sales-invoices-paid", entity, year)}
 		u := new(invoice.Invoice)
-		_, e := t.List(paths, db.Pagination{From:i, Count:count}, &u, func(filename, filepath, path string) error {
+		_, e := t.List(paths, db.Pagination{From: i, Count: count}, &u, func(filename, filepath, path string) error {
 			idx := strings.LastIndex(u.Meta.Issuedate, "-")
 			if idx == -1 {
 				log.Printf("WARN: Invoice(%s) has no valid issuedate?", u.Meta.Invoiceid)
@@ -84,7 +84,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		// hours
 		paths = []string{fmt.Sprintf("%s/%s/{all}/hours", entity, year)}
 		h := new(hour.Hour)
-		_, e = t.List(paths, db.Pagination{From:i, Count:count}, h, func(filename, filepath, path string) error {
+		_, e = t.List(paths, db.Pagination{From: i, Count: count}, h, func(filename, filepath, path string) error {
 			idx := strings.LastIndex(h.Lines[0].Day, "-")
 			if idx == -1 {
 				log.Printf("WARN: Hour(%s) has no valid issuedate?", h.Lines[0].Day)

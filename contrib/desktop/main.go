@@ -3,12 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os/exec"
 	"github.com/getlantern/systray"
+	"os/exec"
 	//"github.com/getlantern/systray/icon"
-	"github.com/skratchdot/open-golang/open"
-	"github.com/mitchellh/go-homedir"
 	"github.com/lextoumbourou/idle"
+	"github.com/mitchellh/go-homedir"
+	"github.com/skratchdot/open-golang/open"
 	//"github.com/ctcpip/notifize"
 	//"sync"
 	"os"
@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	verbose bool
-	dbPath string
+	verbose    bool
+	dbPath     string
 	timerStart *time.Time
-	minute time.Duration
+	minute     time.Duration
 )
 
 func main() {
@@ -45,9 +45,9 @@ func main() {
 
 func onReady() {
 	name := "../../invoiced"
-	args := []string {
+	args := []string{
 		"-c=../../config.toml",
-		"-d="+dbPath,
+		"-d=" + dbPath,
 	}
 
 	if verbose {
@@ -56,7 +56,7 @@ func onReady() {
 	}
 	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
-    cmd.Stderr = os.Stderr
+	cmd.Stderr = os.Stderr
 
 	stopChan := make(chan bool, 2)
 
@@ -128,7 +128,7 @@ func onReady() {
 			}
 
 		case <-mStart.ClickedCh:
-			if verbose{
+			if verbose {
 				fmt.Println("cmd=start")
 			}
 			n := time.Now()

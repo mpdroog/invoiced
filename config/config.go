@@ -1,11 +1,11 @@
 package config
 
 import (
-	"strings"
-	"os"
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"log"
+	"os"
+	"strings"
 )
 
 var (
@@ -14,27 +14,27 @@ var (
 	HTTPListen string
 	CurDir     string
 
-	Hostname   string
-	C          Config
+	Hostname string
+	C        Config
 )
 
 type ConfigQueue struct {
-	User     string
-	Pass     string
-	Host     string
-	Port     int
-	From     string
+	User      string
+	Pass      string
+	Host      string
+	Port      int
+	From      string
 	FromReply string
-	Display  string
-	Subject  string
-	BCC      []string
+	Display   string
+	Subject   string
+	BCC       []string
 }
 type Config struct {
-	Queues    map[string]ConfigQueue
+	Queues map[string]ConfigQueue
 }
 
 func Ignore(str string) bool {
-	return strings.ToLower(str) == ".ds_store";
+	return strings.ToLower(str) == ".ds_store"
 }
 
 func Open(f string) error {

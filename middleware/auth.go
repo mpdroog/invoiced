@@ -1,14 +1,14 @@
 package middleware
 
 import (
-	"github.com/mpdroog/invoiced/config"
 	"github.com/itshosted/webutils/encrypt"
+	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
 	//"net/http"
 	"crypto/sha256"
 	"fmt"
-	"time"
 	"log"
+	"time"
 )
 
 type Sess struct {
@@ -18,26 +18,26 @@ type Sess struct {
 }
 
 type Entities struct {
-	IV string `json:"-"`
+	IV      string `json:"-"`
 	Version int
 
 	Company map[string]Entity
-	User []User
+	User    []User
 }
 
 type Entity struct {
 	Name string
-	COC string
-	VAT string
+	COC  string
+	VAT  string
 	IBAN string
-	BIC string
+	BIC  string
 	Salt string `json:"-"`
 }
 type User struct {
-	Email string
-	Hash string `json:"-"`
-	Company []string
-	Name string
+	Email    string
+	Hash     string `json:"-"`
+	Company  []string
+	Name     string
 	Address1 string
 	Address2 string
 }
@@ -60,7 +60,7 @@ func Login(email, pass string) (string, error) {
 		if user.Email == email {
 			// Found the user, validate pass!
 			// TODO: protect against crash?
-			salt := entities.Company[ user.Company[0] ].Salt
+			salt := entities.Company[user.Company[0]].Salt
 
 			h := sha256.New()
 			h.Write([]byte(salt))

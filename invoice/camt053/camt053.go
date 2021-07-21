@@ -1,5 +1,5 @@
 // camt053 implements low-level XML parsing of the banktransaction
-// file. 
+// file.
 package camt053
 
 import (

@@ -3,28 +3,28 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"github.com/BurntSushi/toml"
 	"github.com/blevesearch/bleve"
-    "os"
-    "strings"
-    "bufio"
-    "path/filepath"
-    "github.com/mpdroog/invoiced/hour"
-    "github.com/BurntSushi/toml"
-    "github.com/mpdroog/invoiced/invoice"
+	"github.com/mpdroog/invoiced/hour"
+	"github.com/mpdroog/invoiced/invoice"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 var verbose bool
 
 func test(q string) {
-    index, e := bleve.Open("./search.db")
-    if e != nil {
-    	panic(e)
-    }
+	index, e := bleve.Open("./search.db")
+	if e != nil {
+		panic(e)
+	}
 
-    f := bleve.NewTermQuery("rootdev")
-    qusr := bleve.NewQueryStringQuery(q)
+	f := bleve.NewTermQuery("rootdev")
+	qusr := bleve.NewQueryStringQuery(q)
 
 	req := bleve.NewSearchRequest(bleve.NewConjunctionQuery(f, qusr))
 	searchResult, e := index.Search(req)
@@ -35,8 +35,8 @@ func test(q string) {
 	fmt.Printf("%+v\n", searchResult)
 
 	if e := index.Close(); e != nil {
-    	panic(e)
-    }
+		panic(e)
+	}
 }
 
 func main() {
@@ -57,26 +57,26 @@ func main() {
 	}
 
 	// Scan full dir
-    if e := filepath.Walk(filedb, func(path string, f os.FileInfo, err error) error {
-    	relative := path[len(filedb):len(path)]
-    	if f.IsDir() {
-    		if verbose {
-		        fmt.Printf("Basedir=%s\n", path)
-		    }
-	        return nil
-    	}
-    	if f.Name() == ".DS_Store" {
-    		if verbose {
-	        	fmt.Printf("Ignore=%s\n", path)
-	    	}
-	        return nil    		
-    	}
-
-    	if strings.Contains(path, "/hours/") {
+	if e := filepath.Walk(filedb, func(path string, f os.FileInfo, err error) error {
+		relative := path[len(filedb):len(path)]
+		if f.IsDir() {
 			if verbose {
-	        	fmt.Printf("Parse hour=%s (%s)\n", path, relative)
-	    	}
-    		out := new(hour.Hour)
+				fmt.Printf("Basedir=%s\n", path)
+			}
+			return nil
+		}
+		if f.Name() == ".DS_Store" {
+			if verbose {
+				fmt.Printf("Ignore=%s\n", path)
+			}
+			return nil
+		}
+
+		if strings.Contains(path, "/hours/") {
+			if verbose {
+				fmt.Printf("Parse hour=%s (%s)\n", path, relative)
+			}
+			out := new(hour.Hour)
 			file, e := os.Open(path)
 			if e != nil {
 				return e
@@ -93,9 +93,9 @@ func main() {
 			}
 		} else if strings.Contains(path, "/sales-invoices") {
 			if verbose {
-	        	fmt.Printf("Parse invoice=%s (%s)\n", path, relative)
-	    	}
-    		out := new(invoice.Invoice)
+				fmt.Printf("Parse invoice=%s (%s)\n", path, relative)
+			}
+			out := new(invoice.Invoice)
 			file, e := os.Open(path)
 			if e != nil {
 				return e
@@ -111,19 +111,19 @@ func main() {
 				panic(e)
 			}
 
-    	} else {
-    		fmt.Printf("Unprocessed=%s (idx=%s)\n", path, relative)
-    	}
+		} else {
+			fmt.Printf("Unprocessed=%s (idx=%s)\n", path, relative)
+		}
 
-        return nil
-    }); e != nil {
-    	panic(e)
-    }
+		return nil
+	}); e != nil {
+		panic(e)
+	}
 
-    if e := index.Close(); e != nil {
-    	panic(e)
-    }
+	if e := index.Close(); e != nil {
+		panic(e)
+	}
 
-    //fmt.Printf("Test query\n")
-    //test("aws")
+	//fmt.Printf("Test query\n")
+	//test("aws")
 }

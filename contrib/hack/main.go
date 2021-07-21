@@ -4,39 +4,37 @@
 package main
 
 import (
-	"math"
-	"fmt"
-	"github.com/boltdb/bolt"
-	"os"
 	"bufio"
 	"bytes"
-	"time"
+	"fmt"
+	"github.com/boltdb/bolt"
+	"math"
+	"os"
 	"strings"
+	"time"
 
 	"encoding/json"
 	"github.com/BurntSushi/toml"
 
+	revfs "github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
 	"github.com/mpdroog/invoiced/utils"
-	revfs "github.com/mpdroog/invoiced/db"
 	"io/ioutil"
-    "path/filepath"
+	"path/filepath"
 
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
-
 	//gitconfig "gopkg.in/src-d/go-git.v4/config"
-
 )
 
 func round(num float64) int {
-    return int(num + math.Copysign(0.5, num))
+	return int(num + math.Copysign(0.5, num))
 }
 
 func toFixed(num float64, precision int) float64 {
-    output := math.Pow(10, float64(precision))
-    return float64(round(num * output)) / output
+	output := math.Pow(10, float64(precision))
+	return float64(round(num*output)) / output
 }
 
 func main() {
@@ -52,23 +50,23 @@ func main() {
 	for _, year := range years {
 		for _, q := range quarters {
 			base := "./db/rootdev/" + year + "/" + q
-			if e := os.MkdirAll(base + "/sales-invoices-unpaid", os.ModePerm); e != nil {
+			if e := os.MkdirAll(base+"/sales-invoices-unpaid", os.ModePerm); e != nil {
 				panic(e)
 			}
-			if e := os.MkdirAll(base + "/sales-invoices-paid", os.ModePerm); e != nil {
+			if e := os.MkdirAll(base+"/sales-invoices-paid", os.ModePerm); e != nil {
 				panic(e)
 			}
-			if e := os.MkdirAll(base + "/hours", os.ModePerm); e != nil {
+			if e := os.MkdirAll(base+"/hours", os.ModePerm); e != nil {
 				panic(e)
 			}
 		}
 	}
 
 	for _, year := range years {
-		if e := os.MkdirAll("./db/rootdev/" + year + "/concepts/sales-invoices", os.ModePerm); e != nil {
+		if e := os.MkdirAll("./db/rootdev/"+year+"/concepts/sales-invoices", os.ModePerm); e != nil {
 			panic(e)
 		}
-		if e := os.MkdirAll("./db/rootdev/" + year + "/concepts/hours", os.ModePerm); e != nil {
+		if e := os.MkdirAll("./db/rootdev/"+year+"/concepts/hours", os.ModePerm); e != nil {
 			panic(e)
 		}
 	}
@@ -262,7 +260,7 @@ Address2="1713HP Obdam"
 	if e != nil {
 		panic(e)
 	}
-	e = filepath.Walk("db", func (path string, f os.FileInfo, err error) error {
+	e = filepath.Walk("db", func(path string, f os.FileInfo, err error) error {
 		fmt.Printf("Read %s\n", path)
 		if strings.HasPrefix(path, "db/.git/") {
 			return nil

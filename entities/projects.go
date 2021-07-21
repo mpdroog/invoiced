@@ -1,24 +1,24 @@
 package entities
 
 import (
+	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"net/http"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/writer"
-	"strings"
-	"fmt"
 	"log"
+	"net/http"
+	"strings"
 )
 
 type Project struct {
-	Name string
-	Debtor string
+	Name         string
+	Debtor       string
 	BillingEmail []string
-	NoteAdd string
-	HourRate float64
-	DueDays int
-	PO string
-	Street1 string
+	NoteAdd      string
+	HourRate     float64
+	DueDays      int
+	PO           string
+	Street1      string
 }
 
 func ProjectSearch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

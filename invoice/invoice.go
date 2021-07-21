@@ -4,26 +4,26 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/jung-kurt/gofpdf"
+	"github.com/mpdroog/invoiced/config"
+	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/utils"
+	"github.com/mpdroog/invoiced/writer"
 	"gopkg.in/validator.v2"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
-	"time"
-	"github.com/mpdroog/invoiced/db"
-	"github.com/mpdroog/invoiced/config"
-	"github.com/jung-kurt/gofpdf"
-	"github.com/mpdroog/invoiced/writer"
-	"github.com/mpdroog/invoiced/utils"
-	"io"
 	"strings"
+	"time"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
 const EUTaxComment = "VAT Reverse charge"
 
 type InputError struct {
-	Error string
+	Error  string
 	Fields validator.ErrorMap
 }
 
@@ -50,8 +50,8 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	year := ps.ByName("year")
 
 	change := db.Commit{
-		Name: r.Header.Get("X-User-Name"),
-		Email: r.Header.Get("X-User-Email"),
+		Name:    r.Header.Get("X-User-Name"),
+		Email:   r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Delete concept invoice %s", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
@@ -71,7 +71,7 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if e != nil {
 		log.Printf("invoice.Delete e=" + e.Error())
 		http.Error(w, e.Error(), http.StatusInternalServerError)
-		return		
+		return
 	}
 
 	// TODO: something cleaner?
@@ -107,8 +107,8 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var u *Invoice
 	bucketTo := ""
 	change := db.Commit{
-		Name: r.Header.Get("X-User-Name"),
-		Email: r.Header.Get("X-User-Email"),
+		Name:    r.Header.Get("X-User-Name"),
+		Email:   r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Finalize concept invoice %s", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
@@ -184,8 +184,8 @@ func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	u := new(Invoice)
 
 	change := db.Commit{
-		Name: r.Header.Get("X-User-Name"),
-		Email: r.Header.Get("X-User-Email"),
+		Name:    r.Header.Get("X-User-Name"),
+		Email:   r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Reset invoice to concept"),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
@@ -205,7 +205,7 @@ func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if e != nil {
 		log.Printf("invoice.Reset " + e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Reset failed loading file from disk"), 400)
-		return		
+		return
 	}
 
 	w.Header().Set("X-Bucket-Change", bucketTo)
@@ -229,8 +229,8 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	u := new(Invoice)
 
 	change := db.Commit{
-		Name: r.Header.Get("X-User-Name"),
-		Email: r.Header.Get("X-User-Email"),
+		Name:    r.Header.Get("X-User-Name"),
+		Email:   r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Mark invoice %s as paid", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
@@ -275,7 +275,7 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		// Errors as JSON
 		w.WriteHeader(http.StatusExpectationFailed)
 		input := InputError{
-			Error: "Input invalid",
+			Error:  "Input invalid",
 			Fields: e.(validator.ErrorMap),
 		}
 		if e := writer.Encode(w, r, input); e != nil {
@@ -298,8 +298,8 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	u.Meta.Status = "CONCEPT"
 
 	change := db.Commit{
-		Name: r.Header.Get("X-User-Name"),
-		Email: r.Header.Get("X-User-Email"),
+		Name:    r.Header.Get("X-User-Name"),
+		Email:   r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Update invoice %s", u.Meta.Conceptid),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
@@ -325,7 +325,7 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	log.Printf("invoice.Load with conceptid=%s", name)
 
 	var paths []string
-	if (bucket == "concepts") {
+	if bucket == "concepts" {
 		paths = []string{fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name)}
 	} else {
 		paths = []string{
@@ -378,7 +378,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	mem := new(Invoice)
 
 	e = db.View(func(t *db.Txn) error {
-		_, e := t.List(paths, db.Pagination{From:from, Count:count}, &mem, func(filename, filepath, fpath string) error {
+		_, e := t.List(paths, db.Pagination{From: from, Count: count}, &mem, func(filename, filepath, fpath string) error {
 			list[fpath] = append(list[fpath], mem)
 			mem = new(Invoice)
 			return nil
@@ -400,7 +400,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	res := &ListReply{
 		Invoices: list,
-		Commits: inv,
+		Commits:  inv,
 	}
 
 	if config.Verbose {
@@ -476,7 +476,7 @@ func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if e != nil {
 			return e
 		}
-		f, e = pdf(db.Path + entity, u)
+		f, e = pdf(db.Path+entity, u)
 		return e
 	})
 	if e != nil {

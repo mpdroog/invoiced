@@ -1,16 +1,16 @@
 package db
 
 import (
+	"bufio"
+	"fmt"
+	"github.com/BurntSushi/toml"
+	"gopkg.in/src-d/go-billy.v3"
+	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"os"
-	"fmt"
-	"bufio"
-	git "gopkg.in/src-d/go-git.v4"
-	"github.com/BurntSushi/toml"
-	"time"
 	"path"
 	"strings"
-	"gopkg.in/src-d/go-billy.v3"
+	"time"
 )
 
 type Commit struct {

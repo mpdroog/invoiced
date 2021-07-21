@@ -1,15 +1,15 @@
 package invoice
 
 import (
+	"fmt"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/entities"
 	"github.com/mpdroog/invoiced/middleware"
-	"time"
-	"fmt"
 	"github.com/shopspring/decimal"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Get start of day
@@ -41,14 +41,14 @@ func HourToInvoice(entity, year, project, name, hourStr, email, hourFile, from s
 
 	company := middleware.CompanyByName(entity)
 	if company == nil {
-		return "", fmt.Errorf("No such company %s", entity)		
+		return "", fmt.Errorf("No such company %s", entity)
 	}
 	user := middleware.UserByEmail(email)
 	if user == nil {
-		return "", fmt.Errorf("No such email %s", email)		
+		return "", fmt.Errorf("No such email %s", email)
 	}
 
-	d, e := time.ParseDuration(fmt.Sprintf("%dh", 24 * prj.DueDays))
+	d, e := time.ParseDuration(fmt.Sprintf("%dh", 24*prj.DueDays))
 	if e != nil {
 		return "", e
 	}
@@ -76,48 +76,48 @@ func HourToInvoice(entity, year, project, name, hourStr, email, hourFile, from s
 	c := &Invoice{
 		Company: company.Name,
 		Entity: InvoiceEntity{
-			Name: user.Name,
+			Name:    user.Name,
 			Street1: user.Address1,
 			Street2: user.Address2,
 		},
 		Customer: InvoiceCustomer{
-			Name: debtor.Name,
+			Name:    debtor.Name,
 			Street1: debtor.Street1 + " " + prj.Street1,
 			Street2: debtor.Street2,
-			Vat: debtor.VAT,
-			Coc: debtor.COC,
+			Vat:     debtor.VAT,
+			Coc:     debtor.COC,
 		},
 		Meta: InvoiceMeta{
 			Conceptid: randStringBytesRmndr(12),
-			Status: "CONCEPT",
+			Status:    "CONCEPT",
 			Invoiceid: "",
 			Issuedate: today.Format("2006-01-02"),
-			Ponumber: prj.PO,
-			Duedate: today.Add(d).Format("2006-01-02"),
-			HourFile: hourFile,
+			Ponumber:  prj.PO,
+			Duedate:   today.Add(d).Format("2006-01-02"),
+			HourFile:  hourFile,
 		},
 		Lines: []InvoiceLine{InvoiceLine{
 			Description: name,
-			Quantity: hourStr,
-			Price: strconv.FormatFloat(prj.HourRate, 'f', 2, 64),
-			Total: extotal.StringFixed(2),
+			Quantity:    hourStr,
+			Price:       strconv.FormatFloat(prj.HourRate, 'f', 2, 64),
+			Total:       extotal.StringFixed(2),
 		}},
 		Notes: prj.NoteAdd,
 		Total: InvoiceTotal{
-			Ex: extotal.StringFixed(2),
-			Tax: tax.StringFixed(2),
+			Ex:    extotal.StringFixed(2),
+			Tax:   tax.StringFixed(2),
 			Total: total.StringFixed(2),
 		},
 		Bank: InvoiceBank{
-			Vat: company.VAT,
-			Coc: company.COC,
+			Vat:  company.VAT,
+			Coc:  company.COC,
 			Iban: company.IBAN,
-			Bic: company.BIC,
+			Bic:  company.BIC,
 		},
 		Mail: InvoiceMail{
-			From: mailQueue,
+			From:    mailQueue,
 			Subject: "Invoice " + prj.Name,
-			To: strings.Join(prj.BillingEmail, ", "),
+			To:      strings.Join(prj.BillingEmail, ", "),
 			Body: `Dear customer,
 
 Please find attached the latest invoice + hour specification.

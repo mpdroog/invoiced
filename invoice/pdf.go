@@ -58,7 +58,7 @@ func pdf(base string, c *Invoice) (*gofpdf.Fpdf, error) {
 		pdf.SetXY(20, 15)
 		//pdf.SetFont("Helvetica", "B", 18)
 		//pdf.Cell(10, 30, c.Company)
-		pdf.Image(base + "/logo.png", 10, 6, 30, 0, false, "", 0, "")
+		pdf.Image(base+"/logo.png", 10, 6, 30, 0, false, "", 0, "")
 	}
 
 	// From

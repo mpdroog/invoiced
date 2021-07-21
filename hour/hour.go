@@ -3,14 +3,14 @@ package hour
 import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/mpdroog/invoiced/config"
+	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/invoice"
+	"github.com/mpdroog/invoiced/utils"
+	"github.com/mpdroog/invoiced/writer"
 	"gopkg.in/validator.v2"
 	"log"
 	"net/http"
-	"github.com/mpdroog/invoiced/db"
-	"github.com/mpdroog/invoiced/config"
-	"github.com/mpdroog/invoiced/writer"
-	"github.com/mpdroog/invoiced/utils"
-	"github.com/mpdroog/invoiced/invoice"
 	"time"
 )
 
@@ -24,8 +24,8 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	change := db.Commit{
-		Name: r.Header.Get("X-User-Name"),
-		Email: r.Header.Get("X-User-Email"),
+		Name:    r.Header.Get("X-User-Name"),
+		Email:   r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Delete concept hour %s", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
@@ -57,8 +57,8 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	year := ps.ByName("year")
 
 	change := db.Commit{
-		Name: r.Header.Get("X-User-Name"),
-		Email: r.Header.Get("X-User-Email"),
+		Name:    r.Header.Get("X-User-Name"),
+		Email:   r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Save concept hour %s", u.Name),
 	}
 
@@ -87,8 +87,8 @@ func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 
 	change := db.Commit{
-		Name: r.Header.Get("X-User-Name"),
-		Email: r.Header.Get("X-User-Email"),
+		Name:    r.Header.Get("X-User-Name"),
+		Email:   r.Header.Get("X-User-Email"),
 		Message: fmt.Sprintf("Bill hours from %s", name),
 	}
 
@@ -117,7 +117,7 @@ func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 	if e != nil {
 		log.Printf("invoice.HourToInvoice: " + e.Error())
-		http.Error(w, "Failed converting hours to invoice, error=" + e.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed converting hours to invoice, error="+e.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -164,7 +164,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	list := make(map[string][]string)
 
 	e = db.View(func(t *db.Txn) error {
-		_, e := t.List(dirs, db.Pagination{From:0, Count:30}, mem, func(filename, file, fpath string) error {
+		_, e := t.List(dirs, db.Pagination{From: 0, Count: 30}, mem, func(filename, file, fpath string) error {
 			k := utils.BucketDir(fpath)
 			list[k] = append(list[k], filename)
 			return nil
@@ -174,7 +174,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if e != nil {
 		log.Printf(e.Error())
 		http.Error(w, fmt.Sprintf("hour.List failed scanning disk"), 400)
-		return	
+		return
 	}
 	if config.Verbose {
 		log.Printf("hour.List count=%d", len(list))
