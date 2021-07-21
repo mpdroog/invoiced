@@ -146,6 +146,7 @@ func main() {
 	router.POST("/api/v1/hour/:entity/:year/:bucket/:id/bill", hour.Bill)
 	router.DELETE("/api/v1/hour/:entity/:year/:bucket/:id", hour.Delete)
 
+	router.GET("/api/v1/summary/:entity/:year", taxes.Summary)
 	router.POST("/api/v1/taxes/:entity/:year/:quarter", taxes.Tax)
 
 	router.ServeFiles("/static/*filepath", http.Dir(config.CurDir+"/static"))

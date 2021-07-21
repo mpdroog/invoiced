@@ -69,6 +69,9 @@ export default class TaxesPage extends React.Component<{}, {}> {
       <div className="hpanel hblue">
         <div className="panel-heading hbuilt">
           Dutch TAX Summary Generator
+          <div className="panel-tools"><div className="btn-group nm7">
+            <a style={{float:'right'}} className="btn btn-default btn-hover-primary showhide" href={'/api/v1/summary/'+this.props.entity+'/'+this.props.year+'?excel=1'}>XLSX Accountant</a>
+          </div></div>
         </div>
         <div className="panel-body">
           <div className="row">
