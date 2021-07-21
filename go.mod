@@ -3,6 +3,7 @@ module github.com/mpdroog/invoiced
 go 1.13
 
 require (
+	github.com/360EntSecGroup-Skylar/excelize/v2 v2.4.0
 	github.com/BurntSushi/toml v0.3.1
 	github.com/blevesearch/bleve v1.0.10
 	github.com/boltdb/bolt v1.3.1
@@ -26,7 +27,7 @@ require (
 	github.com/shopspring/decimal v1.2.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
-	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
+	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc
 	google.golang.org/appengine v1.6.6 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v2 v2.0.0-20150314193201-9b4a113f96b3 // indirect
 	gopkg.in/gomail.v1 v1.0.0-20150320132819-11b919ab4933
