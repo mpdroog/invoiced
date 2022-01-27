@@ -44,4 +44,5 @@ require (
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/validator.v2 v2.0.0-20210331031555-b37d688a7fb0
 	gopkg.in/vmihailenco/msgpack.v2 v2.9.2
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
