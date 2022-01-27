@@ -5,7 +5,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	//"github.com/shopspring/decimal"
-	"github.com/360EntSecGroup-Skylar/excelize/v2"
+	"github.com/xuri/excelize/v2"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/invoice"
