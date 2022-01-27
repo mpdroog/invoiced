@@ -22,30 +22,36 @@ export default class Entities extends React.Component<{}, IMetrics> {
   }
 
 	render() {
-	    let items:React.JSX.Element[] = [];
-
-	    // TODO: More dynamic years?
-	    let years:string[] = [
-		    new Date().getFullYear()-1,
-		    new Date().getFullYear()
-	    ];
-	    for (var key in this.state.entities) {
-	    	if (! this.state.entities.hasOwnProperty(key)) {
-	    		// ignore
-	    		continue;
-	    	}
+    let items:React.JSX.Element[] = [];
+    let curYear:int = new Date().getFullYear();
+    for (var key in this.state.entities) {
+    	if (! this.state.entities.hasOwnProperty(key)) {
+    		// ignore
+    		continue;
+    	}
 			let ukey = "entity_" + key;
 			let entity = this.state.entities[key];
 
-			items.push(<tr key={ukey+"company"}><td colSpan={2}>{entity.Name} - {entity.VAT}</td></tr>);
-			for (var k in years) {
-				if (! years.hasOwnProperty(k)) {
-		    		// ignore
-		    		continue;
-		    	}
-		    	let year:string = years[k];
-				items.push(<tr key={ukey+"company"+year}><td><a href={"#"+key+"/"+year}>{year}</a></td><td>0,00EUR</td></tr>);
+			let hasCurYear: bool = false;
+			let accountingYears: React.JSX.Element[] = [];
+			for (var k in entity.Years) {
+				if (! entity.Years.hasOwnProperty(k)) {
+		    	// ignore
+		    	continue;
+		    }
+		    let year:int = parseInt(entity.Years[k]);
+		    if (year === curYear) {
+		    	hasCurYear = true;
+		    }
+				accountingYears.push(<tr key={ukey+"company"+year}><td><a href={"#"+key+"/"+year}>{year}</a></td><td>0,00EUR</td></tr>);
 			}
+
+			let link: React.JSX.Element = null;
+			if (! hasCurYear) {
+				link = <a href={"/api/v1/entities/" + key + "/open/" + curYear}>Open {curYear}</a>;
+			}
+			items.push(<tr key={ukey+"company"}><td>{entity.Name} - {entity.VAT}</td><td>{link}</td></tr>);
+			items = items.concat(accountingYears);
 		}
 
 		let smallHead = {
