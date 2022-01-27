@@ -27,6 +27,35 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		http.Error(w, "Failed reading entities", 500)
 		return
 	}
+
+	// Collect years we have
+	for entity, v := range res {
+		base := db.Path + entity
+		var years []string
+
+		e = db.View(func(t *db.Txn) error {
+			files, e := t.RawList(base)
+			if e != nil {
+				return e
+			}
+			for _, file := range files {
+				if !file.IsDir() {
+					continue
+				}
+				years = append(years, file.Name())
+			}
+			return nil
+		})
+		if e != nil {
+			log.Printf(e.Error())
+			http.Error(w, "entities.List failed scanning disk", 400)
+			return
+		}
+
+		v.Years = years
+		res[entity] = v
+	}
+
 	if e := writer.Encode(w, r, res); e != nil {
 		log.Printf("entities.List " + e.Error())
 	}

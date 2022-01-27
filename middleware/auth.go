@@ -26,6 +26,8 @@ type Entities struct {
 }
 
 type Entity struct {
+	Years   []string
+
 	Name string
 	COC  string
 	VAT  string

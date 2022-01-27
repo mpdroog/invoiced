@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/mpdroog/invoiced/config"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"os"
@@ -33,6 +34,10 @@ func init() {
 	if e != nil {
 		panic(e)
 	}
+}
+
+func (t *Txn) RawList(path string) ([]fs.FileInfo, error) {
+	return ioutil.ReadDir(path)
 }
 
 func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, string, string) error) (PaginationHeader, error) {
