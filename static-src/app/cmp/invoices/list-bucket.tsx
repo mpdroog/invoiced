@@ -77,6 +77,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td>{inv.Meta.Invoiceid}</td>
       <td>{inv.Customer.Name}</td>
       <td>&euro; {inv.Total.Total}</td>
+      <td>{inv.Meta.Duedate}</td>
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
         <a disabled={inv.Meta.Status === 'FINAL' || inv.Meta.Invoiceid.length > 0} className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
@@ -92,6 +93,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td>{inv.Meta.Invoiceid}</td>
       <td>{inv.Customer.Name}</td>
       <td>&euro; {inv.Total.Total}</td>
+      <td>{inv.Meta.Duedate}</td>
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
       </td>
@@ -153,7 +155,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     }
 
     if (res.length === 0) {
-      res.push(<tr key="empty"><td colSpan={5}>No invoices yet :)</td></tr>);
+      res.push(<tr key="empty"><td colSpan={6}>No invoices yet :)</td></tr>);
     }
 
     var headerButtons = <div/>;
@@ -192,7 +194,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
           <div className="panel-body">
             {balanceUpload}
             <table className="table table-striped">
-            	<thead><tr><th>#</th><th>Invoice</th><th>Customer</th><th>Amount</th><th>I/O</th></tr></thead>
+            	<thead><tr><th>#</th><th>Invoice</th><th>Customer</th><th>Amount</th><th>Duedate</th><th>I/O</th></tr></thead>
             	<tbody>{res}</tbody>
             </table>
 	        </div>
