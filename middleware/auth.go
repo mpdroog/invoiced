@@ -26,7 +26,7 @@ type Entities struct {
 }
 
 type Entity struct {
-	Years   []string
+	Years []string
 
 	Name string
 	COC  string

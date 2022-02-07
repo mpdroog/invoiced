@@ -46,7 +46,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	year, e := strconv.Atoi(ps.ByName("year"))
 	if e != nil {
 		log.Printf(e.Error())
-		http.Error(w, fmt.Sprintf("metrics.Dashboard failed scanning disk"), 400)
+		http.Error(w, fmt.Sprintf("metrics.Dashboard failed reading year-arg"), 400)
 		return
 	}
 
@@ -73,7 +73,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			if _, ok := m[yearmonth]; !ok {
 				m[yearmonth] = &DashboardMetric{
 					RevenueTotal: "0.00",
-					RevenueEx: "0.00",
+					RevenueEx:    "0.00",
 				}
 			}
 
@@ -114,7 +114,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			if !ok {
 				m[yearmonth] = &DashboardMetric{
 					RevenueTotal: "0.00",
-					RevenueEx: "0.00",
+					RevenueEx:    "0.00",
 				}
 			}
 
