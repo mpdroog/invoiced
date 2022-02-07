@@ -72,12 +72,17 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
   }
 
   private conceptLine(key: string, inv: IInvoiceState, bucket: string): React.JSX.Element {
+    var today = new Date().toISOString().split('T')[0];
+    var expiryClass = "";
+    if (inv.Meta.Duedate && inv.Meta.Duedate < today) {
+      expiryClass = 'bg-red';
+    }
     return <tr key={key}>
       <td>{key}</td>
       <td>{inv.Meta.Invoiceid}</td>
       <td>{inv.Customer.Name}</td>
       <td>&euro; {inv.Total.Total}</td>
-      <td>{inv.Meta.Duedate}</td>
+      <td class={expiryClass}>{inv.Meta.Duedate}</td>
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
         <a disabled={inv.Meta.Status === 'FINAL' || inv.Meta.Invoiceid.length > 0} className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
