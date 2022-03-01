@@ -45,6 +45,11 @@ func Encode(w http.ResponseWriter, r *http.Request, d interface{}) error {
 		// Browser override
 		accept = override
 	}
+	if accept == "" {
+		// Default to json with error
+		d = fmt.Sprintf("Invalid ?accept=%s", accept)
+		accept = "application/json"
+	}
 
 	var (
 		b []byte
