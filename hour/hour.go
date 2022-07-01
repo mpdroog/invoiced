@@ -76,6 +76,9 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		http.Error(w, "hour.Delete fail", http.StatusInternalServerError)
 	}
 
+	// CLI forward to wrapper app
+	fmt.Printf("cmd entity=%s year=%s hour=%s\n", entity, year, u.Name)
+
 	if e := writer.Encode(w, r, u); e != nil {
 		log.Printf("hour.Save " + e.Error())
 	}
@@ -145,6 +148,8 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	// CLI forward to wrapper app
+	fmt.Printf("cmd entity=%s year=%s hour=%s\n", entity, year, u.Name)
 	if e := writer.Encode(w, r, u); e != nil {
 		log.Printf("entities.Load " + e.Error())
 	}

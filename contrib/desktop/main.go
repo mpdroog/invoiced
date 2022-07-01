@@ -3,23 +3,28 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os/exec"
 	"github.com/getlantern/systray"
+	"os/exec"
 	//"github.com/getlantern/systray/icon"
-	"github.com/skratchdot/open-golang/open"
-	"github.com/mitchellh/go-homedir"
 	"github.com/lextoumbourou/idle"
+	"github.com/mitchellh/go-homedir"
+	"github.com/skratchdot/open-golang/open"
 	//"github.com/ctcpip/notifize"
 	//"sync"
+	"bufio"
 	"os"
+	"strings"
 	"time"
 )
 
 var (
-	verbose bool
-	dbPath string
+	verbose    bool
+	dbPath     string
 	timerStart *time.Time
-	minute time.Duration
+	minute     time.Duration
+
+	mStart     *systray.MenuItem
+	curProject *map[string]string
 )
 
 func main() {
@@ -45,9 +50,9 @@ func main() {
 
 func onReady() {
 	name := "../../invoiced"
-	args := []string {
+	args := []string{
 		"-c=../../config.toml",
-		"-d="+dbPath,
+		"-d=" + dbPath,
 	}
 
 	if verbose {
@@ -55,8 +60,12 @@ func onReady() {
 		fmt.Printf("exec=%s %s\n", name, args)
 	}
 	cmd := exec.Command(name, args...)
-	cmd.Stdout = os.Stdout
-    cmd.Stderr = os.Stderr
+	stdout, e := cmd.StdoutPipe()
+	if e != nil {
+		panic(e)
+	}
+	//cmd.Stdout = stdout
+	cmd.Stderr = os.Stderr
 
 	stopChan := make(chan bool, 2)
 
@@ -64,8 +73,9 @@ func onReady() {
 	systray.SetTooltip("InvoiceD")
 
 	mBrowser := systray.AddMenuItem("Open", "Open browser")
-	mStart := systray.AddMenuItem("Start", "Start timer")
+	mStart = systray.AddMenuItem("Start", "Start timer")
 	mQuit := systray.AddMenuItem("Quit", "Quit the whole app")
+	mStart.Disable()
 
 	go func() {
 		if e := cmd.Start(); e != nil {
@@ -75,6 +85,33 @@ func onReady() {
 			fmt.Printf("cmd.Wait: %s\n", e.Error())
 		}
 		stopChan <- true
+	}()
+
+	go func() {
+		// Line reader
+		scanner := bufio.NewScanner(stdout)
+		fmt.Printf("stdout.Wait()\n")
+		for scanner.Scan() {
+			line := scanner.Text()
+			if verbose {
+				fmt.Printf("stdout.Line=%s\n", line)
+			}
+			if strings.HasPrefix(line, "cmd ") {
+				// Proxy-cmd
+				args := make(map[string]string)
+				for _, item := range strings.Split(line, " ") {
+					if item == "cmd" {
+						continue
+					}
+					tok := strings.Split(item, "=")
+					args[tok[0]] = tok[1]
+				}
+				fmt.Printf("args=%+v\n", args)
+				curProject = &args
+				systray.SetTitle(fmt.Sprintf("$%s$%s$%s", args["entity"], args["year"], args["hour"]))
+				mStart.Enable()
+			}
+		}
 	}()
 
 	// User timer
@@ -128,9 +165,19 @@ func onReady() {
 			}
 
 		case <-mStart.ClickedCh:
-			if verbose{
+			if verbose {
 				fmt.Println("cmd=start")
 			}
+			if timerStart != nil {
+				// Stop the timer!
+				n := time.Now().Sub(*timerStart)
+				fmt.Printf("Duration=%s\n", n.String())
+				// TODO: Now use API to load..add..save the change
+
+				mStart.SetTitle("Start timer")
+				timerStart = nil
+			}
+			mStart.SetTitle("Stop timer")
 			n := time.Now()
 			timerStart = &n
 		}
