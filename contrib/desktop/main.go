@@ -64,7 +64,6 @@ func onReady() {
 	if e != nil {
 		panic(e)
 	}
-	//cmd.Stdout = stdout
 	cmd.Stderr = os.Stderr
 
 	stopChan := make(chan bool, 2)

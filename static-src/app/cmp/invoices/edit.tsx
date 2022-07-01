@@ -12,6 +12,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
   constructor(props) {
     super(props);
     this.revisions = [];
+    this.errors = {};
     this.state = {
       Company: props.entity,
       Entity: {
@@ -221,6 +222,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
     })
     .catch(err => {
       if (err.response && err.response.status === 417) {
+        this.errors = err.response.data.Fields;
         prettyErr(err.response.data);
         return;
       }

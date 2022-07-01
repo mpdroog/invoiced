@@ -1,14 +1,14 @@
 package main
 
 import (
-    "fmt"
-    "strings"
-    "syscall"
+	"fmt"
+	"strings"
+	"syscall"
 
-    "golang.org/x/crypto/ssh/terminal"
-    "crypto/rand"
-    "crypto/sha256"
-    "io"
+	"crypto/rand"
+	"crypto/sha256"
+	"golang.org/x/crypto/ssh/terminal"
+	"io"
 )
 
 // NewEncryptionKey generates a random 256-bit key for Encrypt() and
@@ -24,12 +24,12 @@ func NewEncryptionKey() *[32]byte {
 }
 
 func creds() (string, error) {
-    fmt.Print("Enter Password: ")
-    bytePassword, e := terminal.ReadPassword(int(syscall.Stdin))
-    if e != nil {
-        return "", e
-    }
-    return strings.TrimSpace(string(bytePassword)), nil
+	fmt.Print("Enter Password: ")
+	bytePassword, e := terminal.ReadPassword(int(syscall.Stdin))
+	if e != nil {
+		return "", e
+	}
+	return strings.TrimSpace(string(bytePassword)), nil
 }
 
 func main() {
@@ -41,15 +41,15 @@ func main() {
 	if e != nil {
 		panic(e)
 	}
-    //fmt.Printf("Password: %s\n", pass)
+	//fmt.Printf("Password: %s\n", pass)
 
 	h := sha256.New()
 	h.Write([]byte(salt))
 	h.Write([]byte(pass))
 	hash := fmt.Sprintf("%x", h.Sum(nil))
 
-    fmt.Printf("\nentities.toml input\n")
-    fmt.Printf("IV:   %s\n", key)
-    fmt.Printf("Salt: %s\n", salt)
-    fmt.Printf("Hash: %s\n", hash)
+	fmt.Printf("\nentities.toml input\n")
+	fmt.Printf("IV:   %s\n", key)
+	fmt.Printf("Salt: %s\n", salt)
+	fmt.Printf("Hash: %s\n", hash)
 }

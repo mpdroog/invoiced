@@ -65,8 +65,8 @@ type Stmt struct {
 					Cdtr struct {
 						Nm      string `xml:"Nm"`
 						PstlAdr struct {
-							AdrTp string `xml:"AdrTp"`
-							Ctry  string `xml:"Ctry"`
+							AdrTp   string   `xml:"AdrTp"`
+							Ctry    string   `xml:"Ctry"`
 							AdrLine []string `xml:"AdrLine"`
 						} `xml:"PstlAdr"`
 					} `xml:"Cdtr"`
@@ -79,8 +79,8 @@ type Stmt struct {
 					Dbtr struct {
 						Nm      string `xml:"Nm"`
 						PstlAdr struct {
-							AdrTp string `xml:"AdrTp"`
-							Ctry  string `xml:"Ctry"`
+							AdrTp   string   `xml:"AdrTp"`
+							Ctry    string   `xml:"Ctry"`
 							AdrLine []string `xml:"AdrLine"`
 						} `xml:"PstlAdr"`
 					} `xml:"Dbtr"`
@@ -89,7 +89,6 @@ type Stmt struct {
 							IBAN string `xml:"IBAN"`
 						} `xml:"Id"`
 					} `xml:"DbtrAcct"`
-
 				} `xml:"RltdPties"`
 				RltdAgts struct {
 					CdtrAgt struct {

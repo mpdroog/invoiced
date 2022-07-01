@@ -1,8 +1,8 @@
 package invoice
 
 import (
-	"github.com/mpdroog/invoiced/db"
 	"fmt"
+	"github.com/mpdroog/invoiced/db"
 )
 
 type Counter struct {

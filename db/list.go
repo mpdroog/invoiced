@@ -1,24 +1,26 @@
 package db
 
 import (
-	"io/ioutil"
-	"github.com/BurntSushi/toml"
-	"fmt"
-	"os"
 	"bufio"
-	"strings"
-	"log"
+	"fmt"
+	"github.com/BurntSushi/toml"
 	"github.com/mpdroog/invoiced/config"
+	"io/fs"
+	"io/ioutil"
+	"log"
+	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 const MAX_FILES = 1000
 const DEADLINE = "5s"
+
 var deadline time.Duration
 
 type Pagination struct {
-	From int // TODO: possible?
+	From  int // TODO: possible?
 	Count int
 }
 
@@ -32,6 +34,10 @@ func init() {
 	if e != nil {
 		panic(e)
 	}
+}
+
+func (t *Txn) RawList(path string) ([]fs.FileInfo, error) {
+	return ioutil.ReadDir(path)
 }
 
 func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, string, string) error) (PaginationHeader, error) {
@@ -50,7 +56,7 @@ func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, 
 		if AlwaysLowercase {
 			p = strings.ToLower(p)
 		}
-		pfPath = append(pfPath, Path + p)
+		pfPath = append(pfPath, Path+p)
 	}
 
 	paths, e := parseWildcards(pfPath)
@@ -82,19 +88,19 @@ func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, 
 
 			if file.IsDir() {
 				if config.Verbose {
-					log.Printf("Ignore %s (is directory)\n", abs + file.Name())
+					log.Printf("Ignore %s (is directory)\n", abs+file.Name())
 				}
 				continue
 			}
 			if config.Ignore(file.Name()) {
 				if config.Verbose {
-					log.Printf("Ignore %s (in .gitignore)\n", abs + file.Name())
+					log.Printf("Ignore %s (in .gitignore)\n", abs+file.Name())
 				}
 				continue
 			}
-			if (! strings.HasSuffix(file.Name(), ".toml")) {
+			if !strings.HasSuffix(file.Name(), ".toml") {
 				if config.Verbose {
-					log.Printf("Ignore %s (invalid extension)\n", abs + file.Name())
+					log.Printf("Ignore %s (invalid extension)\n", abs+file.Name())
 				}
 				continue
 			}
@@ -102,7 +108,7 @@ func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, 
 			// Wrap in anonymous fn to keep open fds low
 			e := func() error {
 				if config.Verbose {
-					log.Printf("Read %s\n", abs + file.Name())
+					log.Printf("Read %s\n", abs+file.Name())
 				}
 
 				file, e := os.Open(abs + file.Name())

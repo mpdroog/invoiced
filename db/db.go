@@ -4,27 +4,27 @@
 package db
 
 import (
-	"os"
 	"bufio"
-	git "gopkg.in/src-d/go-git.v4"
-	"github.com/BurntSushi/toml"
-	"regexp"
-	"log"
-	"strings"
 	"fmt"
+	"github.com/BurntSushi/toml"
 	"github.com/mpdroog/invoiced/config"
-	"sync"
+	git "gopkg.in/src-d/go-git.v4"
 	"io"
+	"log"
+	"os"
+	"regexp"
+	"strings"
+	"sync"
 )
 
 var (
-	Repo *git.Repository
-	Path string
+	Repo            *git.Repository
+	Path            string
 	AlwaysLowercase bool // Force disk I/O in lowercase for better OSX compatibility
 
-	canPush chan struct{}
+	canPush   chan struct{}
 	pathRegex *regexp.Regexp
-	lock *sync.RWMutex
+	lock      *sync.RWMutex
 )
 
 type Txn struct {
@@ -56,7 +56,7 @@ func Init(path string) error {
 		return fmt.Errorf("Path hack attempt: %s", path)
 	}
 
-	if _, e := os.Stat(Path+".git"); os.IsNotExist(e) {
+	if _, e := os.Stat(Path + ".git"); os.IsNotExist(e) {
 		if config.Verbose {
 			log.Printf("Create git-repo")
 		}
@@ -124,7 +124,7 @@ func (t *Txn) OpenRaw(path string) (io.ReadCloser, error) {
 	return tree.Filesystem.Open(path)
 }
 
-func (t *Txn) Open(path string, out interface{}) (error) {
+func (t *Txn) Open(path string, out interface{}) error {
 	if !pathFilter(path) {
 		return fmt.Errorf("Path hack attempt: %s", path)
 	}
@@ -149,7 +149,7 @@ func (t *Txn) Open(path string, out interface{}) (error) {
 	return file.Close()
 }
 
-func (t *Txn) OpenFirst(paths []string, out interface{}) (error) {
+func (t *Txn) OpenFirst(paths []string, out interface{}) error {
 	for _, path := range paths {
 		e := t.Open(path, out)
 		if e != nil {

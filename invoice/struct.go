@@ -1,12 +1,12 @@
 package invoice
 
-import 	"github.com/mpdroog/invoiced/db"
+import "github.com/mpdroog/invoiced/db"
 
 type InvoiceMail struct {
-	From string
+	From    string
 	Subject string
-	To string
-	Body string
+	To      string
+	Body    string
 }
 type InvoiceEntity struct {
 	Name    string `validate:"nonzero"`
@@ -46,22 +46,22 @@ type InvoiceBank struct {
 	Vat  string `validate:"nonzero"`
 	Coc  string `validate:"nonzero"`
 	Iban string `validate:"nonzero,iban"`
-	Bic string `validate:"nonzero,bic"`	
+	Bic  string `validate:"nonzero,bic"`
 }
 
 type Invoice struct {
-	Company string `validate:"nonzero"`
-	Entity  InvoiceEntity
+	Company  string `validate:"nonzero"`
+	Entity   InvoiceEntity
 	Customer InvoiceCustomer
-	Meta InvoiceMeta
-	Lines []InvoiceLine
-	Notes string
-	Total InvoiceTotal
-	Bank InvoiceBank
-	Mail InvoiceMail
+	Meta     InvoiceMeta
+	Lines    []InvoiceLine
+	Notes    string
+	Total    InvoiceTotal
+	Bank     InvoiceBank
+	Mail     InvoiceMail
 }
 
 type ListReply struct {
 	Invoices map[string][]*Invoice
-	Commits []*db.CommitMessage
+	Commits  []*db.CommitMessage
 }

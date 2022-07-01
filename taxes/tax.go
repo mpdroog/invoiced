@@ -2,21 +2,21 @@ package taxes
 
 import (
 	"fmt"
-	"net/http"
 	"github.com/julienschmidt/httprouter"
-	"github.com/shopspring/decimal"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/invoice"
-	"log"
 	"github.com/mpdroog/invoiced/writer"
+	"github.com/shopspring/decimal"
+	"log"
+	"net/http"
 	"strings"
 )
 
 type Sum struct {
-	Ex string
-	Tax string
-	EUEx string  // TOOODOOO
+	Ex        string
+	Tax       string
+	EUEx      string // TOOODOOO
 	EUCompany map[string]string
 }
 
@@ -37,7 +37,6 @@ func addValue(sum, add string, dec int) (string, error) {
 	return s.Add(a).StringFixed(int32(dec)), nil
 }
 
-
 func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
@@ -53,7 +52,7 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid", entity, year, quarter),
 		}
 		u := new(invoice.Invoice)
-		_, e := t.List(paths, db.Pagination{From:0, Count:0}, &u, func(filename, filepath, path string) error {
+		_, e := t.List(paths, db.Pagination{From: 0, Count: 0}, &u, func(filename, filepath, path string) error {
 			var e error
 			if config.Verbose {
 				log.Printf("Invoice(%s) total=%s ex=%s", u.Meta.Invoiceid, u.Total.Total, u.Total.Ex)

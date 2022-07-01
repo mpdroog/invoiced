@@ -1,23 +1,23 @@
 package entities
 
 import (
+	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"net/http"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/writer"
-	"strings"
-	"fmt"
 	"log"
+	"net/http"
+	"strings"
 )
 
 type Debtor struct {
-	Name string
-	Street1 string
-	Street2 string
-	VAT string
-	COC string
-	TAX string // TODO: validate?
-	NoteAdd string
+	Name         string
+	Street1      string
+	Street2      string
+	VAT          string
+	COC          string
+	TAX          string // TODO: validate?
+	NoteAdd      string
 	BillingEmail []string
 }
 

@@ -32,3 +32,8 @@
 textarea.form-control.h140 {
 	height: 140px;
 }
+
+.bg-red {
+	background-color: red;
+	color: #FFFFFF;
+}

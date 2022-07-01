@@ -1,24 +1,24 @@
 package metrics
 
 import (
+	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"log"
-	"net/http"
-	"github.com/mpdroog/invoiced/invoice"
+	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/hour"
-	"github.com/mpdroog/invoiced/config"
-	"github.com/shopspring/decimal"
-	"strings"
-	"strconv"
-	"fmt"
+	"github.com/mpdroog/invoiced/invoice"
 	"github.com/mpdroog/invoiced/writer"
+	"github.com/shopspring/decimal"
+	"log"
+	"net/http"
+	"strconv"
+	"time"
 )
 
 type DashboardMetric struct {
 	RevenueTotal string
-	RevenueEx string
-	Hours string
+	RevenueEx    string
+	Hours        string
 }
 
 func addValue(sum, add string) (string, error) {
@@ -43,35 +43,48 @@ func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	i := 0
 	count := 999 // TODO: remove invoice limit?
 	entity := ps.ByName("entity")
-	year := ps.ByName("year")
+	year, e := strconv.Atoi(ps.ByName("year"))
+	if e != nil {
+		log.Printf(e.Error())
+		http.Error(w, fmt.Sprintf("metrics.Dashboard failed reading year-arg"), 400)
+		return
+	}
 
 	m := make(map[string]*DashboardMetric)
 
-	e := db.View(func(t *db.Txn) error {
+	e = db.View(func(t *db.Txn) error {
 		// invoice
-		paths := []string{fmt.Sprintf("%s/%s/{all}/sales-invoices-paid", entity, year)}
+		paths := []string{
+			fmt.Sprintf("%s/%d/{all}/sales-invoices-paid", entity, year),
+		}
 		u := new(invoice.Invoice)
-		_, e := t.List(paths, db.Pagination{From:i, Count:count}, &u, func(filename, filepath, path string) error {
-			idx := strings.LastIndex(u.Meta.Issuedate, "-")
-			if idx == -1 {
-				log.Printf("WARN: Invoice(%s) has no valid issuedate?", u.Meta.Invoiceid)
-				return nil
-			}
-			month := u.Meta.Issuedate[0:idx]
-			_, ok := m[month]
-			if !ok {
-				m[month] = &DashboardMetric{}
-			}
-
-			var e error
-			if config.Verbose {
-				log.Printf("Invoice(date=%s) total=%s ex=%s", month, u.Total.Total, u.Total.Ex)
-			}
-			m[month].RevenueTotal, e = addValue(m[month].RevenueTotal, u.Total.Total)
+		_, e := t.List(paths, db.Pagination{From: i, Count: count}, &u, func(filename, filepath, path string) error {
+			payDate, e := time.Parse("2006-01-02", u.Meta.Issuedate)
 			if e != nil {
 				return e
 			}
-			m[month].RevenueEx, e = addValue(m[month].RevenueEx, u.Total.Ex)
+			curyear, month, _ := payDate.Date()
+			if curyear != year {
+				// ignore, only interested in payments earned in requested year
+				return nil
+			}
+			yearmonth := fmt.Sprintf("%d-%.2d", curyear, month)
+
+			if _, ok := m[yearmonth]; !ok {
+				m[yearmonth] = &DashboardMetric{
+					RevenueTotal: "0.00",
+					RevenueEx:    "0.00",
+				}
+			}
+
+			if config.Verbose {
+				log.Printf("Invoice(date=%s) total=%s ex=%s", yearmonth, u.Total.Total, u.Total.Ex)
+			}
+			m[yearmonth].RevenueTotal, e = addValue(m[yearmonth].RevenueTotal, u.Total.Total)
+			if e != nil {
+				return e
+			}
+			m[yearmonth].RevenueEx, e = addValue(m[yearmonth].RevenueEx, u.Total.Ex)
 			if e != nil {
 				return e
 			}
@@ -82,18 +95,27 @@ func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 
 		// hours
-		paths = []string{fmt.Sprintf("%s/%s/{all}/hours", entity, year)}
+		paths = []string{fmt.Sprintf("%s/%d/{all}/hours", entity, year)}
 		h := new(hour.Hour)
-		_, e = t.List(paths, db.Pagination{From:i, Count:count}, h, func(filename, filepath, path string) error {
-			idx := strings.LastIndex(h.Lines[0].Day, "-")
-			if idx == -1 {
-				log.Printf("WARN: Hour(%s) has no valid issuedate?", h.Lines[0].Day)
+		_, e = t.List(paths, db.Pagination{From: i, Count: count}, h, func(filename, filepath, path string) error {
+			lineDate, e := time.Parse("2006-01-02", h.Lines[0].Day)
+			if e != nil {
+				return e
+			}
+
+			curyear, month, _ := lineDate.Date()
+			if curyear != year {
+				// ignore, only interested in payments earned in requested year
 				return nil
 			}
-			month := h.Lines[0].Day[0:idx]
-			_, ok := m[month]
+			yearmonth := fmt.Sprintf("%d-%.2d", curyear, month)
+
+			_, ok := m[yearmonth]
 			if !ok {
-				m[month] = &DashboardMetric{}
+				m[yearmonth] = &DashboardMetric{
+					RevenueTotal: "0.00",
+					RevenueEx:    "0.00",
+				}
 			}
 
 			hours := "0.00"
@@ -106,9 +128,9 @@ func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			}
 
 			if config.Verbose {
-				log.Printf("Hours(date=%s) hours=%s", month, hours)
+				log.Printf("Hours(date=%s) hours=%s", yearmonth, hours)
 			}
-			m[month].Hours, e = addValue(m[month].Hours, hours)
+			m[yearmonth].Hours, e = addValue(m[yearmonth].Hours, hours)
 			if e != nil {
 				return e
 			}

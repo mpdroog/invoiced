@@ -4,8 +4,8 @@ import (
 	"github.com/itshosted/webutils/encrypt"
 	"log"
 	"net/http"
-	"time"
 	"strings"
+	"time"
 )
 
 func HTTPLog(next http.Handler) http.Handler {
@@ -37,11 +37,11 @@ func HTTPAuth(next http.Handler) http.Handler {
 				log.Printf("HTTPAuth " + e.Error())
 				// TODO: Somewhere general with login setcookie...
 				http.SetCookie(w, &http.Cookie{
-					Name: "sess",
-					Value: "",
-					Expires: time.Now().Add(-1 * time.Hour),
+					Name:     "sess",
+					Value:    "",
+					Expires:  time.Now().Add(-1 * time.Hour),
 					HttpOnly: true,
-					Domain: r.URL.Host,
+					Domain:   r.URL.Host,
 					//Secure: config.HTTPSOnly,
 				})
 			}
@@ -58,7 +58,7 @@ func HTTPAuth(next http.Handler) http.Handler {
 			if user == nil {
 				w.WriteHeader(401)
 				w.Write([]byte("No such user"))
-				return				
+				return
 			}
 
 			// check if allowed to open URL

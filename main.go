@@ -1,21 +1,21 @@
 package main
 
 import (
+	"flag"
 	"github.com/julienschmidt/httprouter"
 	"github.com/kardianos/osext"
+	"github.com/mpdroog/invoiced/config"
+	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/entities"
+	"github.com/mpdroog/invoiced/hour"
+	"github.com/mpdroog/invoiced/invoice"
+	"github.com/mpdroog/invoiced/metrics"
+	"github.com/mpdroog/invoiced/middleware"
+	"github.com/mpdroog/invoiced/rules"
+	"github.com/mpdroog/invoiced/taxes"
 	"log"
 	"net/http"
 	"sync"
-	"flag"
-	"github.com/mpdroog/invoiced/db"
-	"github.com/mpdroog/invoiced/entities"
-	"github.com/mpdroog/invoiced/config"
-	"github.com/mpdroog/invoiced/hour"
-	"github.com/mpdroog/invoiced/invoice"
-	"github.com/mpdroog/invoiced/taxes"
-	"github.com/mpdroog/invoiced/middleware"
-	"github.com/mpdroog/invoiced/rules"
-	"github.com/mpdroog/invoiced/metrics"
 	"time"
 )
 
@@ -53,11 +53,11 @@ func Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	// TODO: Somewhere general to share with logout?
 	http.SetCookie(w, &http.Cookie{
-		Name: "sess",
-		Value: sess,
-		Expires: time.Now().Add(time.Hour * 24 * 365),
+		Name:     "sess",
+		Value:    sess,
+		Expires:  time.Now().Add(time.Hour * 24 * 365),
 		HttpOnly: true,
-		Domain: r.URL.Host,
+		Domain:   r.URL.Host,
 		//Secure: config.HTTPSOnly,
 	})
 
@@ -68,7 +68,7 @@ func Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 func main() {
 	var (
-		wg sync.WaitGroup
+		wg   sync.WaitGroup
 		path string
 	)
 	flag.BoolVar(&config.Verbose, "v", false, "Verbose-mode (log more)")
@@ -146,6 +146,7 @@ func main() {
 	router.POST("/api/v1/hour/:entity/:year/:bucket/:id/bill", hour.Bill)
 	router.DELETE("/api/v1/hour/:entity/:year/:bucket/:id", hour.Delete)
 
+	router.GET("/api/v1/summary/:entity/:year", taxes.Summary)
 	router.POST("/api/v1/taxes/:entity/:year/:quarter", taxes.Tax)
 
 	router.ServeFiles("/static/*filepath", http.Dir(config.CurDir+"/static"))
