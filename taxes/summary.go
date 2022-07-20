@@ -278,7 +278,7 @@ func Summary(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 					}
 					f.SetCellValue(sheet, fmt.Sprintf("K%d", pos), debtorCode)
 
-					f.SetCellValue(sheet, fmt.Sprintf("L%d", pos), acctId)
+					f.SetCellValue(sheet, fmt.Sprintf("L%d", pos), line.InvoiceId)
 					f.SetCellValue(sheet, fmt.Sprintf("M%d", pos), "")
 				}
 			}
