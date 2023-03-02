@@ -148,12 +148,16 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
     this.revisions.push({}); // TODO :)
   }
 
-  private defaultDecimal(val) {
+  private defaultDecimal(val, isNeg) {
     if (val === "") {
       return "0.00";
     }
     val = val.replace(/,/g, ".");
-    val = val.replace(/[^\d.]/g, '')
+    if (isNeg) {
+      val = val.replace(/[^\d.\-]/g, '');
+    } else {
+      val = val.replace(/[^\d.]/g, '');
+    }
 
     let idx = val.indexOf(".");
     if (idx === -1) {
@@ -173,8 +177,8 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
   }
 
   private lineUpdate(line: IInvoiceLine) {
-    line.Quantity = this.defaultDecimal(line.Quantity);
-    line.Price = this.defaultDecimal(line.Price);
+    line.Quantity = this.defaultDecimal(line.Quantity, false);
+    line.Price = this.defaultDecimal(line.Price, true);
 
     line.Total = new Big(line.Price).times(line.Quantity).round(2).toFixed(2).toString();
     return line;
