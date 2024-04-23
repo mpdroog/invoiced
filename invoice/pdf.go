@@ -188,7 +188,11 @@ func pdf(base string, c *Invoice) (*gofpdf.Fpdf, error) {
 		pdf.CellFormat(30, 30, c.Total.Ex, "", 1, "R", false, 0, "")
 
 		pdf.SetXY(126, 105)
-		pdf.Cell(10, 30, "TAX (21%)")
+		tax := "TAX"
+		if c.Total.Tax != "0" {
+			tax += " (21%)"
+		}
+		pdf.Cell(10, 30, tax)
 
 		pdf.SetXY(170, 105)
 		pdf.CellFormat(30, 30, c.Total.Tax, "", 1, "R", false, 0, "")
