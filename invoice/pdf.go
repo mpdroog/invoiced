@@ -189,7 +189,7 @@ func pdf(base string, c *Invoice) (*gofpdf.Fpdf, error) {
 
 		pdf.SetXY(126, 105)
 		tax := "TAX"
-		if c.Total.Tax != "0" {
+		if c.Total.Tax != "0.00" {
 			tax += " (21%)"
 		}
 		pdf.Cell(10, 30, tax)
