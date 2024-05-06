@@ -11,6 +11,7 @@ interface IHourLineState {
   Start: string
   Stop: string
   Description: string
+  HourRate: number
 }
 interface IHourState {
   start?: string
@@ -32,7 +33,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
       description: "",
       day: Moment(),
       import: false,
-      hourRate: 0,
+      HourRate: 0,
 
       Lines: [],
       Name: "",
@@ -161,21 +162,31 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     }
     if (elem.id === "hour-project") {
       let prevMonth = Moment().subtract(1, 'months');
-      this.setState({
-        Project: e.target.value,
-        Name: e.target.value + "-" + prevMonth.format("YYYY-MM")
-      });
+
+      let diff = {};
+      if (e.target.value !== this.state.Project) {
+        diff["Project"] = e.target.value;
+      }
+      if (this.state.Name === "") {
+        diff["Name"] = e.target.value + "-" + prevMonth.format("YYYY-MM");
+      }
+
+      console.log("diff", diff);
+      if (Object.keys(diff).length > 0) this.setState(diff);
     }
   }
 
   private selectProject(prj) {
     console.log("Change", prj);
     let prevMonth = Moment().subtract(1, 'months');
-    this.setState({
-       Project: prj.Name,
-       Name: prj.Name + "-" + prevMonth.format("YYYY-MM"),
-       hourRate: prj.HourRate
-    });
+    let s = {
+      Project: prj.Name,
+      HourRate: prj.HourRate,
+    };
+    if (this.state.Name === "") {
+      s["Name"] = prj.Name + "-" + prevMonth.format("YYYY-MM");
+    }
+    this.setState(s);
   }
 
   private lineRemove(key: number) {
@@ -281,7 +292,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
               <button className="btn btn-default btn-hover-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fa fa-share"></i>&nbsp;Bill</button>
             </div>
           </div>
-          Sum ({this.state.Total} hours/{this.state.Total * this.state.hourRate } EUR)
+          Sum ({this.state.Total} hours/{this.state.Total * this.state.HourRate } EUR)
         </div>
         <div className="panel-body">
           <div className="row">
