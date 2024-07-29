@@ -21,6 +21,7 @@ import (
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
 const EUTaxComment = "VAT Reverse charge"
+const WorldTaxComment = "Export"
 
 type InputError struct {
 	Error  string
@@ -133,11 +134,28 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 				log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
 			}
 
-			if vatCountry(u.Customer.Vat) != "nl" && !strings.Contains(u.Notes, EUTaxComment) {
-				if len(u.Notes) > 0 {
-					u.Notes += "\n\n"
+			if u.Customer.Tax != "" {
+				// If outside NL we add a special comment above the invoice so it gets administrated correctly
+				if u.Customer.Tax == "EU0" && !strings.Contains(u.Notes, EUTaxComment) {
+					if len(u.Notes) > 0 {
+						u.Notes += "\n\n"
+					}
+					u.Notes += EUTaxComment
+				} else if u.Customer.Tax == "WORLD0" && !strings.Contains(u.Notes, WorldTaxComment) {
+					if len(u.Notes) > 0 {
+						u.Notes += "\n\n"
+					}
+					u.Notes += WorldTaxComment
 				}
-				u.Notes += EUTaxComment
+
+			} else {
+				// old style for older invoices (before 2024Q3)
+				if vatCountry(u.Customer.Vat) != "nl" && !strings.Contains(u.Notes, EUTaxComment) {
+					if len(u.Notes) > 0 {
+						u.Notes += "\n\n"
+					}
+					u.Notes += EUTaxComment
+				}
 			}
 		}
 

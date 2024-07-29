@@ -19,6 +19,7 @@ type InvoiceCustomer struct {
 	Street2 string `validate:"nonzero"`
 	Vat     string
 	Coc     string
+	Tax     string // Simple string so we know what to tax
 }
 type InvoiceMeta struct {
 	Conceptid string `validate:"slug"`

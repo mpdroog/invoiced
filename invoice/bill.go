@@ -86,6 +86,7 @@ func HourToInvoice(entity, year, project, name, hourStr, email, hourFile, from s
 			Street2: debtor.Street2,
 			Vat:     debtor.VAT,
 			Coc:     debtor.COC,
+			Tax:     debtor.TAX,
 		},
 		Meta: InvoiceMeta{
 			Conceptid: randStringBytesRmndr(12),

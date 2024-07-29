@@ -115,7 +115,9 @@ func Summary(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			idname := u.Customer.Name + "-" + u.Customer.Vat
 			sum.Invoices[u.Meta.Invoiceid] = u.Total.Total
 
-			if strings.Contains(u.Notes, "VAT Reverse charge") {
+			if strings.Contains(u.Notes, "Export") {
+				// Outside EU means no tax
+			} else if strings.Contains(u.Notes, "VAT Reverse charge") {
 				sum.EUEx, e = addValue(sum.EUEx, u.Total.Ex, 2)
 				custvat, ok := sum.EUCompany[idname]
 				if !ok {
