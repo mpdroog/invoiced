@@ -25,7 +25,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
         Street1: "",
         Street2: "",
         Vat: "",
-        Coc: ""
+        Coc: "",
       },
       Meta: {
         Conceptid: "",
@@ -191,13 +191,9 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
       ex = ex.plus(val.Total);
     });
 
-    let tax = ex.div("100").times("21");
-    if (this.state.Customer.Vat.length > 0) {
-      var country = this.state.Customer.Vat.substr(0, 2).toUpperCase();
-      console.log("Country " + country);
-      if (country !== "NL") {
-        tax = new Big(0);
-      }
+    let tax = new Big(0);
+    if (this.state.Customer.Tax === "NL21") {
+      tax = ex.div("100").times("21");
     }
     let total = ex.plus(tax);
     console.log("totals (ex,tax,total)", ex.toString(), tax.toString(), total.toString());
@@ -337,6 +333,11 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
 
       <input className="form-control" type="text" data-key="Customer.Vat" onChange={that.handleChange.bind(this)} value={inv.Customer.Vat} placeholder="VAT-number"/>
       <input className="form-control" type="text" data-key="Customer.Coc" onChange={that.handleChange.bind(this)} value={inv.Customer.Coc} placeholder="Chamber Of Commerce (CoC)"/>
+      <select className="form-control" data-key="Customer.Tax" onChange={that.handleChange.bind(this)} value={inv.Customer.Tax} placeholder="TAX plan">
+        <option value="NL21">NL21 (Domestic)</option>
+        <option value="EU0">EU (ICP)</option>
+        <option value="WORLD0">Outside EU (export)</option>
+      </select>
 
     </div>
     <div className="meta col-sm-offset-3 col-sm-5">

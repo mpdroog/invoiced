@@ -16,6 +16,7 @@ export interface IInvoiceCustomer {
   Street2: string
   Vat: string
   Coc: string
+  Tax: string
 }
 export interface IInvoiceMeta {
   Conceptid: string
