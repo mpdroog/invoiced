@@ -101,6 +101,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td>{inv.Meta.Duedate}</td>
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
+        <a className="btn btn-default btn-hover-primary" href={"/api/v1/invoice/" + this.props.entity + "/" + this.props.year + "/" + bucket + "/" + key + "/pdf"}><i className="fa fa-file-pdf-o"></i></a>
       </td>
     </tr>;
   }
