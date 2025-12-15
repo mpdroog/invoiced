@@ -44,6 +44,7 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	sum := &Sum{}
 	sum.EUCompany = make(map[string]string)
+	audit := ""
 
 	e := db.View(func(t *db.Txn) error {
 		// invoice
@@ -51,23 +52,27 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			fmt.Sprintf("%s/%s/%s/sales-invoices-paid", entity, year, quarter),
 			fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid", entity, year, quarter),
 		}
+
 		u := new(invoice.Invoice)
 		_, e := t.List(paths, db.Pagination{From: 0, Count: 0}, &u, func(filename, filepath, path string) error {
 			var e error
-			if config.Verbose {
-				log.Printf("Invoice(%s) total=%s ex=%s", u.Meta.Invoiceid, u.Total.Total, u.Total.Ex)
-			}
+
 			if strings.Contains(u.Notes, "Export") {
 				// Outside EU means no tax
+				audit += fmt.Sprintf("Invoice(%s) Export-Ignored\n", u.Meta.Invoiceid)
+
 			} else if strings.Contains(u.Notes, "VAT Reverse charge") {
 				sum.EUEx, e = addValue(sum.EUEx, u.Total.Ex, 2)
 				custvat, ok := sum.EUCompany[u.Customer.Vat]
 				if !ok {
 					custvat = "0.00"
 				}
+
+				audit += fmt.Sprintf("Invoice(%s) ICP ex=%s tax=%s\n", u.Meta.Invoiceid, u.Total.Ex, u.Total.Tax)
 				sum.EUCompany[u.Customer.Vat], e = addValue(custvat, u.Total.Total, 2)
 			} else {
 				sum.Ex, e = addValue(sum.Ex, u.Total.Ex, 2)
+				audit += fmt.Sprintf("Invoice(%s) NL ex=%s tax=%s\n", u.Meta.Invoiceid, u.Total.Ex, u.Total.Tax)
 			}
 			if e != nil {
 				return e
@@ -80,6 +85,10 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 	if e != nil {
 		panic(e)
+	}
+
+	if config.Verbose {
+		log.Printf("TAX audit:\n%s", audit)
 	}
 
 	// Remove decimals (Belastingdienst wants all numbers rounded)
