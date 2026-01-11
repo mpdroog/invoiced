@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/mpdroog/invoiced/config"
-	git "gopkg.in/src-d/go-git.v4"
+	git "github.com/go-git/go-git/v6"
 	"io"
 	"log"
 	"os"

@@ -23,9 +23,9 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	//gitconfig "gopkg.in/src-d/go-git.v4/config"
+	git "github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing/object"
+	//gitconfig "github.com/go-git/go-git/v6/config"
 )
 
 func round(num float64) int {
