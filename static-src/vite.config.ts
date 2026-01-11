@@ -1,14 +1,17 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
 import path from 'path'
 
 export default defineConfig({
-  plugins: [react()],
   root: '.',
   base: '/static/assets/',
+  esbuild: {
+    jsxFactory: 'React.createElement',
+    jsxFragment: 'React.Fragment'
+  },
   build: {
     outDir: '../static/assets',
-    emptyOutDir: true,
+    emptyOutDir: false,
+    minify: false,  // Disable minification for easier debugging
     rollupOptions: {
       input: {
         app: path.resolve(__dirname, 'index.html')

@@ -3,8 +3,6 @@ invoiced
 static/assets/app.js
 static/assets/app.js.map
 node_modules
-static/assets/app.css
-static/assets/app.css.map
 billing.db
 static/assets/COMMITHASH
 static/assets/VERSION

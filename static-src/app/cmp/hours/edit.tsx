@@ -1,7 +1,7 @@
 import * as React from "react";
 import Axios from "axios";
-import * as Big from "big.js";
-import * as Moment from "moment";
+import Big from "big.js";
+import Moment from "moment";
 import Import from "./edit-import";
 import {Autocomplete, LockedInput} from "../../shared/components";
 

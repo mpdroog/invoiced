@@ -13,7 +13,6 @@
     "@types/react": "^15.6.0",
     "@types/react-datepicker": "^0.46.2",
     "@types/react-dom": "^15.5.1",
-    "@vitejs/plugin-react": "^4.2.1",
     "typescript": "^5.3.3",
     "vite": "^5.0.11"
   },

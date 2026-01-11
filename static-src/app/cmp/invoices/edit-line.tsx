@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as Big from "big.js";
+import Big from "big.js";
 import {DOM} from "../../lib/dom";
 
 export class InvoiceLineEdit extends React.Component<{}, {}> {

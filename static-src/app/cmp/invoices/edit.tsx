@@ -1,10 +1,10 @@
 import * as React from "react";
 import Axios from "axios";
-import * as Moment from "moment";
+import Moment from "moment";
 import {Autocomplete, LockedInput} from "../../shared/components";
 import {InvoiceLineEdit} from "./edit-line";
 import {InvoiceMail} from "./edit-mail";
-import * as Big from "big.js";
+import Big from "big.js";
 import * as Struct from "./edit-struct";
 
 export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceState> {
