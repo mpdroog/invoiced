@@ -10,7 +10,6 @@
   <link rel="stylesheet" href="/static/assets/font-awesome.css">
   <link rel="stylesheet" href="/static/assets/font-awesome-animation.css">
   <link rel="stylesheet" href="/static/assets/theme.css">
-  <link rel="stylesheet" href="/static/assets/app.css">
   <link rel="stylesheet" href="/static/assets/main.css">
 </head>
 <body class="fixed-navbar fixed-sidebar">
@@ -51,8 +50,6 @@
         <li>The server is down/crashed.</li></ol>
       </div>
       <div class="modal-footer">
-        <!-- a class="js-modal-hide btn btn-default">Ignore</a -->
-        <!-- a style="float:right" class="btn btn-primary">Report</a -->
       </div>
     </div>
   </div>
@@ -73,14 +70,12 @@
         <textarea id="js-error-body"></textarea>
       </div>
       <div class="modal-footer">
-        <!-- a class="js-modal-hide btn btn-default">Ignore</a -->
-        <!-- a style="float:right" class="btn btn-primary js-report">Report</a -->
       </div>
     </div>
   </div>
 </div>
 <div id="js-dialog-backdrop" class="hidden modal-backdrop fade in"></div>
-<script type="text/javascript" async>
+<script type="text/javascript">
   window.onerror = function(msg, url, lineNo, columnNo, error) {
     handleErr({
       name: "window.onerror",
@@ -109,14 +104,13 @@
 
   function handleErr(e) {
     if (e.response && e.response.status === 401) {
-      // Auth needed
       location.href = '/static/auth.html';
       return;
     }
 
     var errorData = {
-      pageErrorType: e.name, // e.g. ReferenceError
-      pageMessage: e.message, // e.g. x is undefined
+      pageErrorType: e.name,
+      pageMessage: e.message,
       pageURL: document.location.href,
       pageStack: e.e && e.e.stack ? e.e.stack : null,
       serverResponse: e.response ? e.response.data : null,
@@ -126,7 +120,6 @@
     splash && splash.remove();
 
     if (e.request && !e.response) {
-      // Connection error
       document.getElementById("js-dialog-conn-error").classList.add('modal-open');
       document.getElementById("js-dialog-conn-error").style.display = 'block';
       document.getElementById("js-dialog-backdrop").classList.remove('hidden');
@@ -139,7 +132,7 @@
     document.getElementById("js-dialog-error").style.display = 'block';
     document.getElementById("js-dialog-backdrop").classList.remove('hidden');
   }
-  /* Hide button */
+
   var btns = document.getElementsByClassName("js-modal-hide");
   Array.prototype.forEach.call(btns, function(m) {
     m.onclick = function() {
@@ -151,7 +144,6 @@
     };
   });
 
-  /* Catch #-URLS against dev-errs refreshing the page in React */
   window.addEventListener("click", function(e) {
     if (e.target) {
       var node = e.target;
@@ -170,21 +162,17 @@
 
   console.log("JS_ONERR = ON");
 </script>
-<script async>
+<script>
     document.addEventListener("keyup", function(e) {
       var node = e && e.path && e.path.length > 0 ? e.path[0].nodeName : null;
       node = node ? node : e.target.nodeName;
       if (node === "INPUT" || node === "TEXTAREA") {
-        // only use shortcuts when not focussed on user input-fields
         return;
       }
 
       var key = e.code;
       var page = location.hash.substr(1).split("/")[2];
-      //var shift = e.shiftKey;
-      //var ctrl = e.ctrlKey;
 
-      // Global navigation
       if (key === 'KeyD') {
           console.log("D Dashboard");
           document.getElementById("js-dashboard").click();
@@ -206,7 +194,6 @@
         document.getElementById("js-search").focus()
       }
 
-      // Page specific
       if (page === "hours" && key === "KeyN") {
         console.log("Hours New");
         document.getElementById("js-new").click();
@@ -226,6 +213,7 @@
 
     }, false);
 </script>
-<script type="module" src="/static/assets/app.js"></script>
+<script src="/static/assets/prototype.js"></script>
+<script type="module" src="/app/main.tsx"></script>
 </body>
 </html>

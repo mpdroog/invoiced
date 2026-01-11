@@ -3,35 +3,31 @@
   "description": "Invoice Daemon",
   "author": "MP Droog <rootdev@gmail.com>",
   "scripts": {
-    "dev": "brunch watch"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "@types/big.js": "^0.0.31",
-    "@types/node": "^8.0.17",
+    "@types/big.js": "^6.2.2",
+    "@types/node": "^20.11.0",
     "@types/react": "^15.6.0",
     "@types/react-datepicker": "^0.46.2",
     "@types/react-dom": "^15.5.1",
-    "@types/react-router": "^4.0.14",
-    "brunch": "^4.0.0",
-    "csswring": "^6.0.3",
-    "postcss-brunch": "^2.1.0",
-    "typescript": "^2.4.2",
-    "typescript-brunch": "^2.3.0",
-    "uglify-js-brunch": "^2.10.0"
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.11"
   },
   "private": true,
   "license": "BSD-2",
   "dependencies": {
-    "axios": "^0.21.1",
-    "big.js": "^3.1.3",
-    "braces": "^2.3.1",
-    "chartist": "^0.11.0",
-    "glob-parent": "^5.1.2",
-    "moment": "^2.18.1",
+    "axios": "^1.6.5",
+    "big.js": "^6.2.1",
+    "chartist": "^0.11.4",
+    "moment": "^2.30.1",
     "msgpack-lite": "^0.1.26",
-    "postcss": "^8.2.13",
-    "react-chartist": "^0.13.1",
-    "react-lite": "^0.15.39"
+    "react": "^15.6.2",
+    "react-chartist": "^0.14.4",
+    "react-dom": "^15.6.2"
   },
   "version": "1.0.0",
   "repository": {

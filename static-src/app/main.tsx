@@ -2,16 +2,27 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import {Design} from "./shared/design";
 
+// Static imports for all page components
+import EntitiesApp from "./cmp/entities/app";
+import DashboardApp from "./cmp/dashboard/app";
+import HoursList from "./cmp/hours/list";
+import HoursEdit from "./cmp/hours/edit";
+import InvoicesList from "./cmp/invoices/list";
+import InvoicesEdit from "./cmp/invoices/edit";
+import TaxesList from "./cmp/taxes/list";
+
+declare function handleErr(e: any): void;
+
 function hashChange() {
       let url = location.hash.substr(1).split("/");
-      let inject = null;
-      let props = null;
+      let inject: any = null;
+      let props: any = null;
 
       if (url[0] === '') {
             url.shift();
       }
       if (url.length === 0) {
-            inject = require("./cmp/entities/app");
+            inject = EntitiesApp;
       }
 
       if (inject === null) {
@@ -25,11 +36,11 @@ function hashChange() {
                               case "add":
                               case "edit":
                                     props.bucket = url.shift();
-                                    inject = require("./cmp/hours/edit");
+                                    inject = HoursEdit;
                                     break;
 
                               default:
-                                    inject = require("./cmp/hours/list");
+                                    inject = HoursList;
                                     break;
                         }
                         break;
@@ -39,22 +50,22 @@ function hashChange() {
                               case "add":
                               case "edit":
                                     props.bucket = url.shift();
-                                    inject = require("./cmp/invoices/edit");
+                                    inject = InvoicesEdit;
                                     break;
 
                               default:
-                                    inject = require("./cmp/invoices/list");
-                                    break;                        
+                                    inject = InvoicesList;
+                                    break;
                         }
                         break;
 
                   case "taxes":
-                        inject = require("./cmp/taxes/list");
+                        inject = TaxesList;
                         break;
 
                   case "":
                   case undefined:
-                        inject = require("./cmp/dashboard/app");
+                        inject = DashboardApp;
                         break;
 
                   default:
@@ -65,10 +76,10 @@ function hashChange() {
       let page = null;
       if (props !== null) {
             props.id = url.shift();
-            page = React.createElement(inject.default, props);
+            page = React.createElement(inject, props);
             page = React.createElement(Design, props, page);
       } else {
-            page = React.createElement(inject.default, props);
+            page = React.createElement(inject, props);
       }
       console.log("ReactDOM.render()", props);
       ReactDOM.render(page, root);
