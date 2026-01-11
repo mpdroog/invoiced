@@ -164,8 +164,8 @@ func (t *Txn) OpenFirst(paths []string, out interface{}) error {
 }
 
 func View(fn Fn) error {
-	lock.Lock()
-	defer lock.Unlock()
+	lock.RLock()
+	defer lock.RUnlock()
 
 	txn := &Txn{Write: false}
 	return fn(txn)

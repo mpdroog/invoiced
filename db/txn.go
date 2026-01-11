@@ -145,8 +145,8 @@ func revert() error {
 }
 
 func Update(change Commit, fn Fn) error {
-	lock.RLock()
-	defer lock.RUnlock()
+	lock.Lock()
+	defer lock.Unlock()
 
 	txn := &Txn{Write: true}
 	if e := fn(txn); e != nil {
