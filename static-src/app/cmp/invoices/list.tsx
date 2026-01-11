@@ -1,8 +1,8 @@
 import * as React from "react";
 import Invoices from "./list-bucket";
 import Axios from "axios";
-import * as Msgpack from 'msgpack-lite';
-import * as Moment from "moment";
+import Msgpack from 'msgpack-lite';
+import Moment from "moment";
 
 export default class InvoicesPage extends React.Component<{}, {}> {
   constructor(props) {

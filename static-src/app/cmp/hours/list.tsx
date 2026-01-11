@@ -1,7 +1,7 @@
 import * as React from "react";
 import Axios from "axios";
 import {DOM} from "../../lib/dom";
-import * as Msgpack from 'msgpack-lite';
+import Msgpack from 'msgpack-lite';
 
 interface IHourPagination {
   from?: string
