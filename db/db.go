@@ -22,7 +22,6 @@ var (
 	Path            string
 	AlwaysLowercase bool // Force disk I/O in lowercase for better OSX compatibility
 
-	canPush   chan struct{}
 	pathRegex *regexp.Regexp
 	lock      *sync.RWMutex
 )
@@ -50,7 +49,6 @@ func Init(path string) error {
 		Path += "/"
 	}
 	pathRegex = regexp.MustCompile(`^[A-Za-z0-9\._\-\/{}]+$`)
-	canPush = make(chan struct{}, 10) // non-blocking
 
 	if !pathFilter(Path) {
 		return fmt.Errorf("Path hack attempt: %s", path)

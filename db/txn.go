@@ -133,9 +133,6 @@ func commit(msg, name, email string) error {
 	if _, e := tree.Commit(msg, opts); e != nil {
 		return e
 	}
-
-	// push
-	canPush <- struct{}{}
 	return nil
 }
 
