@@ -14,10 +14,13 @@ import (
 )
 
 type Sum struct {
-	Ex        string
-	Tax       string
-	EUEx      string // TOOODOOO
-	EUCompany map[string]string
+	Ex        string // Sum revenue of NL invoices
+	Tax       string // Tax to pay
+	EUEx      string // Sum revenue of EU invoices
+	EUCompany map[string]string // Tax per EU company for ICP
+
+	ExWorld   string // Sum revenue of world invoices
+	ExRevenue string // Sum revenue of everything
 }
 
 func addValue(sum, add string, dec int) (string, error) {
@@ -60,6 +63,7 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			if strings.Contains(u.Notes, "Export") {
 				// Outside EU means no tax
 				audit += fmt.Sprintf("Invoice(%s) Export-Ignored\n", u.Meta.Invoiceid)
+				sum.ExWorld, e = addValue(sum.ExWorld, u.Total.Ex, 2)
 
 			} else if strings.Contains(u.Notes, "VAT Reverse charge") {
 				sum.EUEx, e = addValue(sum.EUEx, u.Total.Ex, 2)
@@ -78,6 +82,7 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 				return e
 			}
 
+			sum.ExRevenue, e = addValue(sum.ExRevenue, u.Total.Ex, 2)
 			sum.Tax, e = addValue(sum.Tax, u.Total.Tax, 2)
 			return e
 		})

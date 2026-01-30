@@ -57,6 +57,9 @@ func Summary(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		"Money Factory B.V.":   "5",
 		"Omniga GmbH & Co. KG": "6",
 		"NIMA":                 "7",
+		"MyAlo GmbH": 			"8",
+		"RSP Sales":			"9",
+		"Rumah":				"9",
 	}
 
 	sum := &Overview{}
@@ -277,6 +280,9 @@ func Summary(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 					debtorCode := "0"
 					if val, ok := relationCodes[line.CustomerName]; ok {
 						debtorCode = val
+					}
+					if debtorCode == "0" {
+						fmt.Printf("WARN: Missing debtorCode for %s", line.CustomerName)
 					}
 					f.SetCellValue(sheet, fmt.Sprintf("K%d", pos), debtorCode)
 
