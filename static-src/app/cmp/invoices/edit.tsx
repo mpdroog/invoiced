@@ -274,6 +274,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
       },
       Notes: data.NoteAdd,
       Mail: {
+        ...this.state.Mail,
         To: data.BillingEmail.join(", ")
       }
     });
