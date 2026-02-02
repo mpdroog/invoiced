@@ -1,5 +1,6 @@
 {
   "name": "InvoiceD",
+  "type": "module",
   "description": "Invoice Daemon",
   "author": "MP Droog <rootdev@gmail.com>",
   "scripts": {
