@@ -28,7 +28,7 @@ What makes us better than the competition (technical):
 Technical background
 ===========
 - The backend is Golang/~~Bleve~~/Git
-- The frontend is ReactJS/TypeScript/Brunch (static-src)
+- The frontend is ReactJS/TypeScript/Vite (static-src)
 
 1] contrib/desktop( invoiced )
 2] static
@@ -49,7 +49,8 @@ Frontend
 # Install yarn (better npm)
 cd static-src
 yarn install
-npm run dev
+npm run build                      # Build to ../static/assets/
+npm run dev                        # Dev server on port 5173 (proxies /api to localhost:9999)
 ```
 
 Backend
