@@ -190,8 +190,11 @@ func main() {
 	router.POST("/api/v1/taxes/:entity/:year/:quarter", taxes.Tax)
 
 	router.GET("/api/v1/git/:entity/status", gitpkg.Status)
+	router.GET("/api/v1/git/:entity/history", gitpkg.History)
 	router.POST("/api/v1/git/:entity/push", gitpkg.Push)
 	router.POST("/api/v1/git/:entity/pull", gitpkg.Pull)
+	router.POST("/api/v1/git/:entity/discard", gitpkg.DiscardAll)
+	router.POST("/api/v1/git/:entity/reset/:hash", gitpkg.ResetTo)
 
 	router.ServeFiles("/static/*filepath", http.Dir(config.CurDir+"/static"))
 

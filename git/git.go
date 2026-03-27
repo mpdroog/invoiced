@@ -20,16 +20,23 @@ import (
 )
 
 type CommitInfo struct {
-	Hash    string `json:"hash"`
-	Message string `json:"message"`
-	Author  string `json:"author"`
-	Date    string `json:"date"`
+	Hash     string `json:"hash"`
+	FullHash string `json:"fullHash"`
+	Message  string `json:"message"`
+	Author   string `json:"author"`
+	Date     string `json:"date"`
 }
 
 type StatusResponse struct {
 	Ahead   int          `json:"ahead"`
 	Commits []CommitInfo `json:"commits"`
 	Remote  string       `json:"remote"`
+}
+
+type HistoryResponse struct {
+	Commits []CommitInfo `json:"commits"`
+	HasMore bool         `json:"hasMore"`
+	Page    int          `json:"page"`
 }
 
 type PullPushResponse struct {
@@ -140,10 +147,11 @@ func Status(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 
 		resp.Commits = append(resp.Commits, CommitInfo{
-			Hash:    commit.Hash.String()[:7],
-			Message: commit.Message,
-			Author:  commit.Author.Name,
-			Date:    commit.Author.When.Format("2006-01-02 15:04"),
+			Hash:     commit.Hash.String()[:7],
+			FullHash: commit.Hash.String(),
+			Message:  commit.Message,
+			Author:   commit.Author.Name,
+			Date:     commit.Author.When.Format("2006-01-02 15:04"),
 		})
 		resp.Ahead++
 
@@ -193,6 +201,198 @@ func Push(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Message: "Pushed successfully",
 	}); err != nil {
 		log.Printf("git.Push encode: %s", err.Error())
+	}
+}
+
+// History returns paginated commit history
+func History(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	pageStr := r.URL.Query().Get("page")
+	page := 0
+	if pageStr != "" {
+		fmt.Sscanf(pageStr, "%d", &page)
+	}
+	if page < 0 {
+		page = 0
+	}
+
+	const perPage = 20
+	skip := page * perPage
+
+	resp := HistoryResponse{
+		Commits: []CommitInfo{},
+		HasMore: false,
+		Page:    page,
+	}
+
+	// Get HEAD reference
+	head, err := db.Repo.Head()
+	if err != nil {
+		log.Printf("git.History head: %s", err.Error())
+		http.Error(w, "Failed to get HEAD", http.StatusInternalServerError)
+		return
+	}
+
+	// Get commit log
+	logIter, err := db.Repo.Log(&git.LogOptions{
+		From:  head.Hash(),
+		Order: git.LogOrderCommitterTime,
+	})
+	if err != nil {
+		log.Printf("git.History log: %s", err.Error())
+		http.Error(w, "Failed to get log", http.StatusInternalServerError)
+		return
+	}
+	defer logIter.Close()
+
+	// Skip to the right page
+	skipped := 0
+	for skipped < skip {
+		_, err := logIter.Next()
+		if err != nil {
+			break
+		}
+		skipped++
+	}
+
+	// Collect commits for this page
+	count := 0
+	for count < perPage+1 { // +1 to check if there are more
+		commit, err := logIter.Next()
+		if err != nil {
+			break
+		}
+
+		if count < perPage {
+			resp.Commits = append(resp.Commits, CommitInfo{
+				Hash:     commit.Hash.String()[:7],
+				FullHash: commit.Hash.String(),
+				Message:  strings.TrimSpace(commit.Message),
+				Author:   commit.Author.Name,
+				Date:     commit.Author.When.Format("2006-01-02 15:04"),
+			})
+		} else {
+			resp.HasMore = true
+		}
+		count++
+	}
+
+	if err := writer.Encode(w, r, resp); err != nil {
+		log.Printf("git.History encode: %s", err.Error())
+	}
+}
+
+// DiscardAll resets the repository to origin/master (discards all local changes)
+func DiscardAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// Get remote tracking branch reference
+	remoteRef, err := db.Repo.Reference(plumbing.NewRemoteReferenceName("origin", "master"), true)
+	if err != nil {
+		log.Printf("git.DiscardAll remote ref: %s", err.Error())
+		if err := writer.Encode(w, r, PullPushResponse{
+			Success: false,
+			Message: fmt.Sprintf("Failed to find origin/master: %s", err.Error()),
+		}); err != nil {
+			log.Printf("git.DiscardAll encode: %s", err.Error())
+		}
+		return
+	}
+
+	// Get worktree
+	tree, err := db.Repo.Worktree()
+	if err != nil {
+		log.Printf("git.DiscardAll worktree: %s", err.Error())
+		if err := writer.Encode(w, r, PullPushResponse{
+			Success: false,
+			Message: fmt.Sprintf("Failed: %s", err.Error()),
+		}); err != nil {
+			log.Printf("git.DiscardAll encode: %s", err.Error())
+		}
+		return
+	}
+
+	// Hard reset to origin/master
+	err = tree.Reset(&git.ResetOptions{
+		Commit: remoteRef.Hash(),
+		Mode:   git.HardReset,
+	})
+
+	if err != nil {
+		log.Printf("git.DiscardAll reset: %s", err.Error())
+		if err := writer.Encode(w, r, PullPushResponse{
+			Success: false,
+			Message: fmt.Sprintf("Reset failed: %s", err.Error()),
+		}); err != nil {
+			log.Printf("git.DiscardAll encode: %s", err.Error())
+		}
+		return
+	}
+
+	if err := writer.Encode(w, r, PullPushResponse{
+		Success: true,
+		Message: "Discarded all local changes",
+	}); err != nil {
+		log.Printf("git.DiscardAll encode: %s", err.Error())
+	}
+}
+
+// ResetTo resets the repository to a specific commit (hard reset)
+func ResetTo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	hash := ps.ByName("hash")
+	if hash == "" {
+		http.Error(w, "Missing commit hash", http.StatusBadRequest)
+		return
+	}
+
+	// Resolve the hash
+	commitHash := plumbing.NewHash(hash)
+
+	// Verify commit exists
+	_, err := db.Repo.CommitObject(commitHash)
+	if err != nil {
+		log.Printf("git.ResetTo commit not found: %s", err.Error())
+		if err := writer.Encode(w, r, PullPushResponse{
+			Success: false,
+			Message: fmt.Sprintf("Commit not found: %s", hash),
+		}); err != nil {
+			log.Printf("git.ResetTo encode: %s", err.Error())
+		}
+		return
+	}
+
+	// Get worktree
+	tree, err := db.Repo.Worktree()
+	if err != nil {
+		log.Printf("git.ResetTo worktree: %s", err.Error())
+		if err := writer.Encode(w, r, PullPushResponse{
+			Success: false,
+			Message: fmt.Sprintf("Failed: %s", err.Error()),
+		}); err != nil {
+			log.Printf("git.ResetTo encode: %s", err.Error())
+		}
+		return
+	}
+
+	// Hard reset to the commit
+	err = tree.Reset(&git.ResetOptions{
+		Commit: commitHash,
+		Mode:   git.HardReset,
+	})
+
+	if err != nil {
+		log.Printf("git.ResetTo reset: %s", err.Error())
+		if err := writer.Encode(w, r, PullPushResponse{
+			Success: false,
+			Message: fmt.Sprintf("Reset failed: %s", err.Error()),
+		}); err != nil {
+			log.Printf("git.ResetTo encode: %s", err.Error())
+		}
+		return
+	}
+
+	if err := writer.Encode(w, r, PullPushResponse{
+		Success: true,
+		Message: fmt.Sprintf("Reset to commit %s", hash[:7]),
+	}); err != nil {
+		log.Printf("git.ResetTo encode: %s", err.Error())
 	}
 }
 

@@ -3,6 +3,7 @@ import Axios from "axios";
 
 interface CommitInfo {
   hash: string;
+  fullHash: string;
   message: string;
   author: string;
   date: string;
@@ -14,6 +15,12 @@ interface StatusResponse {
   remote: string;
 }
 
+interface HistoryResponse {
+  commits: CommitInfo[];
+  hasMore: boolean;
+  page: number;
+}
+
 interface ActionResponse {
   success: boolean;
   message: string;
@@ -23,9 +30,12 @@ interface GitState {
   loading: boolean;
   pushing: boolean;
   pulling: boolean;
+  reverting: string | null;
   error: string | null;
   actionResult: string | null;
   status: StatusResponse | null;
+  history: HistoryResponse | null;
+  historyLoading: boolean;
 }
 
 export default class GitPage extends React.Component<{}, GitState> {
@@ -35,14 +45,18 @@ export default class GitPage extends React.Component<{}, GitState> {
       loading: true,
       pushing: false,
       pulling: false,
+      reverting: null,
       error: null,
       actionResult: null,
-      status: null
+      status: null,
+      history: null,
+      historyLoading: false
     };
   }
 
   componentDidMount() {
     this.loadStatus();
+    this.loadHistory(0);
   }
 
   private loadStatus() {
@@ -54,6 +68,18 @@ export default class GitPage extends React.Component<{}, GitState> {
       .catch(err => {
         this.setState({loading: false, error: 'Failed to load git status'});
         handleErr(err);
+      });
+  }
+
+  private loadHistory(page: number) {
+    this.setState({historyLoading: true});
+    Axios.get('/api/v1/git/' + this.props.entity + '/history', {params: {page}})
+      .then(res => {
+        this.setState({historyLoading: false, history: res.data});
+      })
+      .catch(err => {
+        this.setState({historyLoading: false});
+        console.error('Failed to load history', err);
       });
   }
 
@@ -89,6 +115,46 @@ export default class GitPage extends React.Component<{}, GitState> {
       });
   }
 
+  private doDiscardAll() {
+    if (!confirm('Discard ALL local changes? This will reset to the last pushed state.')) {
+      return;
+    }
+
+    this.setState({reverting: 'all', actionResult: null, error: null});
+    Axios.post('/api/v1/git/' + this.props.entity + '/discard')
+      .then(res => {
+        const result: ActionResponse = res.data;
+        this.setState({reverting: null, actionResult: result.message});
+        if (result.success) {
+          this.loadStatus();
+        }
+      })
+      .catch(err => {
+        this.setState({reverting: null, error: 'Discard failed'});
+        handleErr(err);
+      });
+  }
+
+  private doResetTo(fullHash: string, shortHash: string) {
+    if (!confirm(`Reset to commit ${shortHash}? Commits after this will be discarded.`)) {
+      return;
+    }
+
+    this.setState({reverting: fullHash, actionResult: null, error: null});
+    Axios.post('/api/v1/git/' + this.props.entity + '/reset/' + fullHash)
+      .then(res => {
+        const result: ActionResponse = res.data;
+        this.setState({reverting: null, actionResult: result.message});
+        if (result.success) {
+          this.loadStatus();
+        }
+      })
+      .catch(err => {
+        this.setState({reverting: null, error: 'Reset failed'});
+        handleErr(err);
+      });
+  }
+
   render() {
     let content = null;
 
@@ -108,6 +174,7 @@ export default class GitPage extends React.Component<{}, GitState> {
               <th>Message</th>
               <th>Author</th>
               <th>Date</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -117,6 +184,20 @@ export default class GitPage extends React.Component<{}, GitState> {
                 <td>{c.message}</td>
                 <td>{c.author}</td>
                 <td>{c.date}</td>
+                <td>
+                  <button
+                    className="btn btn-xs btn-default"
+                    onClick={() => this.doResetTo(c.fullHash, c.hash)}
+                    disabled={this.state.reverting !== null}
+                    title="Reset to this commit"
+                  >
+                    {this.state.reverting === c.fullHash ? (
+                      <i className="fa fa-spinner fa-spin"></i>
+                    ) : (
+                      <i className="fa fa-undo"></i>
+                    )}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -135,7 +216,7 @@ export default class GitPage extends React.Component<{}, GitState> {
             <button
               className="btn btn-default m-r-sm"
               onClick={this.doPull.bind(this)}
-              disabled={this.state.pulling || this.state.pushing}
+              disabled={this.state.pulling || this.state.pushing || this.state.reverting !== null}
             >
               {this.state.pulling ? (
                 <span><i className="fa fa-spinner fa-spin"></i> Pulling...</span>
@@ -144,9 +225,9 @@ export default class GitPage extends React.Component<{}, GitState> {
               )}
             </button>
             <button
-              className="btn btn-primary"
+              className="btn btn-primary m-r-sm"
               onClick={this.doPush.bind(this)}
-              disabled={this.state.pushing || this.state.pulling || status.ahead === 0}
+              disabled={this.state.pushing || this.state.pulling || this.state.reverting !== null || status.ahead === 0}
             >
               {this.state.pushing ? (
                 <span><i className="fa fa-spinner fa-spin"></i> Pushing...</span>
@@ -154,6 +235,19 @@ export default class GitPage extends React.Component<{}, GitState> {
                 <span><i className="fa fa-cloud-upload"></i> Push to Remote</span>
               )}
             </button>
+            {status.ahead > 0 && (
+              <button
+                className="btn btn-danger"
+                onClick={this.doDiscardAll.bind(this)}
+                disabled={this.state.pushing || this.state.pulling || this.state.reverting !== null}
+              >
+                {this.state.reverting === 'all' ? (
+                  <span><i className="fa fa-spinner fa-spin"></i> Discarding...</span>
+                ) : (
+                  <span><i className="fa fa-undo"></i> Discard All</span>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
@@ -163,6 +257,61 @@ export default class GitPage extends React.Component<{}, GitState> {
 
         <h4>Unpushed Commits</h4>
         {commitsList}
+      </div>;
+    }
+
+    let historyPanel = null;
+    if (this.state.history) {
+      const hist = this.state.history;
+      historyPanel = <div className="hpanel hgreen m-t-md">
+        <div className="panel-heading hbuilt">
+          <i className="fa fa-history"></i> Previous Commits
+        </div>
+        <div className="panel-body">
+          {this.state.historyLoading ? (
+            <p><i className="fa fa-spinner fa-spin"></i> Loading...</p>
+          ) : (
+            <div>
+              <table className="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Hash</th>
+                    <th>Message</th>
+                    <th>Author</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {hist.commits.map((c, i) => (
+                    <tr key={i}>
+                      <td><code>{c.hash}</code></td>
+                      <td>{c.message}</td>
+                      <td>{c.author}</td>
+                      <td>{c.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="text-center">
+                <button
+                  className="btn btn-default m-r-sm"
+                  onClick={() => this.loadHistory(hist.page - 1)}
+                  disabled={hist.page === 0 || this.state.historyLoading}
+                >
+                  <i className="fa fa-chevron-left"></i> Newer
+                </button>
+                <span className="text-muted">Page {hist.page + 1}</span>
+                <button
+                  className="btn btn-default m-l-sm"
+                  onClick={() => this.loadHistory(hist.page + 1)}
+                  disabled={!hist.hasMore || this.state.historyLoading}
+                >
+                  Older <i className="fa fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>;
     }
 
@@ -180,6 +329,7 @@ export default class GitPage extends React.Component<{}, GitState> {
           {content}
         </div>
       </div>
+      {historyPanel}
     </div>;
   }
 }
