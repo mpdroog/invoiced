@@ -13,6 +13,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/model"
+	"github.com/mpdroog/invoiced/purchase"
 )
 
 // PathParts contains parsed components from a TOML file path
@@ -26,11 +27,12 @@ type PathParts struct {
 	Type     string // "invoice" or "hour"
 }
 
-// Patterns for matching invoice and hour paths
+// Patterns for matching invoice, hour, and purchase paths
 // e.g., "rootdev/2024/Q1/sales-invoices-paid/abc123.toml"
 var (
-	invoicePathRe = regexp.MustCompile(`^([^/]+)/(\d{4})/(Q[1-4]|concepts)/(sales-invoices[^/]*)/([^/]+)\.toml$`)
-	hourPathRe    = regexp.MustCompile(`^([^/]+)/(\d{4})/(Q[1-4]|concepts)/hours/([^/]+)\.toml$`)
+	invoicePathRe  = regexp.MustCompile(`^([^/]+)/(\d{4})/(Q[1-4]|concepts)/(sales-invoices[^/]*)/([^/]+)\.toml$`)
+	hourPathRe     = regexp.MustCompile(`^([^/]+)/(\d{4})/(Q[1-4]|concepts)/hours/([^/]+)\.toml$`)
+	purchasePathRe = regexp.MustCompile(`^([^/]+)/(\d{4})/(Q[1-4])/(purchase-invoices[^/]*)/([^/]+)\.toml$`)
 )
 
 // parseInvoicePath extracts components from an invoice path
@@ -92,6 +94,34 @@ func parseHourPath(relPath string) *PathParts {
 	}
 }
 
+// parsePurchasePath extracts components from a purchase invoice path
+func parsePurchasePath(relPath string) *PathParts {
+	matches := purchasePathRe.FindStringSubmatch(relPath)
+	if matches == nil {
+		return nil
+	}
+
+	year, _ := strconv.Atoi(matches[2])
+	q := matches[3][1] - '0' // Q1 -> 1
+	quarter := int(q)
+
+	// Determine status from bucket name
+	bucket := matches[4]
+	status := "UNPAID"
+	if strings.Contains(bucket, "-paid") {
+		status = "PAID"
+	}
+
+	return &PathParts{
+		ID:      matches[5],
+		Entity:  matches[1],
+		Year:    year,
+		Quarter: quarter,
+		Status:  status,
+		Type:    "purchase",
+	}
+}
+
 // SyncPath syncs a single file to the SQLite index
 // relPath should be relative to the db root (e.g., "rootdev/2024/Q1/sales-invoices-paid/abc.toml")
 func SyncPath(dbPath, relPath string) error {
@@ -113,6 +143,12 @@ func SyncPath(dbPath, relPath string) error {
 		return syncHour(parts)
 	}
 
+	// Try purchase invoice
+	if parts := parsePurchasePath(relPath); parts != nil {
+		parts.FullPath = fullPath
+		return syncPurchase(parts)
+	}
+
 	// Not an indexed file type
 	return nil
 }
@@ -130,6 +166,11 @@ func DeletePath(relPath string) error {
 
 	if parts := parseHourPath(relPath); parts != nil {
 		_, err := DB.Exec("DELETE FROM hours WHERE id = ?", parts.ID)
+		return err
+	}
+
+	if parts := parsePurchasePath(relPath); parts != nil {
+		_, err := DB.Exec("DELETE FROM purchase_invoices WHERE id = ?", parts.ID)
 		return err
 	}
 
@@ -232,6 +273,44 @@ func syncHour(p *PathParts) error {
 	if config.Verbose && err == nil {
 		fmt.Printf("idx: synced hour %s (entity=%s, year=%d, Q%d, issuedate=%s)\n",
 			p.ID, p.Entity, p.Year, p.Quarter, issuedate)
+	}
+
+	return err
+}
+
+func syncPurchase(p *PathParts) error {
+	file, err := os.Open(p.FullPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			_, err := DB.Exec("DELETE FROM purchase_invoices WHERE id = ?", p.ID)
+			return err
+		}
+		return err
+	}
+	defer file.Close()
+
+	var inv purchase.PurchaseInvoice
+	buf := bufio.NewReader(file)
+	if _, err := toml.DecodeReader(buf, &inv); err != nil {
+		return fmt.Errorf("idx: decode purchase %s: %w", p.FullPath, err)
+	}
+
+	_, err = DB.Exec(`
+		INSERT OR REPLACE INTO purchase_invoices
+		(id, entity, year, quarter, status, supplier_name, supplier_vat, invoiceid,
+		 issuedate, duedate, paydate, total_ex, total_tax, total_inc, currency,
+		 payment_ref, iban, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		p.ID, p.Entity, p.Year, p.Quarter, p.Status,
+		inv.Supplier.Name, inv.Supplier.VAT, inv.ID,
+		inv.Issuedate, inv.Duedate, inv.Paydate,
+		inv.TotalEx, inv.TotalTax, inv.TotalInc, inv.Currency,
+		inv.PaymentRef, inv.IBAN, time.Now().Format(time.RFC3339),
+	)
+
+	if config.Verbose && err == nil {
+		fmt.Printf("idx: synced purchase %s (entity=%s, year=%d, Q%d, status=%s)\n",
+			p.ID, p.Entity, p.Year, p.Quarter, p.Status)
 	}
 
 	return err

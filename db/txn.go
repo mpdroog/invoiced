@@ -3,14 +3,16 @@ package db
 import (
 	"bufio"
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/go-git/go-billy/v6"
-	git "github.com/go-git/go-git/v6"
-	"github.com/go-git/go-git/v6/plumbing/object"
+	"io"
 	"os"
 	"path"
 	"strings"
 	"time"
+
+	"github.com/BurntSushi/toml"
+	"github.com/go-git/go-billy/v6"
+	git "github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
 type Commit struct {
@@ -68,6 +70,49 @@ func (t *Txn) Save(file string, isNew bool, in interface{}) error {
 	// commit on git
 	if _, e := tree.Add(file); e != nil {
 		f.Close() /* ignore err, write err takes precedence */
+		return e
+	}
+
+	// Track for index sync
+	t.TouchedPaths = append(t.TouchedPaths, file)
+
+	return f.Close()
+}
+
+func (t *Txn) SaveRaw(file string, r io.Reader) error {
+	if !t.Write {
+		panic("DevErr: SaveRaw-func only allowed in Update")
+	}
+	if !pathFilter(file) {
+		return fmt.Errorf("Path hack attempt: %s", file)
+	}
+	if AlwaysLowercase {
+		file = strings.ToLower(file)
+	}
+
+	tree, e := Repo.Worktree()
+	if e != nil {
+		return e
+	}
+
+	// Ensure dirs exist
+	if e := tree.Filesystem.MkdirAll(path.Dir(file), os.ModePerm); e != nil {
+		return e
+	}
+
+	f, e := tree.Filesystem.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if e != nil {
+		return e
+	}
+
+	if _, e := io.Copy(f, r); e != nil {
+		f.Close()
+		return e
+	}
+
+	// commit on git
+	if _, e := tree.Add(file); e != nil {
+		f.Close()
 		return e
 	}
 

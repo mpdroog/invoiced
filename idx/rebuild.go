@@ -24,8 +24,11 @@ func Rebuild(dbPath string) error {
 	if _, err := DB.Exec("DELETE FROM hours"); err != nil {
 		return err
 	}
+	if _, err := DB.Exec("DELETE FROM purchase_invoices"); err != nil {
+		return err
+	}
 
-	var invoiceCount, hourCount int
+	var invoiceCount, hourCount, purchaseCount int
 
 	// Walk all TOML files
 	err := filepath.Walk(dbPath, func(path string, info os.FileInfo, err error) error {
@@ -71,9 +74,16 @@ func Rebuild(dbPath string) error {
 			} else {
 				hourCount++
 			}
+		} else if parts := parsePurchasePath(relPath); parts != nil {
+			parts.FullPath = path
+			if err := syncPurchase(parts); err != nil {
+				log.Printf("idx: error syncing purchase %s: %v", relPath, err)
+			} else {
+				purchaseCount++
+			}
 		} else if config.Verbose {
 			// Only log unprocessed files in verbose mode
-			if strings.Contains(relPath, "/sales-invoices") || strings.Contains(relPath, "/hours/") {
+			if strings.Contains(relPath, "/sales-invoices") || strings.Contains(relPath, "/hours/") || strings.Contains(relPath, "/purchase-invoices") {
 				log.Printf("idx: unprocessed file %s", relPath)
 			}
 		}
@@ -85,6 +95,6 @@ func Rebuild(dbPath string) error {
 		return err
 	}
 
-	log.Printf("idx: rebuilt index with %d invoices and %d hours", invoiceCount, hourCount)
+	log.Printf("idx: rebuilt index with %d invoices, %d hours, %d purchases", invoiceCount, hourCount, purchaseCount)
 	return nil
 }

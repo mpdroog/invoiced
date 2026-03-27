@@ -18,6 +18,7 @@ import HoursList from "./cmp/hours/list";
 import HoursEdit from "./cmp/hours/edit";
 import InvoicesList from "./cmp/invoices/list";
 import InvoicesEdit from "./cmp/invoices/edit";
+import PurchasesList from "./cmp/purchases/list";
 import TaxesList from "./cmp/taxes/list";
 import GitPage from "./cmp/git/app";
 
@@ -67,6 +68,10 @@ function hashChange() {
                                     inject = InvoicesList;
                                     break;
                         }
+                        break;
+
+                  case "purchases":
+                        inject = PurchasesList;
                         break;
 
                   case "taxes":

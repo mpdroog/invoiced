@@ -107,6 +107,40 @@ func createTables() error {
 	CREATE INDEX IF NOT EXISTS idx_hours_entity_year ON hours(entity, year);
 	CREATE INDEX IF NOT EXISTS idx_hours_quarter ON hours(entity, year, quarter);
 	CREATE INDEX IF NOT EXISTS idx_hours_issuedate ON hours(entity, issuedate);
+
+	CREATE TABLE IF NOT EXISTS purchase_invoices (
+		id            TEXT PRIMARY KEY,  -- sanitized filename
+		entity        TEXT NOT NULL,
+		year          INTEGER NOT NULL,
+		quarter       INTEGER NOT NULL,
+		status        TEXT NOT NULL,     -- UNPAID, PAID
+
+		-- Supplier info
+		supplier_name TEXT,
+		supplier_vat  TEXT,
+
+		-- Invoice details
+		invoiceid     TEXT,              -- Original invoice ID from supplier
+		issuedate     TEXT,
+		duedate       TEXT,
+		paydate       TEXT,
+
+		-- Totals
+		total_ex      TEXT,
+		total_tax     TEXT,
+		total_inc     TEXT,
+		currency      TEXT,
+
+		-- Payment info
+		payment_ref   TEXT,
+		iban          TEXT,
+
+		updated_at    TEXT
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_purchases_entity_year ON purchase_invoices(entity, year);
+	CREATE INDEX IF NOT EXISTS idx_purchases_quarter ON purchase_invoices(entity, year, quarter, status);
+	CREATE INDEX IF NOT EXISTS idx_purchases_supplier ON purchase_invoices(entity, supplier_name);
 	`
 
 	_, err := DB.Exec(schema)

@@ -19,6 +19,7 @@ import (
 	"github.com/mpdroog/invoiced/invoice"
 	"github.com/mpdroog/invoiced/metrics"
 	"github.com/mpdroog/invoiced/middleware"
+	"github.com/mpdroog/invoiced/purchase"
 	"github.com/mpdroog/invoiced/rules"
 	"github.com/mpdroog/invoiced/taxes"
 )
@@ -171,6 +172,13 @@ func main() {
 	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/email", invoice.Email)
 	router.POST("/api/v1/invoice-balance/:entity/:year", invoice.Balance)
 	router.DELETE("/api/v1/invoice/:entity/:year/:bucket/:id", invoice.Delete)
+
+	router.GET("/api/v1/purchases/:entity/:year", purchase.List)
+	router.POST("/api/v1/purchase/:entity/:year", purchase.Upload)
+	router.GET("/api/v1/purchase/:entity/:year/:bucket/:id", purchase.Load)
+	router.GET("/api/v1/purchase/:entity/:year/:bucket/:id/pdf", purchase.PDF)
+	router.POST("/api/v1/purchase/:entity/:year/:bucket/:id/paid", purchase.Paid)
+	router.DELETE("/api/v1/purchase/:entity/:year/:bucket/:id", purchase.Delete)
 
 	router.GET("/api/v1/hours/:entity/:year", hour.List)
 	router.POST("/api/v1/hour/:entity/:year/:bucket", hour.Save)

@@ -63,6 +63,11 @@ class Menu extends React.Component<{company: string, year: string}, {ahead: numb
                             </a>
                         </li>
                         <li>
+                            <a href={"#"+company+"/"+year+"/purchases"} id="js-purchases" title="Purchase Invoices">
+                                <i className="fa fa-shopping-cart"></i>
+                            </a>
+                        </li>
+                        <li>
                             <a href={"#"+company+"/"+year+"/taxes"} id="js-taxes">
                                 <i className="fa fa-bank"></i>
                             </a>
