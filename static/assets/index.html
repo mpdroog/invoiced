@@ -1,0 +1,219 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>Heroes - Boekhoud.cloud</title>
+  <link rel="stylesheet" href="/static/assets/bootstrap.css">
+  <link rel="stylesheet" href="/static/assets/font-awesome.css">
+  <link rel="stylesheet" href="/static/assets/font-awesome-animation.css">
+  <link rel="stylesheet" href="/static/assets/theme.css">
+  <link rel="stylesheet" href="/static/assets/main.css">
+  <script type="module" crossorigin src="/static/assets/app.js"></script>
+</head>
+<body class="fixed-navbar fixed-sidebar">
+
+<!-- Simple splash screen-->
+<div class="splash" id="js-splash"> <div class="color-line"></div><div class="splash-title"><h1>Boekhoud.cloud</h1><p>Free and hackable accounting</p><div class="spinner"> <div class="rect1"></div> <div class="rect2"></div> <div class="rect3"></div> <div class="rect4"></div> <div class="rect5"></div> </div> </div> </div>
+
+<!-- Header -->
+<div class="color-line"></div>
+
+<!-- Main Wrapper -->
+<div id="root">
+  <div class="loading">
+    <p><i class="fa fa-hourglass-o faa-spin animated"></i>
+    Loading JS..</p>
+
+    <noscript>
+      <i class="fa fa-exclamation-triangle"></i>
+      Please enable JavaScript to use this website!
+    </noscript>
+  </div>
+</div>
+
+<div id="js-dialog-conn-error" tabindex="-1" role="dialog" class="modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" data-dismiss="modal" aria-label="Close" class="close">
+          <span class="js-modal-hide" aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">
+          😵 Oops! Internet down?
+        </h4>
+      </div>
+      <div class="modal-body">
+        <p>Failed contacting the server, please check if:</p>
+        <ol><li>Your internet connection is down</li>
+        <li>The server is down/crashed.</li></ol>
+      </div>
+      <div class="modal-footer">
+      </div>
+    </div>
+  </div>
+</div>
+<div id="js-dialog-error" tabindex="-1" role="dialog" class="modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" data-dismiss="modal" aria-label="Close" class="close">
+          <span class="js-modal-hide" aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" id="js-error-title">
+          😱 Oops! Something went wrong...
+        </h4>
+      </div>
+      <div class="modal-body">
+        <p>Sorry to bother you, but I got an error that needs to be corrected:</p>
+        <textarea id="js-error-body"></textarea>
+      </div>
+      <div class="modal-footer">
+      </div>
+    </div>
+  </div>
+</div>
+<div id="js-dialog-backdrop" class="hidden modal-backdrop fade in"></div>
+<script type="text/javascript">
+  window.onerror = function(msg, url, lineNo, columnNo, error) {
+    handleErr({
+      name: "window.onerror",
+      message: msg,
+      e: error
+    });
+  };
+
+  function prettyErr(res) {
+    let msg = "";
+    for (const key in res.Fields) {
+      if (! res.Fields.hasOwnProperty(key)) {
+        continue;
+      }
+
+      let line = res.Fields[key];
+      msg += "Field (" + key + ") invalid=" + line.join(", ") + "\n";
+    }
+
+    document.getElementById("js-error-title").innerText = res.Error;
+    document.getElementById("js-error-body").value = msg;
+    document.getElementById("js-dialog-error").classList.add('modal-open');
+    document.getElementById("js-dialog-error").style.display = 'block';
+    document.getElementById("js-dialog-backdrop").classList.remove('hidden');
+  }
+
+  function handleErr(e) {
+    if (e.response && e.response.status === 401) {
+      location.href = '/static/auth.html';
+      return;
+    }
+
+    var errorData = {
+      pageErrorType: e.name,
+      pageMessage: e.message,
+      pageURL: document.location.href,
+      pageStack: e.e && e.e.stack ? e.e.stack : null,
+      serverResponse: e.response ? e.response.data : null,
+      serverURL: e.request ? e.request.responseURL : null,
+    };
+    var splash = document.getElementById("js-splash");
+    splash && splash.remove();
+
+    if (e.request && !e.response) {
+      document.getElementById("js-dialog-conn-error").classList.add('modal-open');
+      document.getElementById("js-dialog-conn-error").style.display = 'block';
+      document.getElementById("js-dialog-backdrop").classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById("js-error-title").innerText = "😱 Oops! Something went wrong...";
+    document.getElementById("js-error-body").value = JSON.stringify(errorData);
+    document.getElementById("js-dialog-error").classList.add('modal-open');
+    document.getElementById("js-dialog-error").style.display = 'block';
+    document.getElementById("js-dialog-backdrop").classList.remove('hidden');
+  }
+
+  var btns = document.getElementsByClassName("js-modal-hide");
+  Array.prototype.forEach.call(btns, function(m) {
+    m.onclick = function() {
+      document.getElementById("js-dialog-error").classList.remove("modal-open");
+      document.getElementById("js-dialog-error").style.display = 'none';
+      document.getElementById("js-dialog-conn-error").classList.remove("modal-open");
+      document.getElementById("js-dialog-conn-error").style.display = 'none';
+      document.getElementById("js-dialog-backdrop").classList.add('hidden');
+    };
+  });
+
+  window.addEventListener("click", function(e) {
+    if (e.target) {
+      var node = e.target;
+      while(node !== window && node !== null) {
+        if (node.nodeName === "A") {
+          if (node.href.substr(-1) === "#") {
+            console.log("JS mismatch", node);
+            e.preventDefault();
+          }
+          break;
+        }
+        node = node.parentNode;
+      }
+    }
+  });
+
+  console.log("JS_ONERR = ON");
+</script>
+<script>
+    document.addEventListener("keyup", function(e) {
+      var node = e && e.path && e.path.length > 0 ? e.path[0].nodeName : null;
+      node = node ? node : e.target.nodeName;
+      if (node === "INPUT" || node === "TEXTAREA") {
+        return;
+      }
+
+      var key = e.code;
+      var page = location.hash.substr(1).split("/")[2];
+
+      if (key === 'KeyD') {
+          console.log("D Dashboard");
+          document.getElementById("js-dashboard").click();
+      }
+      if (key === 'KeyI') {
+          console.log("I Invoices");
+          document.getElementById("js-invoices").click();
+      }
+      if (key === 'KeyH') {
+          console.log("H Hours");
+          document.getElementById("js-hours").click();
+      }
+      if (key === 'KeyE') {
+          console.log("E Entities");
+          document.getElementById("js-entities").click();
+      }
+      if (key === 'Slash') {
+        console.log("/ search");
+        document.getElementById("js-search").focus()
+      }
+
+      if (page === "hours" && key === "KeyN") {
+        console.log("Hours New");
+        document.getElementById("js-new").click();
+      }
+      if (page === "hour-add" && key === "KeyN") {
+        console.log("Hour-add New Entry");
+        document.getElementById("hour-day").focus();
+      }
+      if (page === "invoices" && key === "KeyN") {
+        console.log("Invoices New");
+        document.getElementById("js-new").click();
+      }
+      if (page === "invoices" && key === "KeyB") {
+        console.log("Invoices Balance");
+        document.getElementById("js-balance").click();
+      }
+
+    }, false);
+</script>
+<script src="/static/assets/prototype.js"></script>
+</body>
+</html>
