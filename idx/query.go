@@ -327,3 +327,171 @@ func GetYearlyTotal(entity string, year int) (string, error) {
 
 	return decimal.NewFromFloat(total.Float64).StringFixed(2), nil
 }
+
+// UnpaidSummary contains summary of unpaid invoices
+type UnpaidSummary struct {
+	Count       int
+	TotalAmount string
+}
+
+// GetUnpaidSummary returns count and total of unpaid invoices
+func GetUnpaidSummary(entity string, year int) (*UnpaidSummary, error) {
+	if DB == nil {
+		return &UnpaidSummary{Count: 0, TotalAmount: "0.00"}, nil
+	}
+
+	var count int
+	var total sql.NullFloat64
+	err := DB.QueryRow(`
+		SELECT COUNT(*), COALESCE(SUM(CAST(total_inc AS REAL)), 0)
+		FROM invoices
+		WHERE entity = ? AND year = ? AND status = 'UNPAID'`,
+		entity, year,
+	).Scan(&count, &total)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &UnpaidSummary{
+		Count:       count,
+		TotalAmount: decimal.NewFromFloat(total.Float64).StringFixed(2),
+	}, nil
+}
+
+// OverdueInvoice represents an overdue invoice
+type OverdueInvoice struct {
+	ID           string
+	InvoiceID    string
+	CustomerName string
+	DueDate      string
+	Amount       string
+	DaysOverdue  int
+	Quarter      int
+}
+
+// GetOverdueInvoices returns invoices past their due date
+func GetOverdueInvoices(entity string, year int, today string) ([]OverdueInvoice, error) {
+	if DB == nil {
+		return nil, nil
+	}
+
+	rows, err := DB.Query(`
+		SELECT id, invoiceid, customer_name, duedate, total_inc, quarter,
+		       julianday(?) - julianday(duedate) as days_overdue
+		FROM invoices
+		WHERE entity = ? AND year = ? AND status = 'UNPAID'
+		  AND duedate != '' AND duedate < ?
+		ORDER BY duedate ASC`,
+		today, entity, year, today,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []OverdueInvoice
+	for rows.Next() {
+		var inv OverdueInvoice
+		var daysOverdue float64
+		if err := rows.Scan(&inv.ID, &inv.InvoiceID, &inv.CustomerName, &inv.DueDate, &inv.Amount, &inv.Quarter, &daysOverdue); err != nil {
+			return nil, err
+		}
+		inv.DaysOverdue = int(daysOverdue)
+		results = append(results, inv)
+	}
+
+	return results, rows.Err()
+}
+
+// UnbilledHoursSummary contains summary of unbilled hours
+type UnbilledHoursSummary struct {
+	Count      int
+	TotalHours string
+}
+
+// GetUnbilledHours returns count and total of concept hours (not yet billed)
+func GetUnbilledHours(entity string, year int) (*UnbilledHoursSummary, error) {
+	if DB == nil {
+		return &UnbilledHoursSummary{Count: 0, TotalHours: "0.00"}, nil
+	}
+
+	var count int
+	var total sql.NullFloat64
+	err := DB.QueryRow(`
+		SELECT COUNT(*), COALESCE(SUM(CAST(total_hours AS REAL)), 0)
+		FROM hours
+		WHERE entity = ? AND year = ? AND status = 'CONCEPT'`,
+		entity, year,
+	).Scan(&count, &total)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &UnbilledHoursSummary{
+		Count:      count,
+		TotalHours: decimal.NewFromFloat(total.Float64).StringFixed(2),
+	}, nil
+}
+
+// YearComparison contains comparison between two years
+type YearComparison struct {
+	CurrentYear     int
+	PreviousYear    int
+	CurrentRevenue  string
+	PreviousRevenue string
+	GrowthPercent   string
+	GrowthAmount    string
+}
+
+// GetYearComparison compares revenue between current and previous year
+func GetYearComparison(entity string, currentYear int) (*YearComparison, error) {
+	if DB == nil {
+		return nil, nil
+	}
+
+	previousYear := currentYear - 1
+
+	var currentTotal, previousTotal sql.NullFloat64
+
+	// Current year revenue
+	err := DB.QueryRow(`
+		SELECT COALESCE(SUM(CAST(total_ex AS REAL)), 0)
+		FROM invoices
+		WHERE entity = ? AND year = ? AND status IN ('PAID', 'UNPAID')`,
+		entity, currentYear,
+	).Scan(&currentTotal)
+	if err != nil {
+		return nil, err
+	}
+
+	// Previous year revenue
+	err = DB.QueryRow(`
+		SELECT COALESCE(SUM(CAST(total_ex AS REAL)), 0)
+		FROM invoices
+		WHERE entity = ? AND year = ? AND status IN ('PAID', 'UNPAID')`,
+		entity, previousYear,
+	).Scan(&previousTotal)
+	if err != nil {
+		return nil, err
+	}
+
+	current := decimal.NewFromFloat(currentTotal.Float64)
+	previous := decimal.NewFromFloat(previousTotal.Float64)
+	growth := current.Sub(previous)
+
+	growthPct := decimal.Zero
+	if !previous.IsZero() {
+		growthPct = growth.Div(previous).Mul(decimal.NewFromInt(100))
+	}
+
+	return &YearComparison{
+		CurrentYear:     currentYear,
+		PreviousYear:    previousYear,
+		CurrentRevenue:  current.StringFixed(2),
+		PreviousRevenue: previous.StringFixed(2),
+		GrowthPercent:   growthPct.StringFixed(1),
+		GrowthAmount:    growth.StringFixed(2),
+	}, nil
+}

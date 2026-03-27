@@ -161,6 +161,7 @@ func main() {
 	router.GET("/api/v1/search/:entity", search.Search)
 
 	router.GET("/api/v1/metrics/:entity/:year", metrics.Dashboard)
+	router.GET("/api/v1/dashboard/:entity/:year", metrics.DashboardFull)
 
 	router.GET("/api/v1/invoices/:entity/:year", invoice.List)
 	router.POST("/api/v1/invoice/:entity/:year", invoice.Save)
