@@ -13,6 +13,7 @@ import (
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/entities"
+	gitpkg "github.com/mpdroog/invoiced/git"
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
 	"github.com/mpdroog/invoiced/metrics"
@@ -150,6 +151,10 @@ func main() {
 
 	router.GET("/api/v1/summary/:entity/:year", taxes.Summary)
 	router.POST("/api/v1/taxes/:entity/:year/:quarter", taxes.Tax)
+
+	router.GET("/api/v1/git/:entity/status", gitpkg.Status)
+	router.POST("/api/v1/git/:entity/push", gitpkg.Push)
+	router.POST("/api/v1/git/:entity/pull", gitpkg.Pull)
 
 	router.ServeFiles("/static/*filepath", http.Dir(config.CurDir+"/static"))
 

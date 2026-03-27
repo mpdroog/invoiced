@@ -21,6 +21,9 @@ type Entities struct {
 	IV      string `json:"-"`
 	Version int
 
+	GitUser  string `json:"-"`
+	GitToken string `json:"-"`
+
 	Company map[string]Entity
 	User    []User
 }
@@ -123,6 +126,11 @@ func CompanyByName(name string) *Entity {
 		}
 	}
 	return nil
+}
+
+// GitCredentials returns configured git user and token
+func GitCredentials() (string, string) {
+	return entities.GitUser, entities.GitToken
 }
 
 // Check if user is allowed to open this path

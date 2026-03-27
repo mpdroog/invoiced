@@ -56,3 +56,15 @@
     background-image: url('/static/assets/login-bg.jpg');
     opacity: 0.1;
 }
+
+.nav-spacer {
+    margin-right: 15px;
+    float: left;
+}
+
+#js-git .label {
+    font-size: 9px;
+    padding: 2px 4px;
+    vertical-align: top;
+}
+

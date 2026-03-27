@@ -1,6 +1,15 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import Axios from "axios";
 import {Design} from "./shared/design";
+
+// Refresh git status badge after successful write operations
+Axios.interceptors.response.use(function (response) {
+      if (response.config.method === 'post' || response.config.method === 'delete') {
+            window.dispatchEvent(new Event('git-refresh'));
+      }
+      return response;
+});
 
 // Static imports for all page components
 import EntitiesApp from "./cmp/entities/app";
@@ -10,6 +19,7 @@ import HoursEdit from "./cmp/hours/edit";
 import InvoicesList from "./cmp/invoices/list";
 import InvoicesEdit from "./cmp/invoices/edit";
 import TaxesList from "./cmp/taxes/list";
+import GitPage from "./cmp/git/app";
 
 declare function handleErr(e: any): void;
 
@@ -61,6 +71,10 @@ function hashChange() {
 
                   case "taxes":
                         inject = TaxesList;
+                        break;
+
+                  case "git":
+                        inject = GitPage;
                         break;
 
                   case "":
