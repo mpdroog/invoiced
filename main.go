@@ -2,6 +2,12 @@ package main
 
 import (
 	"flag"
+	"log"
+	"net/http"
+	"sync"
+	"time"
+
+	"github.com/coreos/go-systemd/daemon"
 	"github.com/julienschmidt/httprouter"
 	"github.com/kardianos/osext"
 	"github.com/mpdroog/invoiced/config"
@@ -13,10 +19,6 @@ import (
 	"github.com/mpdroog/invoiced/middleware"
 	"github.com/mpdroog/invoiced/rules"
 	"github.com/mpdroog/invoiced/taxes"
-	"log"
-	"net/http"
-	"sync"
-	"time"
 )
 
 func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -170,5 +172,14 @@ func main() {
 			log.Fatal(e)
 		}
 	}()
+
+	// Notify systemd that we're ready to accept connections
+	sent, e := daemon.SdNotify(false, daemon.SdNotifyReady)
+	if e != nil {
+		log.Fatal(e)
+	}
+	if !sent && config.Verbose {
+		log.Printf("SystemD notify NOT sent (not running under systemd)\n")
+	}
 	wg.Wait()
 }

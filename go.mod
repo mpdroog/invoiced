@@ -6,6 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/blevesearch/bleve v1.0.10
 	github.com/boltdb/bolt v1.3.1
+	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/getlantern/systray v1.0.4
 	github.com/go-git/go-billy/v6 v6.0.0-20251217170237-e9738f50a3cd
 	github.com/go-git/go-git/v6 v6.0.0-20251231065035-29ae690a9f19
