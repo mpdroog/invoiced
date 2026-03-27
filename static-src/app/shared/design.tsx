@@ -1,22 +1,58 @@
 import * as React from "react";
 import Axios from "axios";
+import "./search.css";
 
-class Menu extends React.Component<{company: string, year: string}, {ahead: number}> {
+interface SearchResult {
+    type: string;
+    id: string;
+    title: string;
+    subtitle: string;
+    entity: string;
+    year: number;
+    quarter: number;
+    bucket: string;
+}
+
+interface MenuState {
+    ahead: number;
+    searchQuery: string;
+    searchResults: SearchResult[];
+    showResults: boolean;
+    searching: boolean;
+}
+
+class Menu extends React.Component<{company: string, year: string}, MenuState> {
     private boundRefresh: () => void;
+    private searchTimeout: any = null;
 
     constructor(props) {
         super(props);
-        this.state = {ahead: 0};
+        this.state = {
+            ahead: 0,
+            searchQuery: '',
+            searchResults: [],
+            showResults: false,
+            searching: false
+        };
         this.boundRefresh = this.fetchGitStatus.bind(this);
     }
 
     componentDidMount() {
         this.fetchGitStatus();
         window.addEventListener('git-refresh', this.boundRefresh);
+        document.addEventListener('click', this.handleClickOutside.bind(this));
     }
 
     componentWillUnmount() {
         window.removeEventListener('git-refresh', this.boundRefresh);
+        document.removeEventListener('click', this.handleClickOutside.bind(this));
+    }
+
+    private handleClickOutside(e: MouseEvent) {
+        const searchContainer = document.getElementById('search-container');
+        if (searchContainer && !searchContainer.contains(e.target as Node)) {
+            this.setState({showResults: false});
+        }
     }
 
     private fetchGitStatus() {
@@ -29,9 +65,56 @@ class Menu extends React.Component<{company: string, year: string}, {ahead: numb
             });
     }
 
+    private handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const query = e.target.value;
+        this.setState({searchQuery: query, showResults: true});
+
+        if (this.searchTimeout) {
+            clearTimeout(this.searchTimeout);
+        }
+
+        if (query.length < 2) {
+            this.setState({searchResults: [], searching: false});
+            return;
+        }
+
+        this.setState({searching: true});
+        this.searchTimeout = setTimeout(() => {
+            Axios.get('/api/v1/search/' + this.props.company, {params: {q: query}})
+                .then(res => {
+                    this.setState({searchResults: res.data.results || [], searching: false});
+                })
+                .catch(() => {
+                    this.setState({searchResults: [], searching: false});
+                });
+        }, 300);
+    }
+
+    private handleResultClick(result: SearchResult) {
+        let url = '#' + result.entity + '/' + result.year + '/';
+        if (result.type === 'invoice') {
+            url += 'invoices/edit/' + result.bucket + '/' + result.id;
+        } else if (result.type === 'hour') {
+            url += 'hours/edit/' + result.bucket + '/' + result.id;
+        } else if (result.type === 'purchase') {
+            url += 'purchases';
+        }
+        this.setState({showResults: false, searchQuery: ''});
+        location.hash = url;
+    }
+
+    private getResultIcon(type: string): string {
+        switch (type) {
+            case 'invoice': return 'fa-money';
+            case 'hour': return 'fa-clock-o';
+            case 'purchase': return 'fa-shopping-cart';
+            default: return 'fa-file';
+        }
+    }
+
     render() {
         const {company, year} = this.props;
-        const {ahead} = this.state;
+        const {ahead, searchQuery, searchResults, showResults, searching} = this.state;
 
         return (<div id="header">
             <div id="logo" className="light-version">
@@ -40,11 +123,47 @@ class Menu extends React.Component<{company: string, year: string}, {ahead: numb
             <nav role="navigation">
                 <div className="nav-spacer">&nbsp;</div>
 
-                <form role="search" className="navbar-form-custom" method="post" action="#">
+                <div id="search-container" className="navbar-form-custom search-container">
                     <div className="form-group">
-                        <input type="text" placeholder="Search something special" className="form-control" name="search" id="js-search"/>
+                        <input
+                            type="text"
+                            placeholder="Search invoices, hours..."
+                            className="form-control"
+                            id="js-search"
+                            value={searchQuery}
+                            onChange={this.handleSearchChange.bind(this)}
+                            onFocus={() => this.setState({showResults: true})}
+                        />
                     </div>
-                </form>
+                    {showResults && searchQuery.length >= 2 && (
+                        <div className="search-dropdown">
+                            {searching ? (
+                                <div className="search-loading">
+                                    <i className="fa fa-spinner fa-spin"></i> Searching...
+                                </div>
+                            ) : searchResults.length > 0 ? (
+                                searchResults.map((r, i) => (
+                                    <div
+                                        key={i}
+                                        className="search-result-item"
+                                        onClick={() => this.handleResultClick(r)}
+                                    >
+                                        <i className={'fa ' + this.getResultIcon(r.type) + ' search-result-icon'}></i>
+                                        <strong>{r.title}</strong>
+                                        <span className="search-result-subtitle">{r.subtitle}</span>
+                                        <div className="search-result-meta">
+                                            {r.type} &middot; {r.year} Q{r.quarter}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="search-no-results">
+                                    No results found
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
                 <div className="navbar-right">
                     <ul className="nav navbar-nav no-borders">
                         <li>

@@ -21,6 +21,7 @@ import (
 	"github.com/mpdroog/invoiced/middleware"
 	"github.com/mpdroog/invoiced/purchase"
 	"github.com/mpdroog/invoiced/rules"
+	"github.com/mpdroog/invoiced/search"
 	"github.com/mpdroog/invoiced/taxes"
 )
 
@@ -156,6 +157,8 @@ func main() {
 
 	router.GET("/api/v1/debtors/:entity/search", entities.Search)
 	router.GET("/api/v1/projects/:entity/search", entities.ProjectSearch)
+
+	router.GET("/api/v1/search/:entity", search.Search)
 
 	router.GET("/api/v1/metrics/:entity/:year", metrics.Dashboard)
 
