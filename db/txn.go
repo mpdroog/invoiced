@@ -70,6 +70,10 @@ func (t *Txn) Save(file string, isNew bool, in interface{}) error {
 		f.Close() /* ignore err, write err takes precedence */
 		return e
 	}
+
+	// Track for index sync
+	t.TouchedPaths = append(t.TouchedPaths, file)
+
 	return f.Close()
 }
 
@@ -92,6 +96,10 @@ func (t *Txn) Remove(path string) error {
 	if _, e := tree.Remove(path); e != nil {
 		return e
 	}
+
+	// Track for index sync (removals tracked as touched with special handling)
+	t.TouchedPaths = append(t.TouchedPaths, path)
+
 	return nil
 }
 
@@ -117,6 +125,10 @@ func (t *Txn) Move(from, to string) error {
 	if _, e := tree.Move(from, to); e != nil {
 		return e
 	}
+
+	// Track for index sync
+	t.MovedPaths = append(t.MovedPaths, struct{ From, To string }{from, to})
+
 	return nil
 }
 
@@ -155,5 +167,15 @@ func Update(change Commit, fn Fn) error {
 		}
 		return e
 	}
-	return commit(change.Message, change.Name, change.Email)
+
+	if e := commit(change.Message, change.Name, change.Email); e != nil {
+		return e
+	}
+
+	// Sync index after successful commit
+	if OnCommit != nil && (len(txn.TouchedPaths) > 0 || len(txn.MovedPaths) > 0) {
+		OnCommit(txn.TouchedPaths, txn.MovedPaths)
+	}
+
+	return nil
 }

@@ -24,10 +24,16 @@ var (
 
 	pathRegex *regexp.Regexp
 	lock      *sync.RWMutex
+
+	// OnCommit is called after successful commits with touched/moved paths
+	// Used by idx package to sync SQLite index
+	OnCommit func(touchedPaths []string, movedPaths []struct{ From, To string })
 )
 
 type Txn struct {
-	Write bool // Don't toggle this bool but use the Update instead of View-func
+	Write        bool     // Don't toggle this bool but use the Update instead of View-func
+	TouchedPaths []string // Paths modified during this transaction (for index sync)
+	MovedPaths   []struct{ From, To string } // Paths moved during this transaction
 }
 type Fn func(*Txn) error
 

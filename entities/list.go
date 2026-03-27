@@ -1,13 +1,16 @@
 package entities
 
 import (
-	"github.com/julienschmidt/httprouter"
-	"github.com/mpdroog/invoiced/db"
-	"github.com/mpdroog/invoiced/middleware"
-	"github.com/mpdroog/invoiced/writer"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/idx"
+	"github.com/mpdroog/invoiced/middleware"
+	"github.com/mpdroog/invoiced/writer"
 )
 
 type DetailRes struct {
@@ -53,6 +56,22 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		}
 
 		v.Years = years
+
+		// Fetch revenue per year from index
+		v.YearRevenue = make(map[string]string)
+		for _, year := range years {
+			yearInt, err := strconv.Atoi(year)
+			if err != nil {
+				continue
+			}
+			total, err := idx.GetYearlyTotal(entity, yearInt)
+			if err != nil {
+				log.Printf("entities.List idx.GetYearlyTotal(%s, %d): %s", entity, yearInt, err.Error())
+				continue
+			}
+			v.YearRevenue[year] = total
+		}
+
 		res[entity] = v
 	}
 

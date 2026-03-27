@@ -11,6 +11,8 @@ interface IInvoiceListState {
   pagination?: IInvoicePagination
   invoices?: IInvoiceState[]
   isBalance: bool
+  sortField: string
+  sortAsc: bool
 }
 
 interface IInvoiceListProps {
@@ -28,7 +30,47 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
         },
         "invoices": null,
         "isBalance": false,
+        "sortField": "Invoice",
+        "sortAsc": true,
       };
+  }
+
+  private toggleSort(field: string) {
+    if (this.state.sortField === field) {
+      this.setState({sortAsc: !this.state.sortAsc});
+    } else {
+      this.setState({sortField: field, sortAsc: true});
+    }
+  }
+
+  private getSortValue(inv: IInvoiceState, field: string): any {
+    switch (field) {
+      case "Invoice": return inv.Meta.Invoiceid || inv.Meta.Conceptid || "";
+      case "Customer": return inv.Customer.Name || "";
+      case "Amount": return parseFloat(inv.Total.Total) || 0;
+      case "Duedate": return inv.Meta.Duedate || "";
+      default: return "";
+    }
+  }
+
+  private sortInvoices(invoices: {key: string, inv: IInvoiceState, bucket: string}[]): {key: string, inv: IInvoiceState, bucket: string}[] {
+    const field = this.state.sortField;
+    const asc = this.state.sortAsc;
+
+    return invoices.sort((a, b) => {
+      let valA = this.getSortValue(a.inv, field);
+      let valB = this.getSortValue(b.inv, field);
+
+      if (typeof valA === "number" && typeof valB === "number") {
+        return asc ? valA - valB : valB - valA;
+      }
+
+      valA = String(valA).toLowerCase();
+      valB = String(valB).toLowerCase();
+      if (valA < valB) return asc ? -1 : 1;
+      if (valA > valB) return asc ? 1 : -1;
+      return 0;
+    });
   }
 
   private delete(e: BrowserEvent) {
@@ -71,18 +113,18 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     });
   }
 
-  private conceptLine(key: string, inv: IInvoiceState, bucket: string): React.JSX.Element {
+  private conceptLine(key: string, inv: IInvoiceState, bucket: string, isPending: bool): React.JSX.Element {
     var today = new Date().toISOString().split('T')[0];
     var expiryClass = "";
-    if (inv.Meta.Duedate && inv.Meta.Duedate < today) {
-      expiryClass = 'bg-red';
+    if (isPending && inv.Meta.Duedate && inv.Meta.Duedate <= today) {
+      expiryClass = 'bg-danger';
     }
     return <tr key={key}>
       <td>{key}</td>
       <td>{inv.Meta.Invoiceid}</td>
       <td>{inv.Customer.Name}</td>
       <td>&euro; {inv.Total.Total}</td>
-      <td class={expiryClass}>{inv.Meta.Duedate}</td>
+      <td className={expiryClass}>{inv.Meta.Duedate}</td>
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
         <a disabled={inv.Meta.Status === 'FINAL' || inv.Meta.Invoiceid.length > 0} className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
@@ -137,28 +179,46 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     return 'Q' + invoiceId.split("-")[0].split("Q")[1];
   }
 
+  private sortHeader(field: string): React.JSX.Element {
+    let icon = "";
+    if (this.state.sortField === field) {
+      icon = this.state.sortAsc ? " ▲" : " ▼";
+    }
+    return <th style={{cursor: "pointer"}} onClick={() => this.toggleSort(field)}>{field}{icon}</th>;
+  }
+
 	render() {
     let res:React.JSX.Element[] = [];
+    let invoiceList: {key: string, inv: IInvoiceState, bucket: string}[] = [];
+    const isPending = this.props.bucket === "sales-invoices-unpaid";
+
     if (this.props.items) {
       for (let dir in this.props.items) {
         if (! this.props.items.hasOwnProperty(dir)) {
           continue;
         }
-        let bucket = dir.split("/")[3];
+        // Extract quarter from directory path (3rd element from end): .../Q1/sales-invoices-paid/ -> Q1
+        let parts = dir.split("/").filter(p => p.length > 0);
+        let bucket = this.props.bucket === "concepts" ? "concepts" : parts[parts.length - 2];
 
         this.props.items[dir].forEach((inv) => {
           let key: string = inv.Meta.Conceptid;
-          if (this.props.bucket === "concepts" || this.props.bucket === "sales-invoices-unpaid") {
-            if (this.props.bucket === "sales-invoices-unpaid") {
-              bucket = this.bucket(inv.Meta.Invoiceid);
-            }
-            res.push(this.conceptLine(key, inv, bucket));
-          } else {
-            res.push(this.finishedLine(key, inv, this.bucket(inv.Meta.Invoiceid)));
-          }
+          invoiceList.push({key, inv, bucket});
         });
       }
     }
+
+    // Sort the invoices
+    invoiceList = this.sortInvoices(invoiceList);
+
+    // Render sorted invoices
+    invoiceList.forEach(({key, inv, bucket}) => {
+      if (this.props.bucket === "concepts" || isPending) {
+        res.push(this.conceptLine(key, inv, bucket, isPending));
+      } else {
+        res.push(this.finishedLine(key, inv, bucket));
+      }
+    });
 
     if (res.length === 0) {
       res.push(<tr key="empty"><td colSpan={6}>No invoices yet :)</td></tr>);
@@ -200,7 +260,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
           <div className="panel-body">
             {balanceUpload}
             <table className="table table-striped">
-            	<thead><tr><th>#</th><th>Invoice</th><th>Customer</th><th>Amount</th><th>Duedate</th><th>I/O</th></tr></thead>
+            	<thead><tr><th>#</th>{this.sortHeader("Invoice")}{this.sortHeader("Customer")}{this.sortHeader("Amount")}{this.sortHeader("Duedate")}<th>I/O</th></tr></thead>
             	<tbody>{res}</tbody>
             </table>
 	        </div>

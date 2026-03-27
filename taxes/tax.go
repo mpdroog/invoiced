@@ -2,15 +2,15 @@ package taxes
 
 import (
 	"fmt"
-	"github.com/julienschmidt/httprouter"
-	"github.com/mpdroog/invoiced/config"
-	"github.com/mpdroog/invoiced/db"
-	"github.com/mpdroog/invoiced/invoice"
-	"github.com/mpdroog/invoiced/writer"
-	"github.com/shopspring/decimal"
 	"log"
 	"net/http"
-	"strings"
+	"strconv"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/mpdroog/invoiced/config"
+	"github.com/mpdroog/invoiced/idx"
+	"github.com/mpdroog/invoiced/writer"
+	"github.com/shopspring/decimal"
 )
 
 type Sum struct {
@@ -45,66 +45,73 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	year := ps.ByName("year")
 	quarter := ps.ByName("quarter")
 
-	sum := &Sum{}
-	sum.EUCompany = make(map[string]string)
-	audit := ""
+	if idx.DB == nil {
+		http.Error(w, "Index not initialized", 500)
+		return
+	}
 
-	e := db.View(func(t *db.Txn) error {
-		// invoice
-		paths := []string{
-			fmt.Sprintf("%s/%s/%s/sales-invoices-paid", entity, year, quarter),
-			fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid", entity, year, quarter),
-		}
+	yearInt, err := strconv.Atoi(year)
+	if err != nil {
+		http.Error(w, "Invalid year", 400)
+		return
+	}
+	quarterInt, err := strconv.Atoi(quarter[1:]) // "Q1" -> 1
+	if err != nil {
+		http.Error(w, "Invalid quarter", 400)
+		return
+	}
 
-		u := new(invoice.Invoice)
-		_, e := t.List(paths, db.Pagination{From: 0, Count: 0}, &u, func(filename, filepath, path string) error {
-			var e error
+	idxSum, audit, err := idx.GetQuarterTaxSummary(entity, yearInt, quarterInt)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Query failed: %s", err.Error()), 500)
+		return
+	}
 
-			if strings.Contains(u.Notes, "Export") {
-				// Outside EU means no tax
-				audit += fmt.Sprintf("Invoice(%s) Export-Ignored\n", u.Meta.Invoiceid)
-				sum.ExWorld, e = addValue(sum.ExWorld, u.Total.Ex, 2)
-
-			} else if strings.Contains(u.Notes, "VAT Reverse charge") {
-				sum.EUEx, e = addValue(sum.EUEx, u.Total.Ex, 2)
-				custvat, ok := sum.EUCompany[u.Customer.Vat]
-				if !ok {
-					custvat = "0.00"
-				}
-
-				audit += fmt.Sprintf("Invoice(%s) ICP ex=%s tax=%s\n", u.Meta.Invoiceid, u.Total.Ex, u.Total.Tax)
-				sum.EUCompany[u.Customer.Vat], e = addValue(custvat, u.Total.Total, 2)
-			} else {
-				sum.Ex, e = addValue(sum.Ex, u.Total.Ex, 2)
-				audit += fmt.Sprintf("Invoice(%s) NL ex=%s tax=%s\n", u.Meta.Invoiceid, u.Total.Ex, u.Total.Tax)
-			}
-			if e != nil {
-				return e
-			}
-
-			sum.ExRevenue, e = addValue(sum.ExRevenue, u.Total.Ex, 2)
-			sum.Tax, e = addValue(sum.Tax, u.Total.Tax, 2)
-			return e
-		})
-		return e
-	})
-	if e != nil {
-		panic(e)
+	sum := &Sum{
+		Ex:        idxSum.Ex,
+		Tax:       idxSum.Tax,
+		EUEx:      idxSum.EUEx,
+		EUCompany: idxSum.EUCompany,
+		ExWorld:   idxSum.ExWorld,
+		ExRevenue: idxSum.ExRevenue,
 	}
 
 	if config.Verbose {
-		log.Printf("TAX audit:\n%s", audit)
+		auditStr := ""
+		for _, a := range audit {
+			auditStr += fmt.Sprintf("Invoice(%s) %s ex=%s tax=%s\n",
+				a.InvoiceID, a.TaxCategory, a.TotalEx, a.TotalTax)
+		}
+		log.Printf("TAX audit:\n%s", auditStr)
 	}
 
 	// Remove decimals (Belastingdienst wants all numbers rounded)
+	var e error
 	sum.EUEx, e = addValue(sum.EUEx, "0", 0)
+	if e != nil {
+		http.Error(w, fmt.Sprintf("EUEx rounding failed: %s", e.Error()), 500)
+		return
+	}
 	sum.Ex, e = addValue(sum.Ex, "0", 0)
+	if e != nil {
+		http.Error(w, fmt.Sprintf("Ex rounding failed: %s", e.Error()), 500)
+		return
+	}
 	sum.Tax, e = addValue(sum.Tax, "0", 0)
+	if e != nil {
+		http.Error(w, fmt.Sprintf("Tax rounding failed: %s", e.Error()), 500)
+		return
+	}
 	for k, v := range sum.EUCompany {
 		sum.EUCompany[k], e = addValue(v, "0", 0)
+		if e != nil {
+			http.Error(w, fmt.Sprintf("EUCompany[%s] rounding failed: %s", k, e.Error()), 500)
+			return
+		}
 	}
 
 	if e := writer.Encode(w, r, sum); e != nil {
-		log.Printf("taxes.Tax " + e.Error())
+		http.Error(w, fmt.Sprintf("Encode failed: %s", e.Error()), 500)
+		return
 	}
 }

@@ -14,7 +14,7 @@ export class InvoiceMail extends React.Component<{}, {}> {
 
     Axios.post('/api/v1/invoice/'+parent.props.entity+'/'+parent.props.year+'/'+parent.props.bucket+'/'+parent.state.Meta.Conceptid+'/email', req)
     .then(res => {
-      parent.setState({Mail: that.state});
+      parent.setState({Mail: parent.state.Mail});
       that.props.onHide(e);
     })
     .catch(err => {

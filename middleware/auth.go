@@ -29,7 +29,8 @@ type Entities struct {
 }
 
 type Entity struct {
-	Years []string
+	Years       []string
+	YearRevenue map[string]string // Revenue per year (EUR)
 
 	Name string
 	COC  string

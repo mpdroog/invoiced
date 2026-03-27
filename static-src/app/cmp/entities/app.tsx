@@ -1,6 +1,13 @@
 import * as React from "react";
 import Axios from "axios";
 
+// Format number with space as thousands separator: 51868.65 -> 51 868.65
+function formatCurrency(value: number): string {
+	let parts = value.toFixed(2).split(".");
+	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+	return parts.join(",");
+}
+
 interface IDictionary {
 [index: string]: IMetricDay;
 }
@@ -34,16 +41,44 @@ export default class Entities extends React.Component<{}, IMetrics> {
 
 			let hasCurYear: bool = false;
 			let accountingYears: React.JSX.Element[] = [];
-			for (var k in entity.Years) {
-				if (! entity.Years.hasOwnProperty(k)) {
+			let prevRevenue: number = 0;
+
+			// Sort years ascending for proper comparison
+			let sortedYears = (entity.Years || []).slice().sort((a, b) => parseInt(a) - parseInt(b));
+
+			for (var k in sortedYears) {
+				if (! sortedYears.hasOwnProperty(k)) {
 		    	// ignore
 		    	continue;
 		    }
-		    let year:int = parseInt(entity.Years[k]);
+		    let yearStr = sortedYears[k];
+		    let year:int = parseInt(yearStr);
 		    if (year === curYear) {
 		    	hasCurYear = true;
 		    }
-				accountingYears.push(<tr key={ukey+"company"+year}><td><a href={"#"+key+"/"+year}>{year}</a></td><td>0,00EUR</td></tr>);
+
+				let revenueStr = entity.YearRevenue && entity.YearRevenue[yearStr] ? entity.YearRevenue[yearStr] : "0.00";
+				let revenue = parseFloat(revenueStr);
+				let formattedRevenue = formatCurrency(revenue);
+
+				// Calculate delta vs previous year
+				let deltaEl: React.JSX.Element = null;
+				if (prevRevenue > 0) {
+					let delta = revenue - prevRevenue;
+					let pct = ((delta / prevRevenue) * 100).toFixed(0);
+					let sign = delta >= 0 ? "+" : "";
+					let badgeClass = delta >= 0 ? "m-l-sm label label-success" : "m-l-sm label label-danger";
+					deltaEl = <span className={badgeClass}>
+						{sign}&euro; {formatCurrency(Math.abs(delta))} ({sign}{pct}%)
+					</span>;
+				}
+
+				accountingYears.push(<tr key={ukey+"company"+year}>
+					<td><a href={"#"+key+"/"+year}>{year}</a></td>
+					<td>&euro; {formattedRevenue}{deltaEl}</td>
+				</tr>);
+
+				prevRevenue = revenue;
 			}
 
 			let link: React.JSX.Element = null;

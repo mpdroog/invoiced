@@ -13,6 +13,7 @@ import (
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/entities"
+	"github.com/mpdroog/invoiced/idx"
 	gitpkg "github.com/mpdroog/invoiced/git"
 	"github.com/mpdroog/invoiced/hour"
 	"github.com/mpdroog/invoiced/invoice"
@@ -98,6 +99,34 @@ func main() {
 	if e := db.Init(config.DbPath); e != nil {
 		panic(e)
 	}
+
+	// Initialize SQLite index
+	if e := idx.Open(config.DbPath); e != nil {
+		log.Fatal(e)
+	}
+
+	// Set up sync hook
+	db.OnCommit = func(touchedPaths []string, movedPaths []struct{ From, To string }) {
+		for _, m := range movedPaths {
+			if err := idx.MovePath(config.DbPath, m.From, m.To); err != nil {
+				log.Fatal(err)
+			}
+		}
+		for _, p := range touchedPaths {
+			if err := idx.SyncPath(config.DbPath, p); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+
+	// Rebuild index if empty
+	if idx.IsEmpty() {
+		log.Printf("Index empty, rebuilding...")
+		if err := idx.Rebuild(config.DbPath); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	if e := middleware.Init(); e != nil {
 		panic(e)
 	}
