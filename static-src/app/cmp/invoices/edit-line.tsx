@@ -1,11 +1,10 @@
 import * as React from "react";
-import Big from "big.js";
 import {DOM} from "../../lib/dom";
 import {IInvoiceLine, IInvoiceState} from "./edit-struct";
 
 interface InvoiceLineEditProps {
   parent: {
-    state: IInvoiceState & { Meta: { Status: string } };
+    state: IInvoiceState;
     setState: (state: Partial<IInvoiceState>) => void;
     handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   };
@@ -18,19 +17,20 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
 
   private lineAdd(e: React.MouseEvent<HTMLButtonElement>): void {
     e.preventDefault();
-    let parent = this.props.parent;
-    if (parent.state.Meta.Status === 'FINAL') {
+    const parent = this.props.parent;
+    if (parent.state.Meta?.Status === 'FINAL') {
       console.log("Finalized, not allowing changes!");
       return;
     }
+    const lines = parent.state.Lines || [];
     console.log("Add invoice line");
-    parent.state.Lines.push({
+    lines.push({
       Description: "",
       Quantity: "0.00",
       Price: "0.00",
       Total: "0.00"
     });
-    parent.setState({Lines: parent.state.Lines});
+    parent.setState({Lines: lines});
   }
 
   private lineRemove(e: React.MouseEvent<HTMLButtonElement>): void {
@@ -41,7 +41,7 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
     if (key === undefined) return;
     const parent = this.props.parent;
 
-    if (parent.state.Meta.Status === 'FINAL') {
+    if (parent.state.Meta?.Status === 'FINAL') {
       console.log("Finalized, not allowing changes!");
       return;
     }
@@ -49,27 +49,30 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
     const lines = parent.state.Lines;
     if (!lines) return;
     const line: IInvoiceLine = lines[keyNum];
-    let isEmpty = line.Description === ""
+    const isEmpty = line.Description === ""
       && line.Quantity === "0.00"
       && line.Price === "0.00"
       && line.Total === "0.00";
-    let isOk = !isEmpty && confirm(`Are you sure you want to remove the invoiceline with description '${line.Description}'?`);
+    const isOk = !isEmpty && confirm(`Are you sure you want to remove the invoiceline with description '${line.Description}'?`);
 
     if (isEmpty || isOk) {
-      console.log(`Deleted idx (${key})`, parent.state.Lines.splice(key, 1)[0]);
-      parent.setState({Lines: parent.state.Lines});
+      console.log(`Deleted idx (${key})`, lines.splice(keyNum, 1)[0]);
+      parent.setState({Lines: lines});
     }
   }
 
-  render() {
-  	let that = this;
-  	let parent = this.props.parent;
-  	let inv = parent.state;
-  	let lines = [];
-	inv.Lines.forEach(function(line: IInvoiceLine, idx: number) {
+  render(): React.JSX.Element {
+  	const that = this;
+  	const parent = this.props.parent;
+  	const inv = parent.state;
+  	const invLines = inv.Lines || [];
+  	const invTotal = inv.Total || { Ex: "0.00", Tax: "0.00", Total: "0.00" };
+  	const invStatus = inv.Meta?.Status;
+  	const lines: React.JSX.Element[] = [];
+	invLines.forEach(function(line: IInvoiceLine, idx: number) {
       lines.push(
         <tr key={"line"+idx}>
-          <td><button disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? 'btn-hover-danger faa-parent animated-hover' : '')} onClick={that.lineRemove.bind(that)} data-idx={idx}><i className="fa fa-trash faa-flash"></i></button></td>
+          <td><button disabled={invStatus === 'FINAL'} className={"btn btn-default " + (invStatus !== 'FINAL' ? 'btn-hover-danger faa-parent animated-hover' : '')} onClick={that.lineRemove.bind(that)} data-idx={idx}><i className="fa fa-trash faa-flash"></i></button></td>
           <td className="pr"><input className="form-control" type="text" data-key={"Lines."+idx+".Description"} onChange={parent.handleChange.bind(parent)} value={line.Description}/><i className="fa fa-asterisk text-danger fa-input"></i></td>
           <td className="pr"><input className="form-control" type="text" data-key={"Lines."+idx+".Quantity"} onChange={parent.handleChange.bind(parent)} value={line.Quantity}/><i className="fa fa-asterisk text-danger fa-input"></i></td>
           <td className="pr"><input className="form-control" type="text" data-key={"Lines."+idx+".Price"} onChange={parent.handleChange.bind(parent)} value={line.Price}/><i className="fa fa-asterisk text-danger fa-input"></i></td>
@@ -92,20 +95,20 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
     <tfoot>
       <tr>
         <td colSpan={3} className="text">
-          <button disabled={inv.Meta.Status === 'FINAL'} className={"btn btn-default " + (inv.Meta.Status !== 'FINAL' ? 'btn-hover-success faa-parent animated-hover' : '')} onClick={that.lineAdd.bind(that)}><i className="fa fa-plus faa-bounce"></i> Add row</button>
+          <button disabled={invStatus === 'FINAL'} className={"btn btn-default " + (invStatus !== 'FINAL' ? 'btn-hover-success faa-parent animated-hover' : '')} onClick={that.lineAdd.bind(that)}><i className="fa fa-plus faa-bounce"></i> Add row</button>
         </td>
         <td className="text">Total (ex tax)</td>
-        <td><input className="form-control" disabled={true} type="text" data-key="Total.Ex" readOnly={true} value={inv.Total.Ex}/></td>
+        <td><input className="form-control" disabled={true} type="text" data-key="Total.Ex" readOnly={true} value={invTotal.Ex}/></td>
       </tr>
       <tr>
         <td colSpan={3}></td>
         <td className="text">Tax (21%)</td>
-        <td><input className="form-control" onChange={parent.handleChange.bind(parent)} disabled={true} type="text" data-key="Total.Tax" readOnly={true} value={inv.Total.Tax}/></td>
+        <td><input className="form-control" onChange={parent.handleChange.bind(parent)} disabled={true} type="text" data-key="Total.Tax" readOnly={true} value={invTotal.Tax}/></td>
       </tr>
       <tr>
         <td colSpan={3}>&nbsp;</td>
         <td className="text">Total</td>
-        <td><input className="form-control" onChange={parent.handleChange.bind(parent)} disabled={true} type="text" data-key="Total.Total" readOnly={true} value={inv.Total.Total}/></td>
+        <td><input className="form-control" onChange={parent.handleChange.bind(parent)} disabled={true} type="text" data-key="Total.Total" readOnly={true} value={invTotal.Total}/></td>
       </tr>
     </tfoot>
   </table>

@@ -54,13 +54,13 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     if (this.props.id) {
       this.ajax(this.props.id);
     }
   }
 
-  private ajax(name: string) {
+  private ajax(name: string): void {
     Axios.get(`/api/v1/hour/${this.props.entity}/${this.props.year}/${this.props.bucket}/${name}`)
     .then(res => {
       this.setState(res.data);
@@ -70,15 +70,16 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     });
   }
 
-  private importLine(lines: Array<{day: string; text: string; fromTo: string[][]}>): void {
+  private importLine(lines: Array<{day: string | null; text: string; fromTo: string[][]}>): void {
     let total = new Big("0.00");
-    let out = this.state.Lines;
+    const out = [...this.state.Lines];
     for (let i = 0; i < lines.length; i++) {
-      let day = lines[i];
-      for (let i2 = 0; i2 < day.fromTo.length; i2++) {
-        let fromTo = day.fromTo[i2];
-        let start = Moment(fromTo[0], 'HH:mm')
-        let stop = Moment(fromTo[1], 'HH:mm');
+      const lineItem = lines[i];
+      if (!lineItem.day) continue;
+      for (let i2 = 0; i2 < lineItem.fromTo.length; i2++) {
+        const fromTo = lineItem.fromTo[i2];
+        const start = Moment(fromTo[0], 'HH:mm')
+        const stop = Moment(fromTo[1], 'HH:mm');
         if (! start.isValid()) {
           throw new Error("Failed parsing start=" + fromTo[0]);
         }
@@ -86,15 +87,15 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
           throw new Error("Failed parsing start=" + fromTo[0]);
         }
         // Momentjs fails us, do the math ourselves..
-        let diff = stop.diff(start)/1000/60/60;
+        const diff = stop.diff(start)/1000/60/60;
         console.log(diff);
 
         out.push({
           Start: fromTo[0],
           Stop: fromTo[1],
           Hours: diff,
-          Description: day.text,
-          Day: day.day
+          Description: lineItem.text,
+          Day: lineItem.day
         });
         total = total.plus(diff);
       }
@@ -106,15 +107,15 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     });
   }
 
-  private recalc(e: Event) {
+  private recalc(e: React.MouseEvent<HTMLButtonElement>): void {
     e.preventDefault();
     if (this.state.start === "" || this.state.stop === "") {
       console.log("Empty state");
       return;
     }
 
-    let start = Moment(this.state.start, 'HH:mm')
-    let stop = Moment(this.state.stop, 'HH:mm');
+    const start = Moment(this.state.start, 'HH:mm')
+    const stop = Moment(this.state.stop, 'HH:mm');
     if (! start.isValid()) {
       throw new Error("Failed parsing start=" + this.state.start);
     }
@@ -122,11 +123,11 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
       throw new Error("Failed parsing stop=" + this.state.stop);
     }
     // Momentjs fails us, do the math ourselves..
-    let sum = stop.diff(start)/1000/60/60;
+    const sum = stop.diff(start)/1000/60/60;
 
     console.log("Start=" + start + " Stop=" + stop + " to hours=" + sum);
 
-    let total = new Big(this.state.Total);
+    const total = new Big(this.state.Total);
     this.state.Lines.push({
       Start: this.state.start,
       Stop: this.state.stop,
@@ -182,12 +183,12 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     }
   }
 
-  private selectProject(prj: {Name: string; HourRate: number}): void {
+  private selectProject(prj: {Name: string; HourRate?: number}): void {
     console.log("Change", prj);
     const prevMonth = Moment().subtract(1, 'months');
     const s: Partial<IHourState> = {
       Project: prj.Name,
-      HourRate: prj.HourRate,
+      HourRate: prj.HourRate || 0,
     };
     if (this.state.Name === "") {
       s.Name = prj.Name + "-" + prevMonth.format("YYYY-MM");
@@ -218,7 +219,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
 
   private bill(e: React.MouseEvent<HTMLButtonElement>): void {
     e.preventDefault();
-    let args = this.state;
+    const args = this.state;
     Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts/${args.Name}/bill`, args)
     .then(res => {
       location.href = `#${this.props.entity}/${this.props.year}/invoices/edit/concepts/${res.headers["x-redirect-invoice"]}`
@@ -229,8 +230,8 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
   }
 
   private shortHand(d: number): string {
-    var date = new Date(1000*60*60*d);
-    var str = '';
+    const date = new Date(1000*60*60*d);
+    let str = '';
     if (date.getUTCDate()-1 > 0) {
       str += date.getUTCDate()-1 + "d";
     }
@@ -239,15 +240,15 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     return str;
   }
 
-  private toggleImport(e: React.MouseEvent<HTMLButtonElement>): void {
+  private toggleImport(e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>): void {
     e.preventDefault();
     this.setState({import: !this.state.import});
   }
 
-	render() {
-    let lines: React.JSX.Element[] = [];
-    let that = this;
-    let isEditable = this.state.Status === "NEW" || this.state.Status === "CONCEPT";
+	render(): React.JSX.Element {
+    const lines: React.JSX.Element[] = [];
+    const that = this;
+    const isEditable = this.state.Status === "NEW" || this.state.Status === "CONCEPT";
 
     this.state.Lines.forEach(function(item:IHourLineState, idx:number) {
       lines.push(<tr key={idx}>
@@ -297,7 +298,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
               <button className="btn btn-default btn-hover-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fa fa-share"></i>&nbsp;Bill</button>
             </div>
           </div>
-          Sum ({this.state.Total} hours/{this.state.Total * this.state.HourRate } EUR)
+          Sum ({this.state.Total} hours/{parseFloat(this.state.Total) * this.state.HourRate} EUR)
         </div>
         <div className="panel-body">
           <div className="row">

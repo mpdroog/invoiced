@@ -40,6 +40,11 @@ interface ImportedLine {
 	text: string;
 }
 
+interface ImportResult {
+	lines: ImportedLine[];
+	errors: string[];
+}
+
 // Try parsing 2July, 1Aug into Date()
 // @return Date|bool
 function parseDate(line: string): string | false {
@@ -76,14 +81,17 @@ function parseHours(line: string): string[] | false {
 	return fromTo;
 }
 
-function importText(lines: string[]): ImportedLine[] {
+function importText(lines: string[]): ImportResult {
 	const output: ImportedLine[] = [];
+	const errors: string[] = [];
 
 	let day: string | null = null;
 	let fromTo: string[][] = [];
 	let text = "";
+	let dayLineNum = 0;
 
 	for (let i = 0; i < lines.length; i++) {
+		const lineNum = i + 1;
 		const line = lines[i].trim();
 		if (line.length === 0) {
 			// ignore empty lines
@@ -93,16 +101,21 @@ function importText(lines: string[]): ImportedLine[] {
 		const date = parseDate(line);
 		if (date !== false) {
 			if (day !== null) {
+				// validate prev entry before saving
+				if (fromTo.length === 0) {
+					errors.push(`Line ${dayLineNum}: Date "${day}" has no time range`);
+				}
 				// save prev lines
 				output.push({
 					day: day,
 					fromTo: fromTo,
-					text: text.substr(3)
+					text: text.substring(3)
 				});
 			}
 
 			// reset
 			day = date;
+			dayLineNum = lineNum;
 			fromTo = [];
 			text = "";
 			continue;
@@ -110,21 +123,35 @@ function importText(lines: string[]): ImportedLine[] {
 
 		const hours = parseHours(line);
 		if (hours === false) {
-			// text
-			text += " - " + line;
+			// text - but only if we have a date context
+			if (day === null) {
+				errors.push(`Line ${lineNum}: "${line}" appears before any date`);
+			} else {
+				text += " - " + line;
+			}
 		} else {
-			// hours
-			fromTo.push(hours);
+			// hours - but only if we have a date context
+			if (day === null) {
+				errors.push(`Line ${lineNum}: Time range "${line}" appears before any date`);
+			} else {
+				fromTo.push(hours);
+			}
 		}
 	}
 
-	// save prev lines
-	output.push({
-		day: day,
-		fromTo: fromTo,
-		text: text.substr(3)
-	});
-	return output;
+	// save last entry if we have one
+	if (day !== null) {
+		if (fromTo.length === 0) {
+			errors.push(`Line ${dayLineNum}: Date "${day}" has no time range`);
+		}
+		output.push({
+			day: day,
+			fromTo: fromTo,
+			text: text.substring(3)
+		});
+	}
+
+	return { lines: output, errors };
 }
 
 interface IImportProps {
@@ -135,27 +162,33 @@ interface IImportProps {
 
 interface IImportState {
   text: string;
+  errors: string[];
 }
 
 export default class HourImport extends React.Component<IImportProps, IImportState> {
   constructor(props: IImportProps) {
     super(props);
     this.state = {
-    	text: ""
+    	text: "",
+    	errors: []
     };
   }
 
   private update(e: React.ChangeEvent<HTMLTextAreaElement>): void {
     if (e.target.id === "import") {
-      this.setState({text: e.target.value});
+      this.setState({text: e.target.value, errors: []});
     }
   }
 
 	private save(e: React.MouseEvent<HTMLAnchorElement>): void {
 		e.preventDefault();
-		this.props.importFn(
-			importText(this.state.text.split("\n"))
-		);
+		const result = importText(this.state.text.split("\n"));
+		if (result.errors.length > 0) {
+			this.setState({ errors: result.errors });
+			return;
+		}
+		this.setState({ errors: [] });
+		this.props.importFn(result.lines);
 		this.props.onHide(e);
 	}
 
@@ -179,7 +212,16 @@ export default class HourImport extends React.Component<IImportProps, IImportSta
             </h4>
           </div>
           <div className="modal-body">
-		    <textarea id="import" style={t} onChange={this.update.bind(this)}></textarea>
+            <p className="text-muted"><small>Format: Start with a date (e.g. "27Mar"), then time ranges (e.g. "07:30 - 07:51"), then description text.</small></p>
+		    <textarea id="import" style={t} onChange={this.update.bind(this)} placeholder={"27Mar\n07:30 - 12:00\nDescription of work done"}></textarea>
+            {this.state.errors.length > 0 && (
+              <div className="alert alert-danger" style={{marginTop: "10px"}}>
+                <strong>Errors:</strong>
+                <ul style={{marginBottom: 0, paddingLeft: "20px"}}>
+                  {this.state.errors.map((err, i) => <li key={i}>{err}</li>)}
+                </ul>
+              </div>
+            )}
           </div>
           <div className="modal-footer">
             <a onClick={this.save.bind(this)} className="btn btn-primary" style={{float:"right"}}> Parse</a>

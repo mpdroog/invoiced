@@ -34,7 +34,7 @@ interface IState {
 interface IProps {
   bucket: string
   title: string
-  items: any
+  items: Record<string, IPurchaseInvoice[]>
   entity: string
   year: string
 }
@@ -50,7 +50,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     };
   }
 
-  private toggleSort(field: string) {
+  private toggleSort(field: string): void {
     if (this.state.sortField === field) {
       this.setState({sortAsc: !this.state.sortAsc});
     } else {
@@ -58,7 +58,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     }
   }
 
-  private getSortValue(inv: IPurchaseInvoice, field: string): any {
+  private getSortValue(inv: IPurchaseInvoice, field: string): string | number {
     switch (field) {
       case "ID": return inv.ID || "";
       case "Supplier": return inv.Supplier?.Name || "";
@@ -88,14 +88,14 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     });
   }
 
-  private setPaid(e, key: string, bucket: string) {
+  private setPaid(e: React.MouseEvent<HTMLAnchorElement>, key: string, bucket: string): void {
     e.preventDefault();
     if (!confirm("Mark this purchase invoice as paid?")) {
       return;
     }
 
     Axios.post(`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}/paid`, {})
-    .then(res => {
+    .then(() => {
       location.reload();
     })
     .catch(err => {
@@ -103,14 +103,14 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     });
   }
 
-  private delete(e, key: string, bucket: string) {
+  private delete(e: React.MouseEvent<HTMLAnchorElement>, key: string, bucket: string): void {
     e.preventDefault();
     if (!confirm("Delete this purchase invoice?")) {
       return;
     }
 
     Axios.delete(`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}`)
-    .then(res => {
+    .then(() => {
       location.reload();
     })
     .catch(err => {
@@ -118,11 +118,11 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     });
   }
 
-  private showAddLineModal(inv: IPurchaseInvoice) {
+  private showAddLineModal(inv: IPurchaseInvoice): void {
     this.setState({showAddLine: true, selectedInvoice: inv});
   }
 
-  private closeModal() {
+  private closeModal(): void {
     this.setState({showAddLine: false, selectedInvoice: null});
   }
 
@@ -134,23 +134,23 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     return <th style={{cursor: "pointer"}} onClick={() => this.toggleSort(field)}>{field}{icon}</th>;
   }
 
-  private openUpload(e) {
+  private openUpload(e: React.MouseEvent<HTMLAnchorElement>): void {
     e.preventDefault();
-    document.getElementById('js-purchase-upload').click();
+    document.getElementById('js-purchase-upload')?.click();
   }
 
-  private uploadXML(e) {
-    if (e.target.files.length === 0) {
+  private uploadXML(e: React.ChangeEvent<HTMLInputElement>): void {
+    if (!e.target.files || e.target.files.length === 0) {
       return;
     }
 
-    let file = e.target.files[0];
-    let form = new FormData();
+    const file = e.target.files[0];
+    const form = new FormData();
     form.append('file', file, file.name);
 
     Axios.post('/api/v1/purchase/'+this.props.entity+'/'+this.props.year,
       form, {headers: {'Content-Type': 'multipart/form-data' }})
-    .then(res => {
+    .then(() => {
       location.reload();
     })
     .catch(err => {
@@ -158,22 +158,22 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     });
   }
 
-  render() {
-    let res: React.JSX.Element[] = [];
+  render(): React.JSX.Element {
+    const res: React.JSX.Element[] = [];
     let invoiceList: {key: string, inv: IPurchaseInvoice, bucket: string}[] = [];
     const isUnpaid = this.props.bucket === "purchase-invoices-unpaid";
 
     if (this.props.items) {
-      for (let dir in this.props.items) {
-        if (!this.props.items.hasOwnProperty(dir)) {
+      for (const dir in this.props.items) {
+        if (!Object.prototype.hasOwnProperty.call(this.props.items, dir)) {
           continue;
         }
-        let parts = dir.split("/").filter(p => p.length > 0);
-        let bucket = parts[parts.length - 2]; // Get Q1, Q2, etc.
+        const parts = dir.split("/").filter(p => p.length > 0);
+        const bucket = parts[parts.length - 2]; // Get Q1, Q2, etc.
 
-        this.props.items[dir].forEach((inv) => {
+        this.props.items[dir].forEach((inv: IPurchaseInvoice) => {
           // Use sanitized filename as key (from ID + Supplier.Name)
-          let key = inv.ID ? (inv.Supplier?.Name?.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + inv.ID.toLowerCase().replace(/[^a-z0-9]/g, '-')) : dir;
+          const key = inv.ID ? (inv.Supplier?.Name?.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + inv.ID.toLowerCase().replace(/[^a-z0-9]/g, '-')) : dir;
           invoiceList.push({key, inv, bucket});
         });
       }
@@ -221,7 +221,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
       </div>;
     }
 
-    let uploadForm = <form className="hidden">
+    const uploadForm = <form className="hidden">
       <input id="js-purchase-upload" accept=".xml" type="file" onChange={this.uploadXML.bind(this)} />
     </form>;
 
@@ -256,6 +256,13 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
 }
 
 // Modal for adding line to existing invoice
+interface IConceptInvoice {
+  Meta: { Conceptid: string };
+  Customer: { Name: string };
+  Lines: { Description: string; Quantity: string; Price: string; Total: string }[];
+  Total: { Ex: string; Tax: string; Total: string };
+}
+
 interface IAddLineModalProps {
   invoice: IPurchaseInvoice
   entity: string
@@ -264,7 +271,7 @@ interface IAddLineModalProps {
 }
 
 interface IAddLineModalState {
-  concepts: any[]
+  concepts: IConceptInvoice[]
   selectedConcept: string
   selectedLine: number
 }
@@ -279,14 +286,14 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     // Fetch concept invoices to add lines to
     Axios.get('/api/v1/invoices/'+this.props.entity+'/'+this.props.year, {params: {from: 0, count: 0}})
     .then(res => {
-      let concepts = [];
-      for (let key in res.data.Invoices) {
+      const concepts: IConceptInvoice[] = [];
+      for (const key in res.data.Invoices) {
         if (key.endsWith("/concepts/sales-invoices/")) {
-          res.data.Invoices[key].forEach(inv => {
+          res.data.Invoices[key].forEach((inv: IConceptInvoice) => {
             concepts.push(inv);
           });
         }
@@ -298,7 +305,7 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
     });
   }
 
-  private addLine() {
+  private addLine(): void {
     if (!this.state.selectedConcept) {
       alert("Please select an invoice");
       return;
@@ -322,7 +329,7 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
 
     // Recalculate totals
     let totalEx = 0;
-    concept.Lines.forEach(l => {
+    concept.Lines.forEach((l: { Total: string }) => {
       totalEx += parseFloat(l.Total) || 0;
     });
     const taxRate = 0.21; // Default 21% VAT
@@ -333,7 +340,7 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
 
     // Save updated concept
     Axios.post('/api/v1/invoice/'+this.props.entity+'/'+this.props.year, concept)
-    .then(res => {
+    .then(() => {
       alert("Line added successfully!");
       this.props.onClose();
     })
@@ -342,7 +349,7 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
     });
   }
 
-  render() {
+  render(): React.JSX.Element {
     const inv = this.props.invoice;
     const s = {display: "block"};
 

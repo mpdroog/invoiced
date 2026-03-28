@@ -59,12 +59,12 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.loadStatus();
     this.loadHistory(0);
   }
 
-  private loadStatus() {
+  private loadStatus(): void {
     this.setState({loading: true, error: null});
     Axios.get('/api/v1/git/' + this.props.entity + '/status')
       .then(res => {
@@ -76,7 +76,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
       });
   }
 
-  private loadHistory(page: number) {
+  private loadHistory(page: number): void {
     this.setState({historyLoading: true});
     Axios.get('/api/v1/git/' + this.props.entity + '/history', {params: {page}})
       .then(res => {
@@ -88,7 +88,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
       });
   }
 
-  private doPush() {
+  private doPush(): void {
     this.setState({pushing: true, actionResult: null, error: null});
     Axios.post('/api/v1/git/' + this.props.entity + '/push')
       .then(res => {
@@ -104,7 +104,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
       });
   }
 
-  private doPull() {
+  private doPull(): void {
     this.setState({pulling: true, actionResult: null, error: null});
     Axios.post('/api/v1/git/' + this.props.entity + '/pull')
       .then(res => {
@@ -120,7 +120,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
       });
   }
 
-  private doDiscardAll() {
+  private doDiscardAll(): void {
     if (!confirm('Discard ALL local changes? This will reset to the last pushed state.')) {
       return;
     }
@@ -140,7 +140,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
       });
   }
 
-  private doResetTo(fullHash: string, shortHash: string) {
+  private doResetTo(fullHash: string, shortHash: string): void {
     if (!confirm(`Reset to commit ${shortHash}? Commits after this will be discarded.`)) {
       return;
     }
@@ -160,7 +160,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
       });
   }
 
-  render() {
+  render(): React.JSX.Element {
     let content = null;
 
     if (this.state.loading) {

@@ -42,25 +42,25 @@ class Menu extends React.Component<MenuProps, MenuState> {
         this.boundRefresh = this.fetchGitStatus.bind(this);
     }
 
-    componentDidMount() {
+    componentDidMount(): void {
         this.fetchGitStatus();
         window.addEventListener('git-refresh', this.boundRefresh);
         document.addEventListener('click', this.handleClickOutside.bind(this));
     }
 
-    componentWillUnmount() {
+    componentWillUnmount(): void {
         window.removeEventListener('git-refresh', this.boundRefresh);
         document.removeEventListener('click', this.handleClickOutside.bind(this));
     }
 
-    private handleClickOutside(e: MouseEvent) {
+    private handleClickOutside(e: MouseEvent): void {
         const searchContainer = document.getElementById('search-container');
         if (searchContainer && !searchContainer.contains(e.target as Node)) {
             this.setState({showResults: false});
         }
     }
 
-    private fetchGitStatus() {
+    private fetchGitStatus(): void {
         Axios.get('/api/v1/git/' + this.props.company + '/status')
             .then(res => {
                 this.setState({ahead: res.data.ahead || 0});
@@ -70,7 +70,7 @@ class Menu extends React.Component<MenuProps, MenuState> {
             });
     }
 
-    private handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    private handleSearchChange(e: React.ChangeEvent<HTMLInputElement>): void {
         const query = e.target.value;
         this.setState({searchQuery: query, showResults: true});
 
@@ -95,7 +95,7 @@ class Menu extends React.Component<MenuProps, MenuState> {
         }, 300);
     }
 
-    private handleResultClick(result: SearchResult) {
+    private handleResultClick(result: SearchResult): void {
         let url = '#' + result.entity + '/' + result.year + '/';
         if (result.type === 'invoice') {
             url += 'invoices/edit/' + result.bucket + '/' + result.id;
@@ -117,7 +117,7 @@ class Menu extends React.Component<MenuProps, MenuState> {
         }
     }
 
-    render() {
+    render(): React.JSX.Element {
         const {company, year} = this.props;
         const {ahead, searchQuery, searchResults, showResults, searching} = this.state;
 
@@ -210,8 +210,8 @@ class Menu extends React.Component<MenuProps, MenuState> {
     }
 }
 
-export function calendar({ year }) {
-    let selected = {fontSize:"18px"};
+export function calendar({ year }: { year: string }): React.JSX.Element {
+    const selected = {fontSize:"18px"};
     return (<div>
         <div className="month"> 
           <ul>

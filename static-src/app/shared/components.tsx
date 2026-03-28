@@ -3,7 +3,7 @@ import Axios from "axios";
 
 interface LockedInputProps {
   locked: boolean;
-  'data-key': string;
+  'data-key'?: string;
   type: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   value: string;
@@ -35,7 +35,7 @@ export class LockedInput extends React.Component<LockedInputProps, LockedInputSt
 
   render(): React.JSX.Element {
     const locked = this.state.locked;
-	let icon = locked ? "fa-lock" : "fa-unlock";
+	const icon = locked ? "fa-lock" : "fa-unlock";
 	return <div className="input-group">
 		<input className="form-control" data-key={this.props['data-key']} disabled={locked} type={this.props.type} onChange={this.props.onChange} value={this.props.value} placeholder={this.props.placeholder} id={this.props.id} />
         <div className="input-group-addon">

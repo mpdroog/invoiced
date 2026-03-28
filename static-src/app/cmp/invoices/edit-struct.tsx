@@ -1,9 +1,9 @@
-import * as React from "react";
-import * as Moment from "moment";
-
 export type IInvoiceStatus = "NEW" | "CONCEPT" | "FINAL";
-export interface IInvoiceProps extends React.Props<InvoiceEdit> {
-  id? : string
+export interface IInvoiceProps {
+  id?: string;
+  entity: string;
+  year: string;
+  bucket?: string;
 }
 export interface IInvoiceEntity {
   Name: string
@@ -19,15 +19,15 @@ export interface IInvoiceCustomer {
   Tax: string
 }
 export interface IInvoiceMeta {
-  Conceptid: string
-  Status: IInvoiceStatus
-  Invoiceid: string
-  Issuedate?: string
-  Ponumber: string
-  Duedate?: string
-  Paydate?: Moment.Moment
-  Freefield?: string
-  HourFile: string
+  Conceptid: string;
+  Status: IInvoiceStatus;
+  Invoiceid: string;
+  Issuedate?: string | null;
+  Ponumber: string;
+  Duedate?: string | null;
+  Paydate?: string | null;
+  Freefield?: string;
+  HourFile: string;
 }
 export interface IInvoiceLine {
   Description: string
@@ -41,9 +41,10 @@ export interface IInvoiceTotal {
   Total: string //number
 }
 export interface IInvoiceBank {
-  Vat: string
-  Coc: string
-  Iban: string
+  Vat: string;
+  Coc: string;
+  Iban: string;
+  Bic: string;
 }
 export interface IInvoiceMail {
   From: string

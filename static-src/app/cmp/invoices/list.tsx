@@ -21,25 +21,25 @@ export default class InvoicesPage extends React.Component<InvoicesPageProps, Inv
     this.state = {concepts: {}, pending: {}, paid: {}};
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.ajax();
   }
 
-  private ajax() {
+  private ajax(): void {
     Axios.get('/api/v1/invoices/'+this.props.entity+'/'+this.props.year, {params: {
       from: 0,
       count: 0
     }, headers: {'Accept': 'application/x-msgpack'}, responseType: 'arraybuffer'})
     .then(res => {
-      res.data = msgpackDecode(new Uint8Array(res.data));
-      let s = {concepts: [], pending: [], paid: []};
+      const data = msgpackDecode(new Uint8Array(res.data)) as { Invoices: Record<string, IInvoiceState[]> };
+      const s: InvoicesPageState = {concepts: {}, pending: {}, paid: {}};
 
       // invoices
-      for (let key in res.data.Invoices) {
-        if (! res.data.Invoices.hasOwnProperty(key)) {
+      for (const key in data.Invoices) {
+        if (!Object.prototype.hasOwnProperty.call(data.Invoices, key)) {
           continue;
         }
-        let item = res.data.Invoices[key];
+        const item = data.Invoices[key];
         if (key.endsWith("/sales-invoices-paid/")) {
           s.paid[key] = item;
         } else if (key.endsWith("/sales-invoices-unpaid/")) {
@@ -57,7 +57,7 @@ export default class InvoicesPage extends React.Component<InvoicesPageProps, Inv
     });
   }
 
-  render() {
+  render(): React.JSX.Element {
     return <div className="row"><div className="col-sm-12">
       <Invoices title="Concepts" bucket="concepts" items={this.state.concepts} {...this.props} />
       <Invoices title="Pending" bucket="sales-invoices-unpaid" items={this.state.pending} {...this.props} />

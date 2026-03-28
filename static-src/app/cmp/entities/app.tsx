@@ -3,7 +3,7 @@ import Axios from "axios";
 
 // Format number with space as thousands separator: 51868.65 -> 51 868.65
 function formatCurrency(value: number): string {
-	let parts = value.toFixed(2).split(".");
+	const parts = value.toFixed(2).split(".");
 	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 	return parts.join(",");
 }
@@ -36,46 +36,41 @@ export default class Entities extends React.Component<Record<string, never>, IEn
     };
   }
 
-	render() {
+	render(): React.JSX.Element {
     let items:React.JSX.Element[] = [];
-    let curYear: number = new Date().getFullYear();
-    for (var key in this.state.entities) {
-    	if (! this.state.entities.hasOwnProperty(key)) {
+    const curYear: number = new Date().getFullYear();
+    for (const key in this.state.entities) {
+    	if (!Object.prototype.hasOwnProperty.call(this.state.entities, key)) {
     		// ignore
     		continue;
     	}
-			let ukey = "entity_" + key;
-			let entity = this.state.entities[key];
+			const ukey = "entity_" + key;
+			const entity = this.state.entities[key];
 
 			let hasCurYear: boolean = false;
-			let accountingYears: React.JSX.Element[] = [];
+			const accountingYears: React.JSX.Element[] = [];
 			let prevRevenue: number = 0;
 
 			// Sort years ascending for proper comparison
-			let sortedYears = (entity.Years || []).slice().sort((a, b) => parseInt(a) - parseInt(b));
+			const sortedYears = (entity.Years || []).slice().sort((a, b) => parseInt(a) - parseInt(b));
 
-			for (var k in sortedYears) {
-				if (! sortedYears.hasOwnProperty(k)) {
-		    	// ignore
-		    	continue;
-		    }
-		    let yearStr = sortedYears[k];
-		    let year: number = parseInt(yearStr);
+			for (const yearStr of sortedYears) {
+		    const year: number = parseInt(yearStr);
 		    if (year === curYear) {
 		    	hasCurYear = true;
 		    }
 
-				let revenueStr = entity.YearRevenue && entity.YearRevenue[yearStr] ? entity.YearRevenue[yearStr] : "0.00";
-				let revenue = parseFloat(revenueStr);
-				let formattedRevenue = formatCurrency(revenue);
+				const revenueStr = entity.YearRevenue?.[yearStr] ?? "0.00";
+				const revenue = parseFloat(revenueStr);
+				const formattedRevenue = formatCurrency(revenue);
 
 				// Calculate delta vs previous year
-				let deltaEl: React.JSX.Element = null;
+				let deltaEl: React.JSX.Element | null = null;
 				if (prevRevenue > 0) {
-					let delta = revenue - prevRevenue;
-					let pct = ((delta / prevRevenue) * 100).toFixed(0);
-					let sign = delta >= 0 ? "+" : "";
-					let badgeClass = delta >= 0 ? "m-l-sm label label-success" : "m-l-sm label label-danger";
+					const delta = revenue - prevRevenue;
+					const pct = ((delta / prevRevenue) * 100).toFixed(0);
+					const sign = delta >= 0 ? "+" : "";
+					const badgeClass = delta >= 0 ? "m-l-sm label label-success" : "m-l-sm label label-danger";
 					deltaEl = <span className={badgeClass}>
 						{sign}&euro; {formatCurrency(Math.abs(delta))} ({sign}{pct}%)
 					</span>;
@@ -89,7 +84,7 @@ export default class Entities extends React.Component<Record<string, never>, IEn
 				prevRevenue = revenue;
 			}
 
-			let link: React.JSX.Element = null;
+			let link: React.JSX.Element | null = null;
 			if (! hasCurYear) {
 				link = <a href={"/api/v1/entities/" + key + "/open/" + curYear}>Open {curYear}</a>;
 			}
@@ -97,13 +92,6 @@ export default class Entities extends React.Component<Record<string, never>, IEn
 			items = items.concat(accountingYears);
 		}
 
-		let smallHead = {
-			fontSize: "12px",
-			float: "right",
-			border: "1px solid gray",
-			padding: "10px",
-			marginLeft: "5px"
-		};
 		return <div>
 			<div className="normalheader col-md-6">
 			    <div className="hpanel">
@@ -124,11 +112,11 @@ export default class Entities extends React.Component<Record<string, never>, IEn
 		</div>;
 	}
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.ajax();
   }
 
-  private ajax() {
+  private ajax(): void {
     Axios.get('/api/v1/entities', {})
     .then(res => {
       	this.setState({entities: res.data});

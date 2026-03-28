@@ -3,30 +3,52 @@ import PurchaseInvoices from "./list-bucket";
 import Axios from "axios";
 import { decode as msgpackDecode } from '@msgpack/msgpack';
 
-export default class PurchasesPage extends React.Component<{}, {}> {
-  constructor(props) {
+interface IPurchaseInvoice {
+  ID: string;
+  Supplier: { Name: string; VAT: string };
+  Issuedate: string;
+  Duedate: string;
+  TotalEx: string;
+  TotalTax: string;
+  TotalInc: string;
+  Status: string;
+  Lines: { Description: string; Quantity: string; Price: string; Total: string; TaxPercent: string }[];
+}
+
+interface PurchasesPageProps {
+  entity: string;
+  year: string;
+}
+
+interface PurchasesPageState {
+  unpaid: Record<string, IPurchaseInvoice[]>;
+  paid: Record<string, IPurchaseInvoice[]>;
+}
+
+export default class PurchasesPage extends React.Component<PurchasesPageProps, PurchasesPageState> {
+  constructor(props: PurchasesPageProps) {
     super(props);
-    this.state = {unpaid: [], paid: []};
+    this.state = {unpaid: {}, paid: {}};
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.ajax();
   }
 
-  private ajax() {
+  private ajax(): void {
     Axios.get('/api/v1/purchases/'+this.props.entity+'/'+this.props.year, {params: {
       from: 0,
       count: 0
     }, headers: {'Accept': 'application/x-msgpack'}, responseType: 'arraybuffer'})
     .then(res => {
-      res.data = msgpackDecode(new Uint8Array(res.data));
-      let s = {unpaid: [], paid: []};
+      const data = msgpackDecode(new Uint8Array(res.data)) as { Invoices: Record<string, IPurchaseInvoice[]> };
+      const s: PurchasesPageState = {unpaid: {}, paid: {}};
 
-      for (let key in res.data.Invoices) {
-        if (! res.data.Invoices.hasOwnProperty(key)) {
+      for (const key in data.Invoices) {
+        if (!Object.prototype.hasOwnProperty.call(data.Invoices, key)) {
           continue;
         }
-        let item = res.data.Invoices[key];
+        const item = data.Invoices[key];
         if (key.endsWith("/purchase-invoices-paid/")) {
           s.paid[key] = item;
         } else if (key.endsWith("/purchase-invoices-unpaid/")) {
@@ -42,10 +64,10 @@ export default class PurchasesPage extends React.Component<{}, {}> {
     });
   }
 
-  render() {
+  render(): React.JSX.Element {
     return <div className="row"><div className="col-sm-12">
-      <PurchaseInvoices title="Unpaid" bucket="purchase-invoices-unpaid" items={this.state.unpaid} {...this.props} />
-      <PurchaseInvoices title="Paid" bucket="purchase-invoices-paid" items={this.state.paid} {...this.props} />
+      <PurchaseInvoices title="Unpaid" bucket="purchase-invoices-unpaid" items={this.state.unpaid} entity={this.props.entity} year={this.props.year} />
+      <PurchaseInvoices title="Paid" bucket="purchase-invoices-paid" items={this.state.paid} entity={this.props.entity} year={this.props.year} />
     </div></div>;
   }
 }

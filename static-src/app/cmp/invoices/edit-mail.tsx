@@ -9,8 +9,8 @@ interface InvoiceMailParent {
     bucket?: string;
   };
   state: {
-    Mail: IInvoiceMail;
-    Meta: IInvoiceMeta;
+    Mail?: IInvoiceMail;
+    Meta?: IInvoiceMeta;
   };
   setState: (state: {Mail: IInvoiceMail}) => void;
 }
@@ -27,14 +27,17 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
   }
 
   send(e: React.MouseEvent<HTMLAnchorElement>): void {
-    let parent = this.props.parent;
-    let req = JSON.parse(JSON.stringify(parent.state.Mail));
+    const parent = this.props.parent;
+    const mail = parent.state.Mail;
+    const meta = parent.state.Meta;
+    if (!mail || !meta) return;
+    const req = JSON.parse(JSON.stringify(mail));
     console.log("Send!", req);
 
-    Axios.post('/api/v1/invoice/'+parent.props.entity+'/'+parent.props.year+'/'+parent.props.bucket+'/'+parent.state.Meta.Conceptid+'/email', req)
-    .then(res => {
+    Axios.post('/api/v1/invoice/'+parent.props.entity+'/'+parent.props.year+'/'+parent.props.bucket+'/'+meta.Conceptid+'/email', req)
+    .then(() => {
       parent.setState({Mail: parent.state.Mail});
-      that.props.onHide(e);
+      this.props.onHide(e);
     })
     .catch(err => {
       handleErr(err);
@@ -43,25 +46,31 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
 
   private update(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void {
     const id = e.target.id as keyof IInvoiceMail;
-    const mail = {...this.props.parent.state.Mail};
+    const currentMail = this.props.parent.state.Mail;
+    if (!currentMail) return;
+    const mail = {...currentMail};
     mail[id] = e.target.value;
     this.props.parent.setState({Mail: mail});
   }
 
-  render() {
+  render(): React.JSX.Element {
     if (! this.props.hide) {
       return <div/>
     }
-    let s = {display: "block"};
-    let a = {float: "left", width: "350px", textAlign: "left"};
-    let parent = this.props.parent;
-    let parentState = this.props.parent.state;
-    let hourFile = <div/>;
-    if (parentState.Meta.HourFile.length > 0) {
-      hourFile = <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentState.Meta.Conceptid + "/text"} target="_blank"><i className="fa fa-file-o" />&nbsp;hours.txt</a></p>;
+    const parent = this.props.parent;
+    const parentMail = parent.state.Mail;
+    const parentMeta = parent.state.Meta;
+    if (!parentMail || !parentMeta) {
+      return <div/>;
+    }
+    const s: React.CSSProperties = {display: "block"};
+    const a: React.CSSProperties = {float: "left", width: "350px", textAlign: "left"};
+    let hourFile: React.JSX.Element = <div/>;
+    if (parentMeta.HourFile.length > 0) {
+      hourFile = <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/text"} target="_blank" rel="noreferrer"><i className="fa fa-file-o" />&nbsp;hours.txt</a></p>;
     }
 
-  	return <div className="modal" style={s} tabindex="-1" role="dialog">
+  	return <div className="modal" style={s} tabIndex={-1} role="dialog">
       <div className="modal-dialog">
         <div className="modal-content">
           <div className="modal-header">
@@ -74,8 +83,8 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
 	              <i className="fa fa-send"></i>
           		</div>
 	          	<div className="col-sm-10">
-	              <input type="text" className="form-control" onChange={this.update.bind(this)} id="Subject" value={parentState.Mail.Subject}/>
-  	          	  <input type="text" className="form-control" onChange={this.update.bind(this)} id="From" value={"Reply-To: " + parentState.Mail.From} disabled={true}/>
+	              <input type="text" className="form-control" onChange={this.update.bind(this)} id="Subject" value={parentMail.Subject}/>
+  	          	  <input type="text" className="form-control" onChange={this.update.bind(this)} id="From" value={"Reply-To: " + parentMail.From} disabled={true}/>
 	            </div>
 	            </div>
             </h4>
@@ -86,16 +95,16 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
           			To
           		</div>
 	          	<div className="col-sm-11">
-		          	<input type="text" className="form-control" onChange={this.update.bind(this)} id="To" value={parentState.Mail.To}/>
+		          	<input type="text" className="form-control" onChange={this.update.bind(this)} id="To" value={parentMail.To}/>
 		        </div>
 		    </div>
 
-            <textarea onChange={this.update.bind(this)} id="Body" className="form-control h140">{parentState.Mail.Body}</textarea>
+            <textarea onChange={this.update.bind(this)} id="Body" className="form-control h140">{parentMail.Body}</textarea>
           </div>
           <div className="modal-footer">
             <div style={a}>
-              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentState.Meta.Conceptid + "/pdf"} target="_blank"><i className="fa fa-file-pdf-o" />&nbsp;{parentState.Meta.Invoiceid}.pdf</a></p>
-              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentState.Meta.Conceptid + "/xml"} target="_blank"><i className="fa fa-bank" />&nbsp;{parentState.Meta.Invoiceid}.xml</a></p>
+              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/pdf"} target="_blank"><i className="fa fa-file-pdf-o" />&nbsp;{parentMeta.Invoiceid}.pdf</a></p>
+              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/xml"} target="_blank"><i className="fa fa-bank" />&nbsp;{parentMeta.Invoiceid}.xml</a></p>
               {hourFile}
             </div>
             <a onClick={this.send.bind(this)} className="btn btn-primary" style={{float:"right"}}> Send</a>

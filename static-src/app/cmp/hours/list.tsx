@@ -31,19 +31,19 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
     };
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.ajax();
   }
 
-  private ajax() {
-    let entity = this.props.entity;
-    let year = this.props.year;
+  private ajax(): void {
+    const entity = this.props.entity;
+    const year = this.props.year;
     Axios.get('/api/v1/hours/'+entity+'/'+year, {params: this.state.pagination, headers: {'Accept': 'application/x-msgpack'}, responseType: 'arraybuffer'})
     .then(res => {
-      res.data = msgpackDecode(new Uint8Array(res.data));
-      this.setState({hours: res.data});
-      window.rootdev = {
-        invoiced: res.data
+      const data = msgpackDecode(new Uint8Array(res.data)) as Record<string, string[]>;
+      this.setState({hours: data});
+      (window as Window & { rootdev?: { invoiced?: unknown } }).rootdev = {
+        invoiced: data
       };
     })
     .catch(err => {
@@ -51,12 +51,16 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
     });
   }
 
-  private delete(e: BrowserEvent) {
+  private delete(e: React.MouseEvent<HTMLAnchorElement>): void {
     e.preventDefault();
-    let id = DOM.eventFilter(e, "A").dataset["target"];
+    const node = DOM.eventFilter(e, "A");
+    if (!node) return;
+    const id = node.dataset["target"];
+    const bucket = node.dataset["bucket"];
+    if (!id || !bucket) return;
 
-    Axios.delete(`/api/v1/hour/${this.props.entity}/${this.props.year}/${this.props.bucket}/${id}`)
-    .then(res => {
+    Axios.delete(`/api/v1/hour/${this.props.entity}/${this.props.year}/${bucket}/${id}`)
+    .then(() => {
       location.reload();
     })
     .catch(err => {
@@ -64,15 +68,15 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
     });
   }
 
-  render() {
-    let res:React.JSX.Element[] = [];
-    let that = this;
+  render(): React.JSX.Element {
+    const res:React.JSX.Element[] = [];
+    const that = this;
     let items = 0;
     console.log("hours=",this.state.hours);
 
     if (this.state.hours) {
-      for (let bucket in this.state.hours) {
-        if (! this.state.hours.hasOwnProperty(bucket)) {
+      for (const bucket in this.state.hours) {
+        if (!Object.prototype.hasOwnProperty.call(this.state.hours, bucket)) {
           continue;
         }
         items++;
@@ -82,7 +86,7 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
             <td>{elem}</td>
             <td>
               <a className="btn btn-default btn-hover-primary" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+bucket+"/"+elem}><i className="fa fa-pencil"></i></a>
-              <a className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={elem} onClick={that.delete.bind(that)}><i className="fa fa-trash faa-flash"></i></a>
+              <a className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={elem} data-bucket={bucket} onClick={that.delete.bind(that)}><i className="fa fa-trash faa-flash"></i></a>
             </td></tr>);
         });
       }

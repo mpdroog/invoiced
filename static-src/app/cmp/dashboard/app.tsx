@@ -93,7 +93,7 @@ interface IState {
 
 // Format number with space as thousands separator: 51868.65 -> 51 868,65
 function formatCurrency(value: number): string {
-	let parts = value.toFixed(2).split(".");
+	const parts = value.toFixed(2).split(".");
 	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 	return parts.join(",");
 }
@@ -129,8 +129,8 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 		const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 		const prevYear = parseInt(year) - 1;
 
-		let revstats: {month: string, current: number, previous: number}[] = [];
-		let hourstats: {month: string, current: number, previous: number}[] = [];
+		const revstats: {month: string, current: number, previous: number}[] = [];
+		const hourstats: {month: string, current: number, previous: number}[] = [];
 		let sum = 0;
 
 		// Build data for each month (1-12)
@@ -358,7 +358,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 									<CartesianGrid strokeDasharray="3 3" />
 									<XAxis dataKey="month" tick={{fontSize: 12}} interval={1} />
 									<YAxis tick={{fontSize: 12}} />
-									<Tooltip formatter={(value: number) => `€ ${value.toFixed(2)}`} />
+									<Tooltip formatter={(value) => typeof value === 'number' ? `€ ${value.toFixed(2)}` : value} />
 									<Line type="monotone" dataKey="current" stroke={CHART_COLORS.current} name={year} strokeWidth={2} dot={false} />
 									<Line type="monotone" dataKey="previous" stroke={CHART_COLORS.previous} name={String(prevYear)} strokeWidth={2} dot={false} />
 								</LineChart>
@@ -382,7 +382,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 									<CartesianGrid strokeDasharray="3 3" />
 									<XAxis dataKey="month" tick={{fontSize: 12}} interval={1} />
 									<YAxis tick={{fontSize: 12}} />
-									<Tooltip formatter={(value: number) => `${value.toFixed(1)} hrs`} />
+									<Tooltip formatter={(value) => typeof value === 'number' ? `${value.toFixed(1)} hrs` : value} />
 									<Line type="monotone" dataKey="current" stroke={CHART_COLORS.current} name={year} strokeWidth={2} dot={false} />
 									<Line type="monotone" dataKey="previous" stroke={CHART_COLORS.previous} name={String(prevYear)} strokeWidth={2} dot={false} />
 								</LineChart>
@@ -433,13 +433,13 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 		</div>;
 	}
 
-	componentDidMount() {
+	componentDidMount(): void {
 		this.ajax();
 	}
 
-	private ajax() {
-		let entity = this.props.entity;
-		let year = this.props.year;
+	private ajax(): void {
+		const entity = this.props.entity;
+		const year = this.props.year;
 
 		// Fetch comprehensive dashboard data
 		Axios.get('/api/v1/dashboard/'+entity+'/'+year, {})
@@ -456,7 +456,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 		.then(res => {
 			this.setState({commits: res.data.commits || []});
 		})
-		.catch(err => {
+		.catch(_err => {
 			// Silently ignore - git history may not be available
 		});
 	}

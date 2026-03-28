@@ -22,7 +22,7 @@ interface InvoiceEditState extends Struct.IInvoiceState {
 
 export default class InvoiceEdit extends React.Component<InvoiceEditProps, InvoiceEditState> {
   private revisions: Partial<Struct.IInvoiceState>[];
-  private errors: Record<string, string>;
+  public errors: Record<string, string>;
 
   constructor(props: InvoiceEditProps) {
     super(props);
@@ -41,6 +41,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
         Street2: "",
         Vat: "",
         Coc: "",
+        Tax: "NL21",
       },
       Meta: {
         Conceptid: "",
@@ -82,20 +83,19 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     };
   }
 
-  componentDidMount() {
-    let params = this.props;
-    if (params.id) {
-      this.ajax(params["bucket"], params.id);
+  componentDidMount(): void {
+    const params = this.props;
+    if (params.id && params.bucket) {
+      this.ajax(params.bucket, params.id);
     } else {
       this.ajaxDefaults(params.entity);
     }
   }
 
-  private ajaxDefaults(entity: string) {
-    let that = this;
+  private ajaxDefaults(entity: string): void {
     Axios.get(`/api/v1/entities/${entity}/details`)
     .then(res => {
-      that.setState({
+      this.setState({
         Company: res.data.Entity.Name,
         Entity: {
           Name: res.data.User.Name,
@@ -115,10 +115,10 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     });
   }
 
-  private ajax(bucket: string, name: string) {
-    Axios.get(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${name}`)
+  private ajax(bucket: string, name: string): void {
+    Axios.get(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${name}`)
     .then(res => {
-      this.parseInput.call(this, res.data);
+      this.parseInput(res.data);
     })
     .catch(err => {
       handleErr(err);
@@ -126,27 +126,29 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
   }
 
   private parseInput(data: Struct.IInvoiceState, newbucket?: string): void {
-    if (newbucket) {
-      this.props.bucket = newbucket;
-    }
-    let url = `#${this.props.entity}/${this.props.year}/invoices/edit/${this.props.bucket}/${data.Meta.Conceptid}`;
-    if (window.location.href != url) {
+    const meta = data.Meta;
+    if (!meta) return;
+
+    const bucket = newbucket || this.props.bucket || 'concepts';
+    const url = `#${this.props.entity}/${this.props.year}/invoices/edit/${bucket}/${meta.Conceptid}`;
+    if (window.location.hash !== url) {
       // Update URL so refresh will keep the invoice open
       history.replaceState({}, "", url);
-      this.props.id = data.Meta.Conceptid;
     }
-    data.Meta.Issuedate = data.Meta.Issuedate ? Moment(data.Meta.Issuedate).format('YYYY-MM-DD') : null;
-    data.Meta.Duedate = data.Meta.Duedate ? Moment(data.Meta.Duedate).format('YYYY-MM-DD') : null;
-    data.Meta.Paydate = data.Meta.Paydate ? Moment(data.Meta.Paydate).format('YYYY-MM-DD') : null;
+    meta.Issuedate = meta.Issuedate ? Moment(meta.Issuedate).format('YYYY-MM-DD') : null;
+    meta.Duedate = meta.Duedate ? Moment(meta.Duedate).format('YYYY-MM-DD') : null;
+    meta.Paydate = meta.Paydate ? Moment(meta.Paydate).format('YYYY-MM-DD') : null;
 
-    this.setState(data);
+    this.setState(data as InvoiceEditState);
   }
 
-  private triggerChange(indices: string[], val: string) {
-    if (this.state.Meta.Status === 'FINAL') {
+  private triggerChange(indices: string[], val: string): void {
+    const meta = this.state.Meta;
+    if (meta?.Status === 'FINAL') {
       console.log("Finalized, not allowing changes!");
       return;
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let node: any = this.state;
     for (let i = 0; i < indices.length-1; i++) {
       node = node[ indices[i] ];
@@ -154,12 +156,15 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     node[indices[indices.length-1]] = val;
 
     // Any post-processing
-    if (indices[0] === "Lines") {
-      let idx = indices[1] as any;
-      this.state.Lines[idx] = this.lineUpdate(this.state.Lines[idx]);
-      this.state.Total = this.totalUpdate(this.state.Lines);
+    const lines = this.state.Lines;
+    if (indices[0] === "Lines" && lines) {
+      const idx = parseInt(indices[1], 10);
+      lines[idx] = this.lineUpdate(lines[idx]);
+      const newState = {...this.state, Lines: lines, Total: this.totalUpdate(lines)};
+      this.setState(newState);
+    } else {
+      this.setState({...this.state});
     }
-    this.setState(this.state);
     this.revisions.push({}); // TODO :)
   }
 
@@ -169,12 +174,12 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     }
     val = val.replace(/,/g, ".");
     if (isNeg) {
-      val = val.replace(/[^\d.\-]/g, '');
+      val = val.replace(/[^\d.-]/g, '');
     } else {
       val = val.replace(/[^\d.]/g, '');
     }
 
-    let idx = val.indexOf(".");
+    const idx = val.indexOf(".");
     if (idx === -1) {
       return val + ".00";
     }
@@ -201,16 +206,17 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
 
   private totalUpdate(lines: Struct.IInvoiceLine[]): Struct.IInvoiceTotal {
     let ex = new Big(0);
-    lines.forEach(function(val: IInvoiceLine) {
+    lines.forEach(function(val: Struct.IInvoiceLine) {
       console.log("Add", val.Total);
       ex = ex.plus(val.Total);
     });
 
     let tax = new Big(0);
-    if (this.state.Customer.Tax === "NL21") {
+    const customer = this.state.Customer;
+    if (customer?.Tax === "NL21") {
       tax = ex.div("100").times("21");
     }
-    let total = ex.plus(tax);
+    const total = ex.plus(tax);
     console.log("totals (ex,tax,total)", ex.toString(), tax.toString(), total.toString());
 
     return {
@@ -221,14 +227,16 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
   }
 
   handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void {
-    console.log("handleChange", e.target.dataset["key"]);
-    let indices = e.target.dataset["key"].split('.');
+    const key = e.target.dataset["key"];
+    if (!key) return;
+    console.log("handleChange", key);
+    const indices = key.split('.');
     this.triggerChange(indices, e.target.value);
   }
 
-  private save(e: BrowserEvent) {
+  private save(e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>): void {
     e.preventDefault();
-    let req = JSON.parse(JSON.stringify(this.state));
+    const req = JSON.parse(JSON.stringify(this.state));
     console.log(req);
 
     Axios.post('/api/v1/invoice/'+this.props.entity+'/'+this.props.year, req)
@@ -236,7 +244,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       this.parseInput.call(this, res.data);
     })
     .catch(err => {
-      if (err.response && err.response.status === 417) {
+      if (err.response?.status === 417) {
         this.errors = err.response.data.Fields;
         prettyErr(err.response.data);
         return;
@@ -245,75 +253,88 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     });
   }
 
-  private reset(e: BrowserEvent) {
+  private reset(e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>): void {
     e.preventDefault();
-    Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${this.state.Meta.Conceptid}/reset`, {})
+    const meta = this.state.Meta;
+    if (!meta) return;
+    Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/reset`, {})
     .then(res => {
-      this.parseInput.call(this, res.data, res.headers["x-bucket-change"]);
+      // Reset always moves to concepts bucket
+      this.parseInput(res.data, "concepts");
     })
     .catch(err => {
       handleErr(err);
     });
   }
 
-  private finalize(e: BrowserEvent) {
+  private finalize(e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>): void {
     e.preventDefault();
-    Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${this.state.Meta.Conceptid}/finalize`, {})
+    const meta = this.state.Meta;
+    if (!meta) return;
+    Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/finalize`, {})
     .then(res => {
-      this.parseInput.call(this, res.data, res.headers["x-bucket-change"]);
+      this.parseInput(res.data, res.headers["x-bucket-change"]);
     })
     .catch(err => {
       handleErr(err);
     });
   }
 
-  private pdf() {
-    if (this.state.Meta.Status !== 'FINAL') {
+  private pdf(): void {
+    const meta = this.state.Meta;
+    if (meta?.Status !== 'FINAL') {
       console.log("PDF only available in finalized invoices");
       return;
     }
-    let url = `/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${this.props.id}/pdf`;
+    const url = `/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${this.props.id}/pdf`;
     console.log(`Open PDF ${url}`);
     location.assign(url);
   }
 
-  private selectCustomer(data: {Name: string; Street1: string; Street2: string; VAT: string; COC: string; NoteAdd?: string; BillingEmail?: string[]}): void {
+  private selectCustomer(data: {Name: string; Street1?: string; Street2?: string; VAT?: string; COC?: string; NoteAdd?: string; BillingEmail?: string[]}): void {
     console.log("Select customer", data);
     this.setState({
       Customer: {
         Name: data.Name,
-        Street1: data.Street1,
-        Street2: data.Street2,
-        Vat: data.VAT,
-        Coc: data.COC
+        Street1: data.Street1 || "",
+        Street2: data.Street2 || "",
+        Vat: data.VAT || "",
+        Coc: data.COC || "",
+        Tax: "NL21"
       },
       Notes: data.NoteAdd,
       Mail: {
         ...this.state.Mail,
-        To: data.BillingEmail.join(", ")
+        From: this.state.Mail?.From || "",
+        Subject: this.state.Mail?.Subject || "",
+        Body: this.state.Mail?.Body || "",
+        To: (data.BillingEmail || []).join(", ")
       }
     });
   }
 
-  private email() {
+  private email(): void {
     this.setState({State: {email: !this.state.State.email}});
   }
 
-	render() {
-    let inv = this.state;
-    let that = this;
+	render(): React.JSX.Element {
+    const inv = this.state;
+    const that = this;
+    const meta = inv.Meta || { Status: "NEW", Conceptid: "", Invoiceid: "", Ponumber: "", HourFile: "" };
+    const entity = inv.Entity || { Name: "", Street1: "", Street2: "" };
+    const customer = inv.Customer || { Name: "", Street1: "", Street2: "", Vat: "", Coc: "", Tax: "NL21" };
 
 		return <form><div className="normalheader">
 		    <div className="hpanel hblue">
           <div className="panel-heading hbuilt">
             <div className="panel-tools">
               <div className="btn-group nm7">
-                <button className="btn btn-default btn-hover-success" disabled={this.revisions.length === 0 || inv.Meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i> Save</button>
-                <button className="btn btn-default btn-hover-danger" disabled={inv.Meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fa fa-lock"></i> Finalize</button>
-                <a className="btn btn-default btn-hover-success" disabled={inv.Meta.Status !== "FINAL"} onClick={this.pdf.bind(this)}><i className="fa fa-file-pdf-o"></i> PDF</a>
-                <a className="btn btn-default btn-hover-success" disabled={inv.Meta.Status !== "FINAL"} onClick={this.email.bind(this)}><i className="fa fa-send"></i> E-mail</a>
+                <button className="btn btn-default btn-hover-success" disabled={this.revisions.length === 0 || meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i> Save</button>
+                <button className="btn btn-default btn-hover-danger" disabled={meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fa fa-lock"></i> Finalize</button>
+                <button className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.pdf.bind(this)}><i className="fa fa-file-pdf-o"></i> PDF</button>
+                <button className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.email.bind(this)}><i className="fa fa-send"></i> E-mail</button>
 
-                <button className="btn btn-default btn-hover-danger" disabled={inv.Meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fa fa-unlock"></i> Reset</button>
+                <button className="btn btn-default btn-hover-danger" disabled={meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fa fa-unlock"></i> Reset</button>
 
               </div>
 
@@ -322,7 +343,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
           </div>
           <div className="panel-body">
 
-<div className={"invoice group " + (inv.Meta.Status === 'FINAL' ? 'o50' : '')}>
+<div className={"invoice group " + (meta.Status === 'FINAL' ? 'o50' : '')}>
   <div className="row">
     <div className="company col-sm-4">
       <input className="form-control" type="text" data-key="Company" onChange={that.handleChange.bind(this)} value={inv.Company}/>
@@ -332,9 +353,9 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       From
     </div>
     <div className="entity col-sm-4">
-      <input className="form-control" type="text" data-key="Entity.Name" onChange={that.handleChange.bind(this)} value={inv.Entity.Name}/>
-      <input className="form-control" type="text" data-key="Entity.Street1" onChange={that.handleChange.bind(this)} value={inv.Entity.Street1}/>
-      <input className="form-control" type="text" data-key="Entity.Street2" onChange={that.handleChange.bind(this)} value={inv.Entity.Street2}/>
+      <input className="form-control" type="text" data-key="Entity.Name" onChange={that.handleChange.bind(this)} value={entity.Name}/>
+      <input className="form-control" type="text" data-key="Entity.Street1" onChange={that.handleChange.bind(this)} value={entity.Street1}/>
+      <input className="form-control" type="text" data-key="Entity.Street2" onChange={that.handleChange.bind(this)} value={entity.Street2}/>
     </div>
   </div>
 
@@ -343,13 +364,13 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       Invoice For
     </div>
     <div className="col-sm-3">
-      <Autocomplete data-key="Customer.Name" onSelect={that.selectCustomer.bind(that)} onChange={that.handleChange.bind(that)} required={true} placeholder="Company Name" url={"/api/v1/debtors/"+that.props.entity+"/search"} value={inv.Customer.Name} />
-      <div className="pr"><input className="form-control" type="text" data-key="Customer.Street1" onChange={that.handleChange.bind(this)} value={inv.Customer.Street1} placeholder="Street1" /><i className="fa fa-asterisk text-danger fa-input"></i></div>
-      <div className="pr"><input className="form-control" type="text" data-key="Customer.Street2" onChange={that.handleChange.bind(this)} value={inv.Customer.Street2} placeholder="Street2" /><i className="fa fa-asterisk text-danger fa-input"></i></div>
+      <Autocomplete data-key="Customer.Name" onSelect={that.selectCustomer.bind(that)} onChange={that.handleChange.bind(that)} required={true} placeholder="Company Name" url={"/api/v1/debtors/"+that.props.entity+"/search"} value={customer.Name} />
+      <div className="pr"><input className="form-control" type="text" data-key="Customer.Street1" onChange={that.handleChange.bind(this)} value={customer.Street1} placeholder="Street1" /><i className="fa fa-asterisk text-danger fa-input"></i></div>
+      <div className="pr"><input className="form-control" type="text" data-key="Customer.Street2" onChange={that.handleChange.bind(this)} value={customer.Street2} placeholder="Street2" /><i className="fa fa-asterisk text-danger fa-input"></i></div>
 
-      <input className="form-control" type="text" data-key="Customer.Vat" onChange={that.handleChange.bind(this)} value={inv.Customer.Vat} placeholder="VAT-number"/>
-      <input className="form-control" type="text" data-key="Customer.Coc" onChange={that.handleChange.bind(this)} value={inv.Customer.Coc} placeholder="Chamber Of Commerce (CoC)"/>
-      <select className="form-control" data-key="Customer.Tax" onChange={that.handleChange.bind(this)} value={inv.Customer.Tax} placeholder="TAX plan">
+      <input className="form-control" type="text" data-key="Customer.Vat" onChange={that.handleChange.bind(this)} value={customer.Vat} placeholder="VAT-number"/>
+      <input className="form-control" type="text" data-key="Customer.Coc" onChange={that.handleChange.bind(this)} value={customer.Coc} placeholder="Chamber Of Commerce (CoC)"/>
+      <select className="form-control" data-key="Customer.Tax" onChange={that.handleChange.bind(this)} value={customer.Tax}>
         <option value="NL21">NL21 (Domestic)</option>
         <option value="EU0">EU (ICP)</option>
         <option value="WORLD0">Outside EU (export)</option>
@@ -364,23 +385,23 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
               Invoice ID
             </td>
             <td>
-              <LockedInput type="text" value={inv.Meta.Invoiceid} placeholder="AUTOGENERATED" onChange={that.handleChange.bind(that)} locked={true} data-key="Meta.Invoiceid"/>
+              <LockedInput type="text" value={meta.Invoiceid} placeholder="AUTOGENERATED" onChange={that.handleChange.bind(that)} locked={true} data-key="Meta.Invoiceid"/>
             </td>
           </tr>
           <tr>
             <td className="text">Issue Date</td>
             <td>
-              <LockedInput type="date" value={inv.Meta.Issuedate} placeholder="AUTOGENERATED" onChange={that.handleChange.bind(that)} locked={true} data-key="Meta.Issuedate"/>
+              <LockedInput type="date" value={meta.Issuedate || ""} placeholder="AUTOGENERATED" onChange={that.handleChange.bind(that)} locked={true} data-key="Meta.Issuedate"/>
             </td>
           </tr>
           <tr>
             <td className="text">PO Number</td>
-            <td><input className="form-control" type="text" data-key="Meta.Ponumber" onChange={that.handleChange.bind(that)} value={inv.Meta.Ponumber}/></td>
+            <td><input className="form-control" type="text" data-key="Meta.Ponumber" onChange={that.handleChange.bind(that)} value={meta.Ponumber}/></td>
           </tr>
           <tr>
             <td className="text">Due Date</td>
             <td>
-                <input type="date" value={inv.Meta.Duedate} onChange={that.handleChange.bind(that)} className="form-control" data-key="Meta.Duedate" />
+                <input type="date" value={meta.Duedate || ""} onChange={that.handleChange.bind(that)} className="form-control" data-key="Meta.Duedate" />
             </td>
           </tr>
         </tbody>
@@ -400,8 +421,8 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       <p>Banking details</p>
       <table className="table mb0"><tbody>
         <tr><td className="text">VAT</td><td className="pr">
-          <LockedInput type="text" value={inv.Bank.Vat} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Vat" required={true} /></td></tr>
-        <tr><td className="text">CoC</td><td className="pr"><LockedInput type="text" value={inv.Bank.Coc} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Coc" required={true} /></td></tr>
+          <LockedInput type="text" value={(inv.Bank || {Vat: "", Coc: "", Iban: "", Bic: ""}).Vat} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Vat" required={true} /></td></tr>
+        <tr><td className="text">CoC</td><td className="pr"><LockedInput type="text" value={(inv.Bank || {Vat: "", Coc: "", Iban: "", Bic: ""}).Coc} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Coc" required={true} /></td></tr>
         <tr><td className="text">IBAN</td><td className="pr"><LockedInput type="text" value={inv.Bank.Iban} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Iban" required={true} /></td></tr>
         <tr><td className="text">BIC</td><td className="pr"><LockedInput type="text" value={inv.Bank.Bic} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Bic" required={true} /></td></tr>
       </tbody></table>

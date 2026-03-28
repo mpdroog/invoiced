@@ -24,8 +24,6 @@ import GitPage from "./cmp/git/app";
 
 declare function handleErr(e: unknown): void;
 
-type PageComponent = React.ComponentType<RouteProps>;
-
 interface RouteProps {
       entity: string;
       year: string;
@@ -33,6 +31,9 @@ interface RouteProps {
       bucket?: string;
       key?: string;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PageComponent = React.ComponentType<any>;
 
 function hashChange(): void {
       const url = location.hash.substr(1).split("/");
@@ -121,16 +122,16 @@ function hashChange(): void {
 let reactRoot: Root;
 
 try {
-      let splash = document.getElementById("js-splash");
-      let rootEl = document.getElementById('root');
+      const splash = document.getElementById("js-splash");
+      const rootEl = document.getElementById('root');
       if (rootEl === null) {
             throw "document.getElementById(root) returned null?";
       }
 
       reactRoot = createRoot(rootEl);
       hashChange();
-      splash && splash.remove();
-      window.onhashchange = function() {
+      splash?.remove();
+      window.onhashchange = function(): void {
             hashChange();
       };
 

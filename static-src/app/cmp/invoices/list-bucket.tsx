@@ -1,41 +1,44 @@
 import * as React from "react";
 import Axios from "axios";
-import {IInvoiceState} from "./invoice-add";
+import {IInvoiceState} from "./edit-struct";
 import {DOM} from "../../lib/dom";
 
 interface IInvoicePagination {
-  from?: string
-  count?: number
+  from?: number;
+  count?: number;
 }
 interface IInvoiceListState {
-  pagination?: IInvoicePagination
-  invoices?: IInvoiceState[]
-  isBalance: boolean
-  sortField: string
-  sortAsc: boolean
+  pagination?: IInvoicePagination;
+  invoices?: IInvoiceState[];
+  isBalance: boolean;
+  sortField: string;
+  sortAsc: boolean;
 }
 
 interface IInvoiceListProps {
-  bucket: string
-  title: string
+  bucket: string;
+  title: string;
+  entity: string;
+  year: string;
+  items: Record<string, IInvoiceState[]>;
 }
 
 export default class Invoices extends React.Component<IInvoiceListProps, IInvoiceListState> {
   constructor(props: IInvoiceListProps) {
       super(props);
       this.state = {
-        "pagination": {
-          "from": 0,
-          "count": 50
+        pagination: {
+          from: 0,
+          count: 50
         },
-        "invoices": null,
-        "isBalance": false,
-        "sortField": "Invoice",
-        "sortAsc": true,
+        invoices: [],
+        isBalance: false,
+        sortField: "Invoice",
+        sortAsc: true,
       };
   }
 
-  private toggleSort(field: string) {
+  private toggleSort(field: string): void {
     if (this.state.sortField === field) {
       this.setState({sortAsc: !this.state.sortAsc});
     } else {
@@ -43,7 +46,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     }
   }
 
-  private getSortValue(inv: IInvoiceState, field: string): any {
+  private getSortValue(inv: IInvoiceState, field: string): string | number {
     switch (field) {
       case "Invoice": return inv.Meta.Invoiceid || inv.Meta.Conceptid || "";
       case "Customer": return inv.Customer.Name || "";
@@ -73,19 +76,21 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     });
   }
 
-  private delete(e: BrowserEvent) {
+  private delete(e: React.MouseEvent<HTMLAnchorElement>): void {
     e.preventDefault();
-    let node = DOM.eventFilter(e, "A");
-    let id = node.dataset["target"];
-    let bucket = node.dataset.bucket;
+    const node = DOM.eventFilter(e, "A");
+    if (!node) return;
+    const id = node.dataset["target"];
+    const bucket = node.dataset["bucket"];
+    const isDisabled = node.dataset["disabled"] === "true";
 
-    if (node.attributes.disabled) {
+    if (isDisabled) {
       console.log("btn disabled");
       return;
     }
 
     Axios.delete(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${id}`)
-    .then(res => {
+    .then(() => {
       location.reload();
     })
     .catch(err => {
@@ -95,17 +100,19 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
 
   private setPaid(e: React.MouseEvent<HTMLAnchorElement>): void {
     e.preventDefault();
-    let node = DOM.eventFilter(e, "A");
-    let id = node.dataset.id;
-    let bucket = node.dataset.bucket;
+    const node = DOM.eventFilter(e, "A");
+    if (!node) return;
+    const id = node.dataset["id"];
+    const bucket = node.dataset["bucket"];
+    const isDisabled = node.dataset["disabled"] === "true";
 
-    if (node.attributes.disabled) {
+    if (isDisabled) {
       console.log("btn disabled");
       return;
     }
 
     Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${id}/paid`, {})
-    .then(res => {
+    .then(() => {
       location.reload();
     })
     .catch(err => {
@@ -114,21 +121,26 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
   }
 
   private conceptLine(key: string, inv: IInvoiceState, bucket: string, isPending: boolean): React.JSX.Element {
-    var today = new Date().toISOString().split('T')[0];
-    var expiryClass = "";
-    if (isPending && inv.Meta.Duedate && inv.Meta.Duedate <= today) {
+    const today = new Date().toISOString().split('T')[0];
+    let expiryClass = "";
+    if (isPending && inv.Meta?.Duedate && inv.Meta.Duedate <= today) {
       expiryClass = 'bg-danger';
     }
+    const meta = inv.Meta || { Status: "NEW", Invoiceid: "", Conceptid: "", Duedate: "", Ponumber: "", HourFile: "" };
+    const customer = inv.Customer || { Name: "", Street1: "", Street2: "", Vat: "", Coc: "", Tax: "NL21" };
+    const total = inv.Total || { Ex: "0.00", Tax: "0.00", Total: "0.00" };
+    const isDeleteDisabled = meta.Status === 'FINAL' || meta.Invoiceid.length > 0;
+    const isPaidDisabled = bucket === 'concepts';
     return <tr key={key}>
       <td>{key}</td>
-      <td>{inv.Meta.Invoiceid}</td>
-      <td>{inv.Customer.Name}</td>
-      <td>&euro; {inv.Total.Total}</td>
-      <td className={expiryClass}>{inv.Meta.Duedate}</td>
+      <td>{meta.Invoiceid}</td>
+      <td>{customer.Name}</td>
+      <td>&euro; {total.Total}</td>
+      <td className={expiryClass}>{meta.Duedate}</td>
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
-        <a disabled={inv.Meta.Status === 'FINAL' || inv.Meta.Invoiceid.length > 0} className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={key} data-status={inv.Meta.Status} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
-        <a disabled={bucket === 'concepts'} className="btn btn-default btn-hover-danger faa-parent animated-hover" data-id={key} data-bucket={bucket} onClick={this.setPaid.bind(this)}><i className="fa fa-check faa-flash"></i></a>
+        <a className={"btn btn-default btn-hover-danger faa-parent animated-hover" + (isDeleteDisabled ? " disabled" : "")} data-target={key} data-status={meta.Status} data-disabled={String(isDeleteDisabled)} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
+        <a className={"btn btn-default btn-hover-danger faa-parent animated-hover" + (isPaidDisabled ? " disabled" : "")} data-id={key} data-bucket={bucket} data-disabled={String(isPaidDisabled)} onClick={this.setPaid.bind(this)}><i className="fa fa-check faa-flash"></i></a>
       </td>
     </tr>;
   }
@@ -158,25 +170,20 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     }
 
     console.log("Upload");
-    let file = e.target.files[0];
-    let form = new FormData();
+    const file = e.target.files[0];
+    const form = new FormData();
     form.append('file', file, file.name);
 
     // api/v1/invoice/:entity/:year/:bucket/:id/balance
     Axios.post('/api/v1/invoice-balance/'+this.props.entity+'/'+this.props.year,
       form, {headers: {'Content-Type': 'multipart/form-data' }})
-    .then(res => {
+    .then(() => {
       // TODO: Report something to UI?
       location.reload();
     })
     .catch(err => {
       handleErr(err);
     });
-  }
-
-  // TODO: Ugly hack...
-  private bucket(invoiceId: string): string {
-    return 'Q' + invoiceId.split("-")[0].split("Q")[1];
   }
 
   private sortHeader(field: string): React.JSX.Element {
@@ -187,22 +194,22 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     return <th style={{cursor: "pointer"}} onClick={() => this.toggleSort(field)}>{field}{icon}</th>;
   }
 
-	render() {
-    let res:React.JSX.Element[] = [];
+	render(): React.JSX.Element {
+    const res:React.JSX.Element[] = [];
     let invoiceList: {key: string, inv: IInvoiceState, bucket: string}[] = [];
     const isPending = this.props.bucket === "sales-invoices-unpaid";
 
     if (this.props.items) {
-      for (let dir in this.props.items) {
-        if (! this.props.items.hasOwnProperty(dir)) {
+      for (const dir in this.props.items) {
+        if (!Object.prototype.hasOwnProperty.call(this.props.items, dir)) {
           continue;
         }
         // Extract quarter from directory path (3rd element from end): .../Q1/sales-invoices-paid/ -> Q1
-        let parts = dir.split("/").filter(p => p.length > 0);
-        let bucket = this.props.bucket === "concepts" ? "concepts" : parts[parts.length - 2];
+        const parts = dir.split("/").filter(p => p.length > 0);
+        const bucket = this.props.bucket === "concepts" ? "concepts" : parts[parts.length - 2];
 
         this.props.items[dir].forEach((inv) => {
-          let key: string = inv.Meta.Conceptid;
+          const key: string = inv.Meta.Conceptid;
           invoiceList.push({key, inv, bucket});
         });
       }
@@ -224,7 +231,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       res.push(<tr key="empty"><td colSpan={6}>No invoices yet :)</td></tr>);
     }
 
-    var headerButtons = <div/>;
+    let headerButtons = <div/>;
     if (this.props.bucket === "concepts") {
       headerButtons = <div>
         <a id="js-new" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/add"} className="btn btn-default btn-hover-primary showhide">
@@ -239,8 +246,8 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       </div>;
     }
 
-    let url = `/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/balance`;
-    let balanceUpload = <div>
+    const url = `/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/balance`;
+    const balanceUpload = <div>
       <form className="form-inline hidden" method="post" encType="multipart/form-data" action={url}>
         <input id="js-balance-field" accept=".xml" className="form-control" name="file" type="file" onChange={this.uploadBalance.bind(this)} />
         <button className="btn btn-default btn-hover-primary" type="submit"><i className="fa fa-arrow-up"></i> Upload</button>

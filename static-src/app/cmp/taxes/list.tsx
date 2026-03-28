@@ -1,18 +1,35 @@
 import * as React from "react";
 import Axios from "axios";
 
-export default class TaxesPage extends React.Component<{}, {}> {
-  constructor(props) {
+interface TaxData {
+  Ex: string;
+  Tax: string;
+  EUEx: string;
+  EUCompany: Record<string, string>;
+}
+
+interface TaxesPageProps {
+  entity: string;
+  year: string;
+}
+
+interface TaxesPageState {
+  quarter: string;
+  data: TaxData | null;
+}
+
+export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPageState> {
+  constructor(props: TaxesPageProps) {
     super(props);
     this.state = {quarter: "Q1", data: null};
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     //this.ajax();
   }
 
-  private ajax() {
-    var that = this;
+  private ajax(): void {
+    const that = this;
     Axios.post('/api/v1/taxes/'+this.props.entity+'/'+this.props.year+'/'+this.state.quarter)
     .then(res => {
       that.setState({data: res.data});
@@ -22,17 +39,17 @@ export default class TaxesPage extends React.Component<{}, {}> {
     });
   }
 
-  private setQuarter(e) {
+  private setQuarter(e: React.ChangeEvent<HTMLInputElement>): void {
     console.log(e.target.value);
     this.setState({quarter: e.target.value});
   }
 
-	render() {
+	render(): React.JSX.Element {
     let sum = null;
     if (this.state.data) {
-      let icp = [];
-      for (let vat in this.state.data.EUCompany) {
-        if (! this.state.data.EUCompany.hasOwnProperty(vat)) {
+      const icp = [];
+      for (const vat in this.state.data.EUCompany) {
+        if (!Object.prototype.hasOwnProperty.call(this.state.data.EUCompany, vat)) {
           continue;
         }
         icp.push(<tr key={"icp"+vat}>
