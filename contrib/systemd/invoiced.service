@@ -1,0 +1,76 @@
+[Unit]
+Description=Invoiced
+Requires=network.target
+After=network.target
+
+[Service]
+Type=notify
+LimitNOFILE=8192
+Type=notify
+Restart=on-failure
+
+StandardOutput=journal
+StandardError=journal
+
+ExecStart=/etc/invoiced/invoiced -c=/etc/invoiced/config.toml
+WorkingDirectory=/var/invoiced/acct.COMPANY.nl
+User=invoiced
+Group=invoiced
+
+NoNewPrivileges=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+# Filesystem restrictions
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectKernelLogs=true
+ProtectClock=true
+ProtectHostname=true
+
+# Remove ability to see other processes
+ProcSubset=pid
+ProtectProc=invisible
+
+# Restrict writable paths
+ReadOnlyDirectories=/var/www/acct.COMPANY.nl /etc/invoiced
+ReadWritePaths=/var/www/acct.COMPANY.nl/acct
+
+# Restrict networking further
+# IPAddressDeny=any
+# IPAddressAllow=localhost
+# IPAddressAllow=172.65.0.0/16
+# IPAddressAllow=2606:4700::/32
+
+# Restrict realtime features
+RestrictRealtime=true
+
+# Restrict namespaces
+RestrictNamespaces=true
+
+# Lock personality (prevents ABI changes)
+LockPersonality=true
+
+# Disable ptrace
+RestrictSUIDSGID=true
+
+# System call filtering
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Remove environment risks
+RemoveIPC=true
+PrivateUsers=true
+ProtectKernelLogs=true
+MemoryDenyWriteExecute=true
+
+# CGroup ruling
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target
