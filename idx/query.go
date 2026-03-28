@@ -3,37 +3,20 @@ package idx
 import (
 	"database/sql"
 
+	"github.com/mpdroog/invoiced/model"
 	"github.com/shopspring/decimal"
 )
 
-// TaxSummary contains aggregated tax data for a quarter
-type TaxSummary struct {
-	Ex        string            // Sum revenue of NL invoices
-	Tax       string            // Tax to pay
-	EUEx      string            // Sum revenue of EU invoices
-	EUCompany map[string]string // Revenue per EU company VAT number (for ICP)
-	ExWorld   string            // Sum revenue of world invoices
-	ExRevenue string            // Sum revenue of everything
-}
-
-// InvoiceAuditLine contains info for audit logging
-type InvoiceAuditLine struct {
-	InvoiceID   string
-	TaxCategory string
-	TotalEx     string
-	TotalTax    string
-}
-
 // GetQuarterTaxSummary returns aggregated tax data for a specific quarter
-func GetQuarterTaxSummary(entity string, year int, quarter int) (*TaxSummary, []InvoiceAuditLine, error) {
+func GetQuarterTaxSummary(entity string, year int, quarter int) (*model.TaxSummary, []model.InvoiceAuditLine, error) {
 	if DB == nil {
 		return nil, nil, nil
 	}
 
-	sum := &TaxSummary{
+	sum := &model.TaxSummary{
 		EUCompany: make(map[string]string),
 	}
-	var audit []InvoiceAuditLine
+	var audit []model.InvoiceAuditLine
 
 	// Initialize decimals
 	nlEx := decimal.Zero
@@ -78,7 +61,7 @@ func GetQuarterTaxSummary(entity string, year int, quarter int) (*TaxSummary, []
 		}
 
 		// Add to audit log
-		audit = append(audit, InvoiceAuditLine{
+		audit = append(audit, model.InvoiceAuditLine{
 			InvoiceID:   invoiceid,
 			TaxCategory: taxCat,
 			TotalEx:     totalEx,
@@ -121,15 +104,8 @@ func GetQuarterTaxSummary(entity string, year int, quarter int) (*TaxSummary, []
 	return sum, audit, nil
 }
 
-// CustomerTotal represents revenue per customer
-type CustomerTotal struct {
-	Name         string
-	Revenue      string
-	InvoiceCount int
-}
-
 // GetYearlyCustomerTotals returns revenue totals grouped by customer for a year
-func GetYearlyCustomerTotals(entity string, year int, paidOnly bool) ([]CustomerTotal, error) {
+func GetYearlyCustomerTotals(entity string, year int, paidOnly bool) ([]model.CustomerTotal, error) {
 	if DB == nil {
 		return nil, nil
 	}
@@ -152,9 +128,9 @@ func GetYearlyCustomerTotals(entity string, year int, paidOnly bool) ([]Customer
 	}
 	defer rows.Close()
 
-	var results []CustomerTotal
+	var results []model.CustomerTotal
 	for rows.Next() {
-		var ct CustomerTotal
+		var ct model.CustomerTotal
 		var revenue float64
 		if err := rows.Scan(&ct.Name, &revenue, &ct.InvoiceCount); err != nil {
 			return nil, err
@@ -166,20 +142,8 @@ func GetYearlyCustomerTotals(entity string, year int, paidOnly bool) ([]Customer
 	return results, rows.Err()
 }
 
-// QuarterSummary contains aggregated data for a quarter
-type QuarterSummary struct {
-	Quarter       int
-	InvoiceCount  int
-	TotalRevenue  string
-	TotalTax      string
-	PaidCount     int
-	UnpaidCount   int
-	PaidRevenue   string
-	UnpaidRevenue string
-}
-
 // GetYearlyQuarterSummary returns summary data for all quarters in a year
-func GetYearlyQuarterSummary(entity string, year int) ([]QuarterSummary, error) {
+func GetYearlyQuarterSummary(entity string, year int) ([]model.QuarterSummary, error) {
 	if DB == nil {
 		return nil, nil
 	}
@@ -205,9 +169,9 @@ func GetYearlyQuarterSummary(entity string, year int) ([]QuarterSummary, error) 
 	}
 	defer rows.Close()
 
-	var results []QuarterSummary
+	var results []model.QuarterSummary
 	for rows.Next() {
-		var qs QuarterSummary
+		var qs model.QuarterSummary
 		var revenue, tax, paidRev, unpaidRev float64
 		if err := rows.Scan(&qs.Quarter, &qs.InvoiceCount, &revenue, &tax,
 			&qs.PaidCount, &qs.UnpaidCount, &paidRev, &unpaidRev); err != nil {
@@ -223,20 +187,13 @@ func GetYearlyQuarterSummary(entity string, year int) ([]QuarterSummary, error) 
 	return results, rows.Err()
 }
 
-// MonthlyMetric contains revenue and hours for a month
-type MonthlyMetric struct {
-	RevenueTotal string
-	RevenueEx    string
-	Hours        string
-}
-
 // GetMonthlyMetrics returns revenue and hours grouped by month for a year
-func GetMonthlyMetrics(entity string, year int) (map[string]*MonthlyMetric, error) {
+func GetMonthlyMetrics(entity string, year int) (map[string]*model.MonthlyMetric, error) {
 	if DB == nil {
 		return nil, nil
 	}
 
-	m := make(map[string]*MonthlyMetric)
+	m := make(map[string]*model.MonthlyMetric)
 
 	// Get revenue per month from paid invoices (using issuedate)
 	rows, err := DB.Query(`
@@ -260,7 +217,7 @@ func GetMonthlyMetrics(entity string, year int) (map[string]*MonthlyMetric, erro
 		if err := rows.Scan(&yearmonth, &total, &ex); err != nil {
 			return nil, err
 		}
-		m[yearmonth] = &MonthlyMetric{
+		m[yearmonth] = &model.MonthlyMetric{
 			RevenueTotal: decimal.NewFromFloat(total).StringFixed(2),
 			RevenueEx:    decimal.NewFromFloat(ex).StringFixed(2),
 			Hours:        "0.00",
@@ -292,7 +249,7 @@ func GetMonthlyMetrics(entity string, year int) (map[string]*MonthlyMetric, erro
 			return nil, err
 		}
 		if _, ok := m[yearmonth]; !ok {
-			m[yearmonth] = &MonthlyMetric{
+			m[yearmonth] = &model.MonthlyMetric{
 				RevenueTotal: "0.00",
 				RevenueEx:    "0.00",
 			}
@@ -328,16 +285,10 @@ func GetYearlyTotal(entity string, year int) (string, error) {
 	return decimal.NewFromFloat(total.Float64).StringFixed(2), nil
 }
 
-// UnpaidSummary contains summary of unpaid invoices
-type UnpaidSummary struct {
-	Count       int
-	TotalAmount string
-}
-
 // GetUnpaidSummary returns count and total of unpaid invoices
-func GetUnpaidSummary(entity string, year int) (*UnpaidSummary, error) {
+func GetUnpaidSummary(entity string, year int) (*model.UnpaidSummary, error) {
 	if DB == nil {
-		return &UnpaidSummary{Count: 0, TotalAmount: "0.00"}, nil
+		return &model.UnpaidSummary{Count: 0, TotalAmount: "0.00"}, nil
 	}
 
 	var count int
@@ -353,25 +304,14 @@ func GetUnpaidSummary(entity string, year int) (*UnpaidSummary, error) {
 		return nil, err
 	}
 
-	return &UnpaidSummary{
+	return &model.UnpaidSummary{
 		Count:       count,
 		TotalAmount: decimal.NewFromFloat(total.Float64).StringFixed(2),
 	}, nil
 }
 
-// OverdueInvoice represents an overdue invoice
-type OverdueInvoice struct {
-	ID           string
-	InvoiceID    string
-	CustomerName string
-	DueDate      string
-	Amount       string
-	DaysOverdue  int
-	Quarter      int
-}
-
 // GetOverdueInvoices returns invoices past their due date
-func GetOverdueInvoices(entity string, year int, today string) ([]OverdueInvoice, error) {
+func GetOverdueInvoices(entity string, year int, today string) ([]model.OverdueInvoice, error) {
 	if DB == nil {
 		return nil, nil
 	}
@@ -390,9 +330,9 @@ func GetOverdueInvoices(entity string, year int, today string) ([]OverdueInvoice
 	}
 	defer rows.Close()
 
-	var results []OverdueInvoice
+	var results []model.OverdueInvoice
 	for rows.Next() {
-		var inv OverdueInvoice
+		var inv model.OverdueInvoice
 		var daysOverdue float64
 		if err := rows.Scan(&inv.ID, &inv.InvoiceID, &inv.CustomerName, &inv.DueDate, &inv.Amount, &inv.Quarter, &daysOverdue); err != nil {
 			return nil, err
@@ -404,16 +344,10 @@ func GetOverdueInvoices(entity string, year int, today string) ([]OverdueInvoice
 	return results, rows.Err()
 }
 
-// UnbilledHoursSummary contains summary of unbilled hours
-type UnbilledHoursSummary struct {
-	Count      int
-	TotalHours string
-}
-
 // GetUnbilledHours returns count and total of concept hours (not yet billed)
-func GetUnbilledHours(entity string, year int) (*UnbilledHoursSummary, error) {
+func GetUnbilledHours(entity string, year int) (*model.UnbilledHoursSummary, error) {
 	if DB == nil {
-		return &UnbilledHoursSummary{Count: 0, TotalHours: "0.00"}, nil
+		return &model.UnbilledHoursSummary{Count: 0, TotalHours: "0.00"}, nil
 	}
 
 	var count int
@@ -429,24 +363,14 @@ func GetUnbilledHours(entity string, year int) (*UnbilledHoursSummary, error) {
 		return nil, err
 	}
 
-	return &UnbilledHoursSummary{
+	return &model.UnbilledHoursSummary{
 		Count:      count,
 		TotalHours: decimal.NewFromFloat(total.Float64).StringFixed(2),
 	}, nil
 }
 
-// YearComparison contains comparison between two years
-type YearComparison struct {
-	CurrentYear     int
-	PreviousYear    int
-	CurrentRevenue  string
-	PreviousRevenue string
-	GrowthPercent   string
-	GrowthAmount    string
-}
-
 // GetYearComparison compares revenue between current and previous year
-func GetYearComparison(entity string, currentYear int) (*YearComparison, error) {
+func GetYearComparison(entity string, currentYear int) (*model.YearComparison, error) {
 	if DB == nil {
 		return nil, nil
 	}
@@ -486,7 +410,7 @@ func GetYearComparison(entity string, currentYear int) (*YearComparison, error) 
 		growthPct = growth.Div(previous).Mul(decimal.NewFromInt(100))
 	}
 
-	return &YearComparison{
+	return &model.YearComparison{
 		CurrentYear:     currentYear,
 		PreviousYear:    previousYear,
 		CurrentRevenue:  current.StringFixed(2),

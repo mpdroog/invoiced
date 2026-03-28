@@ -191,6 +191,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
                 <td>{c.date}</td>
                 <td>
                   <button
+                    type="button"
                     className="btn btn-xs btn-default"
                     onClick={() => this.doResetTo(c.fullHash, c.hash)}
                     disabled={this.state.reverting !== null}
@@ -219,6 +220,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
           </div>
           <div className="col-md-6 text-right">
             <button
+              type="button"
               className="btn btn-default m-r-sm"
               onClick={this.doPull.bind(this)}
               disabled={this.state.pulling || this.state.pushing || this.state.reverting !== null}
@@ -230,6 +232,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
               )}
             </button>
             <button
+              type="button"
               className="btn btn-primary m-r-sm"
               onClick={this.doPush.bind(this)}
               disabled={this.state.pushing || this.state.pulling || this.state.reverting !== null || status.ahead === 0}
@@ -242,6 +245,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
             </button>
             {status.ahead > 0 && (
               <button
+                type="button"
                 className="btn btn-danger"
                 onClick={this.doDiscardAll.bind(this)}
                 disabled={this.state.pushing || this.state.pulling || this.state.reverting !== null}
@@ -299,6 +303,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
               </table>
               <div className="text-center">
                 <button
+                  type="button"
                   className="btn btn-default m-r-sm"
                   onClick={() => this.loadHistory(hist.page - 1)}
                   disabled={hist.page === 0 || this.state.historyLoading}
@@ -307,6 +312,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
                 </button>
                 <span className="text-muted">Page {hist.page + 1}</span>
                 <button
+                  type="button"
                   className="btn btn-default m-l-sm"
                   onClick={() => this.loadHistory(hist.page + 1)}
                   disabled={!hist.hasMore || this.state.historyLoading}
@@ -325,7 +331,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
         <div className="panel-heading hbuilt">
           <i className="fab fa-git"></i> Git Status
           <div className="panel-tools">
-            <button className="btn btn-default btn-xs" onClick={this.loadStatus.bind(this)}>
+            <button type="button" className="btn btn-default btn-xs" onClick={this.loadStatus.bind(this)}>
               <i className="fas fa-rotate"></i> Refresh
             </button>
           </div>

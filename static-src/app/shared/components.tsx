@@ -149,7 +149,7 @@ export class Autocomplete extends React.Component<AutocompleteProps, Autocomplet
 		backgroundColor: "#f9f9f9"
 	}
 	let suggest: React.JSX.Element | null = null;
-	if (this.state.show && this.state.suggestions) {
+	if (this.state.show && this.state.suggestions.length > 0) {
 		const items: React.JSX.Element[] = [];
 		this.state.suggestions.forEach((item, idx) => {
 			items.push(<div key={"suggest-"+idx} style={i}><a data-key={idx} onClick={this.onSelect.bind(this)}>{item.Name}</a></div>);

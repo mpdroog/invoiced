@@ -4,7 +4,7 @@
   "description": "Invoice Daemon",
   "author": "MP Droog <rootdev@gmail.com>",
   "scripts": {
-    "build": "tsc --noEmit && eslint app/ && vite build",
+    "build": "cd .. && ~/go/bin/tygo generate && cd static-src && tsc --noEmit && eslint app/ && vite build",
     "lint": "eslint app/",
     "lint:fix": "eslint app/ --fix"
   },

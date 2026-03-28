@@ -59,8 +59,17 @@ export default [
       // React rules
       'react/prop-types': 'off',
       'react/react-in-jsx-scope': 'off',
+      'react/button-has-type': 'error', // Prevent accidental form submissions
+      'react/jsx-key': 'error', // Catch missing keys in iterators
+      'react/jsx-no-target-blank': 'error', // Security: require rel="noopener" with target="_blank"
+      'react/no-direct-mutation-state': 'error', // Prevent this.state.x = y or this.state.arr.push()
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+
+      // TypeScript advanced checks
+      '@typescript-eslint/switch-exhaustiveness-check': 'error', // Ensure all enum/union cases handled
+      '@typescript-eslint/await-thenable': 'error', // Only await on Promises
+      '@typescript-eslint/no-unnecessary-condition': 'warn', // Catch always true/false conditions
 
       // General rules
       'no-unused-vars': 'off', // Use TypeScript's instead

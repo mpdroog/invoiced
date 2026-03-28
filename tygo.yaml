@@ -1,0 +1,19 @@
+# tygo configuration - generates TypeScript types from Go structs
+# Run: ~/go/bin/tygo generate
+
+packages:
+  # All API types in one package - no cross-package reference issues
+  - path: "github.com/mpdroog/invoiced/model"
+    output_path: "static-src/app/types/model.ts"
+
+  # Purchase invoice types
+  - path: "github.com/mpdroog/invoiced/purchase"
+    output_path: "static-src/app/types/purchase.ts"
+    include_files:
+      - "struct.go"
+
+  # Entity/User types (for auth)
+  - path: "github.com/mpdroog/invoiced/middleware"
+    output_path: "static-src/app/types/middleware.ts"
+    include_files:
+      - "auth.go"

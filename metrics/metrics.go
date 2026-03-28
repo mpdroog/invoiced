@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -9,42 +10,9 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/idx"
+	"github.com/mpdroog/invoiced/model"
 	"github.com/mpdroog/invoiced/writer"
-	"log"
 )
-
-type DashboardMetric struct {
-	RevenueTotal string
-	RevenueEx    string
-	Hours        string
-}
-
-// DashboardResponse contains all dashboard data
-type DashboardResponse struct {
-	// Monthly metrics (existing)
-	Monthly map[string]*idx.MonthlyMetric `json:"monthly"`
-
-	// Previous year monthly metrics for comparison
-	MonthlyPrevYear map[string]*idx.MonthlyMetric `json:"monthlyPrevYear"`
-
-	// Unpaid invoices summary
-	Unpaid *idx.UnpaidSummary `json:"unpaid"`
-
-	// Overdue invoices
-	Overdue []idx.OverdueInvoice `json:"overdue"`
-
-	// Quarterly breakdown
-	Quarters []idx.QuarterSummary `json:"quarters"`
-
-	// Unbilled hours
-	UnbilledHours *idx.UnbilledHoursSummary `json:"unbilledHours"`
-
-	// Year comparison
-	YearComparison *idx.YearComparison `json:"yearComparison"`
-
-	// Top clients
-	TopClients []idx.CustomerTotal `json:"topClients"`
-}
 
 func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
@@ -66,9 +34,9 @@ func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	// Convert to response format
-	m := make(map[string]*DashboardMetric)
+	m := make(map[string]*model.DashboardMetric)
 	for yearmonth, metric := range idxMetrics {
-		m[yearmonth] = &DashboardMetric{
+		m[yearmonth] = &model.DashboardMetric{
 			RevenueTotal: metric.RevenueTotal,
 			RevenueEx:    metric.RevenueEx,
 			Hours:        metric.Hours,
@@ -101,13 +69,16 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 
 	today := time.Now().Format("2006-01-02")
 
-	resp := &DashboardResponse{}
+	resp := &model.DashboardResponse{}
 
 	// Monthly metrics
 	monthly, err := idx.GetMonthlyMetrics(entity, year)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("metrics.DashboardFull: monthly: %s", err.Error()), 500)
 		return
+	}
+	if monthly == nil {
+		monthly = make(map[string]*model.MonthlyMetric)
 	}
 	resp.Monthly = monthly
 
@@ -117,6 +88,9 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		http.Error(w, fmt.Sprintf("metrics.DashboardFull: monthlyPrev: %s", err.Error()), 500)
 		return
 	}
+	if monthlyPrev == nil {
+		monthlyPrev = make(map[string]*model.MonthlyMetric)
+	}
 	resp.MonthlyPrevYear = monthlyPrev
 
 	// Unpaid summary
@@ -125,13 +99,16 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		http.Error(w, fmt.Sprintf("metrics.DashboardFull: unpaid: %s", err.Error()), 500)
 		return
 	}
-	resp.Unpaid = unpaid
+	resp.Unpaid = *unpaid
 
 	// Overdue invoices
 	overdue, err := idx.GetOverdueInvoices(entity, year, today)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("metrics.DashboardFull: overdue: %s", err.Error()), 500)
 		return
+	}
+	if overdue == nil {
+		overdue = []model.OverdueInvoice{}
 	}
 	resp.Overdue = overdue
 
@@ -141,6 +118,9 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		http.Error(w, fmt.Sprintf("metrics.DashboardFull: quarters: %s", err.Error()), 500)
 		return
 	}
+	if quarters == nil {
+		quarters = []model.QuarterSummary{}
+	}
 	resp.Quarters = quarters
 
 	// Unbilled hours
@@ -149,7 +129,7 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		http.Error(w, fmt.Sprintf("metrics.DashboardFull: unbilled: %s", err.Error()), 500)
 		return
 	}
-	resp.UnbilledHours = unbilled
+	resp.UnbilledHours = *unbilled
 
 	// Year comparison
 	comparison, err := idx.GetYearComparison(entity, year)
@@ -157,7 +137,17 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		http.Error(w, fmt.Sprintf("metrics.DashboardFull: comparison: %s", err.Error()), 500)
 		return
 	}
-	resp.YearComparison = comparison
+	if comparison == nil {
+		comparison = &model.YearComparison{
+			CurrentYear:     year,
+			PreviousYear:    year - 1,
+			CurrentRevenue:  "0.00",
+			PreviousRevenue: "0.00",
+			GrowthPercent:   "0.0",
+			GrowthAmount:    "0.00",
+		}
+	}
+	resp.YearComparison = *comparison
 
 	// Top clients (limit to 5)
 	clients, err := idx.GetYearlyCustomerTotals(entity, year, false)
@@ -165,7 +155,9 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		http.Error(w, fmt.Sprintf("metrics.DashboardFull: clients: %s", err.Error()), 500)
 		return
 	}
-	if len(clients) > 5 {
+	if clients == nil {
+		clients = []model.CustomerTotal{}
+	} else if len(clients) > 5 {
 		clients = clients[:5]
 	}
 	resp.TopClients = clients

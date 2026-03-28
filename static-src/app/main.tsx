@@ -61,6 +61,7 @@ function hashChange(): void {
                                     inject = HoursEdit;
                                     break;
 
+                              case undefined:
                               default:
                                     inject = HoursList;
                                     break;
@@ -75,6 +76,7 @@ function hashChange(): void {
                                     inject = InvoicesEdit;
                                     break;
 
+                              case undefined:
                               default:
                                     inject = InvoicesList;
                                     break;

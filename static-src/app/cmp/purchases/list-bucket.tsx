@@ -61,7 +61,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
   private getSortValue(inv: IPurchaseInvoice, field: string): string | number {
     switch (field) {
       case "ID": return inv.ID || "";
-      case "Supplier": return inv.Supplier?.Name || "";
+      case "Supplier": return inv.Supplier.Name || "";
       case "Amount": return parseFloat(inv.TotalInc) || 0;
       case "Duedate": return inv.Duedate || "";
       default: return "";
@@ -164,22 +164,20 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     let invoiceList: {key: string, inv: IPurchaseInvoice, bucket: string}[] = [];
     const isUnpaid = this.props.bucket === "purchase-invoices-unpaid";
 
-    if (this.props.items) {
-      for (const dir in this.props.items) {
-        if (!Object.prototype.hasOwnProperty.call(this.props.items, dir)) {
-          continue;
-        }
-        const parts = dir.split("/").filter(p => p.length > 0);
-        const bucket = parts[parts.length - 2] ?? ""; // Get Q1, Q2, etc.
-
-        const items = this.props.items[dir];
-        if (!items) continue;
-        items.forEach((inv: IPurchaseInvoice) => {
-          // Use sanitized filename as key (from ID + Supplier.Name)
-          const key = inv.ID ? (inv.Supplier?.Name?.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + inv.ID.toLowerCase().replace(/[^a-z0-9]/g, '-')) : dir;
-          invoiceList.push({key, inv, bucket});
-        });
+    for (const dir in this.props.items) {
+      if (!Object.prototype.hasOwnProperty.call(this.props.items, dir)) {
+        continue;
       }
+      const parts = dir.split("/").filter(p => p.length > 0);
+      const bucket = parts[parts.length - 2] ?? ""; // Get Q1, Q2, etc.
+
+      const items = this.props.items[dir];
+      if (!items) continue;
+      items.forEach((inv: IPurchaseInvoice) => {
+        // Use sanitized filename as key (from ID + Supplier.Name)
+        const key = inv.ID ? (inv.Supplier.Name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + inv.ID.toLowerCase().replace(/[^a-z0-9]/g, '-')) : dir;
+        invoiceList.push({key, inv, bucket});
+      });
     }
 
     invoiceList = this.sortInvoices(invoiceList);
@@ -191,11 +189,11 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
 
       res.push(<tr key={key}>
         <td>{inv.ID}</td>
-        <td>{inv.Supplier?.Name}</td>
+        <td>{inv.Supplier.Name}</td>
         <td>&euro; {inv.TotalInc}</td>
         <td className={expiryClass}>{inv.Duedate}</td>
         <td>
-          <a className="btn btn-default btn-hover-primary" href={`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}/pdf`} target="_blank">
+          <a className="btn btn-default btn-hover-primary" href={`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}/pdf`} target="_blank" rel="noreferrer">
             <i className="far fa-file-pdf"></i>
           </a>
           {isUnpaid && <a className="btn btn-default btn-hover-success " onClick={(e) => this.setPaid(e, key, bucket)}>
@@ -407,8 +405,8 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
             </div>
           </div>
           <div className="modal-footer">
-            <button onClick={this.props.onClose} className="btn btn-default">Cancel</button>
-            <button onClick={() => this.addLine()} className="btn btn-primary">Add Line</button>
+            <button type="button" onClick={this.props.onClose} className="btn btn-default">Cancel</button>
+            <button type="button" onClick={() => this.addLine()} className="btn btn-primary">Add Line</button>
           </div>
         </div>
       </div>

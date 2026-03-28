@@ -21,12 +21,14 @@ interface InvoiceEditState extends Struct.IInvoiceState {
 }
 
 export default class InvoiceEdit extends React.Component<InvoiceEditProps, InvoiceEditState> {
-  private revisions: Partial<Struct.IInvoiceState>[];
+  private undoStack: Struct.IInvoiceLine[][];
+  private redoStack: Struct.IInvoiceLine[][];
   public errors: Record<string, string>;
 
   constructor(props: InvoiceEditProps) {
     super(props);
-    this.revisions = [];
+    this.undoStack = [];
+    this.redoStack = [];
     this.errors = {};
     this.state = {
       Company: props.entity,
@@ -173,7 +175,6 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     } else {
       this.setState({...this.state});
     }
-    this.revisions.push({}); // TODO :)
   }
 
   private defaultDecimal(val: string, isNeg: boolean): string {
@@ -325,6 +326,41 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     this.setState({State: {email: !this.state.State.email}});
   }
 
+  public pushUndo(): void {
+    // Save current lines state for undo
+    const linesCopy = JSON.parse(JSON.stringify(this.state.Lines || []));
+    this.undoStack.push(linesCopy);
+    this.redoStack = []; // Clear redo stack on new change
+  }
+
+  private undo(e: React.MouseEvent<HTMLButtonElement>): void {
+    e.preventDefault();
+    if (this.undoStack.length === 0) return;
+    const previousLines = this.undoStack.pop();
+    if (!previousLines) return;
+
+    // Save current state to redo stack
+    const currentLines = JSON.parse(JSON.stringify(this.state.Lines || []));
+    this.redoStack.push(currentLines);
+
+    // Restore previous state
+    this.setState({Lines: previousLines, Total: this.totalUpdate(previousLines)});
+  }
+
+  private redo(e: React.MouseEvent<HTMLButtonElement>): void {
+    e.preventDefault();
+    if (this.redoStack.length === 0) return;
+    const nextLines = this.redoStack.pop();
+    if (!nextLines) return;
+
+    // Save current state to undo stack
+    const currentLines = JSON.parse(JSON.stringify(this.state.Lines || []));
+    this.undoStack.push(currentLines);
+
+    // Restore next state
+    this.setState({Lines: nextLines, Total: this.totalUpdate(nextLines)});
+  }
+
 	render(): React.JSX.Element {
     const inv = this.state;
     const that = this;
@@ -337,12 +373,14 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
           <div className="panel-heading hbuilt">
             <div className="panel-tools">
               <div className="btn-group nm7">
-                <button className="btn btn-default btn-hover-success" disabled={this.revisions.length === 0 || meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i> Save</button>
-                <button className="btn btn-default btn-hover-danger" disabled={meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fas fa-lock"></i> Finalize</button>
-                <button className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.pdf.bind(this)}><i className="far fa-file-pdf"></i> PDF</button>
-                <button className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.email.bind(this)}><i className="fas fa-paper-plane"></i> E-mail</button>
+                <button type="button" className="btn btn-default btn-hover-warning" disabled={this.undoStack.length === 0 || meta.Status === "FINAL"} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i> Undo</button>
+                <button type="button" className="btn btn-default btn-hover-warning" disabled={this.redoStack.length === 0 || meta.Status === "FINAL"} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i> Redo</button>
+                <button type="button" className="btn btn-default btn-hover-success" disabled={meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i> Save</button>
+                <button type="button" className="btn btn-default btn-hover-danger" disabled={meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fas fa-lock"></i> Finalize</button>
+                <button type="button" className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.pdf.bind(this)}><i className="far fa-file-pdf"></i> PDF</button>
+                <button type="button" className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.email.bind(this)}><i className="fas fa-paper-plane"></i> E-mail</button>
 
-                <button className="btn btn-default btn-hover-danger" disabled={meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fas fa-unlock"></i> Reset</button>
+                <button type="button" className="btn btn-default btn-hover-danger" disabled={meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fas fa-unlock"></i> Reset</button>
 
               </div>
 

@@ -36,8 +36,13 @@ interface IHourState {
 }
 
 export default class HourEdit extends React.Component<HourEditProps, IHourState> {
+  private undoStack: IHourLineState[][];
+  private redoStack: IHourLineState[][];
+
   constructor(props: HourEditProps) {
     super(props);
+    this.undoStack = [];
+    this.redoStack = [];
     this.state = {
       start: "",
       stop: "",
@@ -74,9 +79,9 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     let total = new Big("0.00");
     const out = [...this.state.Lines];
     for (const lineItem of lines) {
-      if (!lineItem?.day) continue;
+      if (!lineItem.day) continue;
       for (const fromTo of lineItem.fromTo) {
-        if (!fromTo) continue;
+        if (fromTo.length < 2) continue;
         const startTime = fromTo[0];
         const stopTime = fromTo[1];
         if (!startTime || !stopTime) continue;
@@ -198,9 +203,49 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     this.setState(s as IHourState);
   }
 
+  private pushUndo(): void {
+    const linesCopy = JSON.parse(JSON.stringify(this.state.Lines)) as IHourLineState[];
+    this.undoStack.push(linesCopy);
+    this.redoStack = [];
+  }
+
+  private undo(e: React.MouseEvent<HTMLButtonElement>): void {
+    e.preventDefault();
+    if (this.undoStack.length === 0) return;
+    const previousLines = this.undoStack.pop();
+    if (!previousLines) return;
+
+    const currentLines = JSON.parse(JSON.stringify(this.state.Lines)) as IHourLineState[];
+    this.redoStack.push(currentLines);
+
+    this.setState({Lines: previousLines, Total: this.updateTotalFromLines(previousLines)});
+  }
+
+  private redo(e: React.MouseEvent<HTMLButtonElement>): void {
+    e.preventDefault();
+    if (this.redoStack.length === 0) return;
+    const nextLines = this.redoStack.pop();
+    if (!nextLines) return;
+
+    const currentLines = JSON.parse(JSON.stringify(this.state.Lines)) as IHourLineState[];
+    this.undoStack.push(currentLines);
+
+    this.setState({Lines: nextLines, Total: this.updateTotalFromLines(nextLines)});
+  }
+
+  private updateTotalFromLines(lines: IHourLineState[]): string {
+    let total = new Big("0.00");
+    lines.forEach(function(val) {
+      total = total.plus(val.Hours);
+    });
+    return total.toFixed(2).toString();
+  }
+
   private lineRemove(key: number): void {
-    console.log(`Deleted ${key} idx `, this.state.Lines.splice(key, 1)[0]);
-    this.setState({Lines: this.state.Lines});
+    this.pushUndo();
+    const newLines = [...this.state.Lines];
+    console.log(`Deleted ${key} idx `, newLines.splice(key, 1)[0]);
+    this.setState({Lines: newLines, Total: this.updateTotalFromLines(newLines)});
   }
 
   private save(e: React.MouseEvent<HTMLButtonElement>): void {
@@ -254,7 +299,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
 
     this.state.Lines.forEach(function(item:IHourLineState, idx:number) {
       lines.push(<tr key={idx}>
-        <td><button className="btn btn-default btn-hover-danger " onClick={that.lineRemove.bind(that, idx)}><i className="fas fa-trash"></i></button></td>
+        <td><button type="button" className="btn btn-default btn-hover-danger" onClick={that.lineRemove.bind(that, idx)}><i className="fas fa-trash"></i></button></td>
         <td>{item.Day}</td>
         <td>{item.Start}</td><td>{item.Stop}</td><td>{that.shortHand(item.Hours)}</td><td>{item.Description}</td>
       </tr>);
@@ -280,7 +325,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
               <input type="text" id="hour-description" className="form-control" placeholder="Description" value={this.state.description} onChange={this.update.bind(this)}/>
             </div>
             <div className="col-sm-1">            
-              <button onClick={this.recalc.bind(this)} className="btn btn-default btn-hover-success">
+              <button type="button" onClick={this.recalc.bind(this)} className="btn btn-default btn-hover-success">
                 <i className="fas fa-plus"></i>
                 &nbsp;Add
               </button>
@@ -295,9 +340,11 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
         <div className="panel-heading hbuilt">
           <div className="panel-tools">
             <div className="btn-group nm7">
-              <button className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.toggleImport.bind(this)}><i className="fas fa-arrow-up"></i>&nbsp;Import</button>
-              <button className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i>&nbsp;Save</button>
-              <button className="btn btn-default btn-hover-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fas fa-share"></i>&nbsp;Bill</button>
+              <button type="button" className="btn btn-default btn-hover-warning" disabled={this.undoStack.length === 0 || !isEditable} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i>&nbsp;Undo</button>
+              <button type="button" className="btn btn-default btn-hover-warning" disabled={this.redoStack.length === 0 || !isEditable} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i>&nbsp;Redo</button>
+              <button type="button" className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.toggleImport.bind(this)}><i className="fas fa-arrow-up"></i>&nbsp;Import</button>
+              <button type="button" className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i>&nbsp;Save</button>
+              <button type="button" className="btn btn-default btn-hover-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fas fa-share"></i>&nbsp;Bill</button>
             </div>
           </div>
           Sum ({this.state.Total} hours/{parseFloat(this.state.Total) * this.state.HourRate} EUR)

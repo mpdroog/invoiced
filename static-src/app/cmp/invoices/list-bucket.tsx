@@ -200,8 +200,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     let invoiceList: {key: string, inv: IInvoiceState, bucket: string}[] = [];
     const isPending = this.props.bucket === "sales-invoices-unpaid";
 
-    if (this.props.items) {
-      for (const dir in this.props.items) {
+    for (const dir in this.props.items) {
         if (!Object.prototype.hasOwnProperty.call(this.props.items, dir)) {
           continue;
         }
@@ -215,7 +214,6 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
           const key: string = inv.Meta?.Conceptid ?? "";
           invoiceList.push({key, inv, bucket});
         });
-      }
     }
 
     // Sort the invoices

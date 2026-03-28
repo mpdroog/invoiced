@@ -4,21 +4,14 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import Moment from "moment";
 import './dashboard.css';
 
+// Types generated from Go structs (run: ~/go/bin/tygo generate)
+import type { DashboardResponse } from '../../types/model';
+
 // Chart colors - must match CSS variables in dashboard.css
 const CHART_COLORS = {
 	current: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-current').trim() || '#62cb31',
 	previous: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-previous').trim() || '#3498db'
 };
-
-interface IDictionary {
-	[index: string]: IMetricDay;
-}
-
-interface IMetricDay {
-	RevenueTotal: string
-	RevenueEx: string
-	Hours: string
-}
 
 interface ICommit {
 	hash: string
@@ -28,65 +21,8 @@ interface ICommit {
 	date: string
 }
 
-interface IUnpaidSummary {
-	Count: number
-	TotalAmount: string
-}
-
-interface IOverdueInvoice {
-	ID: string
-	InvoiceID: string
-	CustomerName: string
-	DueDate: string
-	Amount: string
-	DaysOverdue: number
-	Quarter: number
-}
-
-interface IQuarterSummary {
-	Quarter: number
-	InvoiceCount: number
-	TotalRevenue: string
-	TotalTax: string
-	PaidCount: number
-	UnpaidCount: number
-	PaidRevenue: string
-	UnpaidRevenue: string
-}
-
-interface IUnbilledHours {
-	Count: number
-	TotalHours: string
-}
-
-interface IYearComparison {
-	CurrentYear: number
-	PreviousYear: number
-	CurrentRevenue: string
-	PreviousRevenue: string
-	GrowthPercent: string
-	GrowthAmount: string
-}
-
-interface ITopClient {
-	Name: string
-	Revenue: string
-	InvoiceCount: number
-}
-
-interface IDashboardData {
-	monthly: IDictionary
-	monthlyPrevYear: IDictionary
-	unpaid: IUnpaidSummary
-	overdue: IOverdueInvoice[]
-	quarters: IQuarterSummary[]
-	unbilledHours: IUnbilledHours
-	yearComparison: IYearComparison
-	topClients: ITopClient[]
-}
-
 interface IState {
-	data: IDashboardData | null
+	data: DashboardResponse | null
 	commits: ICommit[]
 	loading: boolean
 }
@@ -141,12 +77,12 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 			const prevKey = `${prevYear}-${monthStr}`;
 
 			// Current year
-			const currentRev = data.monthly?.[currentKey] ? parseFloat(data.monthly[currentKey].RevenueEx) || 0 : 0;
-			const currentHours = data.monthly?.[currentKey] ? parseFloat(data.monthly[currentKey].Hours) || 0 : 0;
+			const currentRev = data.monthly[currentKey] ? parseFloat(data.monthly[currentKey].RevenueEx) || 0 : 0;
+			const currentHours = data.monthly[currentKey] ? parseFloat(data.monthly[currentKey].Hours) || 0 : 0;
 
 			// Previous year
-			const prevRev = data.monthlyPrevYear?.[prevKey] ? parseFloat(data.monthlyPrevYear[prevKey].RevenueEx) || 0 : 0;
-			const prevHours = data.monthlyPrevYear?.[prevKey] ? parseFloat(data.monthlyPrevYear[prevKey].Hours) || 0 : 0;
+			const prevRev = data.monthlyPrevYear[prevKey] ? parseFloat(data.monthlyPrevYear[prevKey].RevenueEx) || 0 : 0;
+			const prevHours = data.monthlyPrevYear[prevKey] ? parseFloat(data.monthlyPrevYear[prevKey].Hours) || 0 : 0;
 
 			revstats.push({month: months[m-1] ?? "", current: currentRev, previous: prevRev});
 			hourstats.push({month: months[m-1] ?? "", current: currentHours, previous: prevHours});
@@ -154,7 +90,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 			sum += currentRev;
 		}
 
-		const growthPositive = data.yearComparison && parseFloat(data.yearComparison.GrowthAmount) >= 0;
+		const growthPositive =  parseFloat(data.yearComparison.GrowthAmount) >= 0;
 
 		return <div className="normalheader">
 			{/* Quick Stats Row */}
@@ -165,9 +101,9 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 							<div className="stats-title">
 								<span className="fas fa-money-bill"></span> Unpaid Invoices
 							</div>
-							<h1>&euro; {formatCurrency(parseFloat(data.unpaid?.TotalAmount || "0"))}</h1>
+							<h1>&euro; {formatCurrency(parseFloat(data.unpaid.TotalAmount || "0"))}</h1>
 							<div className="stats-info">
-								{data.unpaid?.Count || 0} invoices pending payment
+								{data.unpaid.Count || 0} invoices pending payment
 							</div>
 						</div>
 					</div>
@@ -178,9 +114,9 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 							<div className="stats-title">
 								<span className="far fa-clock"></span> Unbilled Hours
 							</div>
-							<h1>{formatCurrency(parseFloat(data.unbilledHours?.TotalHours || "0"))}</h1>
+							<h1>{formatCurrency(parseFloat(data.unbilledHours.TotalHours || "0"))}</h1>
 							<div className="stats-info">
-								{data.unbilledHours?.Count || 0} hour sheets to bill
+								{data.unbilledHours.Count || 0} hour sheets to bill
 							</div>
 						</div>
 					</div>
@@ -193,7 +129,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 							</div>
 							<h1>&euro; {formatCurrency(sum)}</h1>
 							<div className="stats-info">
-								{data.yearComparison && (
+								{ (
 									<span className={growthPositive ? "text-success" : "text-danger"}>
 										{growthPositive ? "+" : ""}{data.yearComparison.GrowthPercent}% vs {data.yearComparison.PreviousYear}
 									</span>
@@ -208,7 +144,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 							<div className="stats-title">
 								<span className="fas fa-triangle-exclamation"></span> Overdue
 							</div>
-							<h1 className={data.overdue?.length > 0 ? "text-danger" : ""}>{data.overdue?.length || 0}</h1>
+							<h1 className={data.overdue.length > 0 ? "text-danger" : ""}>{data.overdue.length}</h1>
 							<div className="stats-info">
 								invoices past due date
 							</div>
@@ -218,7 +154,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 			</div>
 
 			{/* Overdue Alerts */}
-			{data.overdue && data.overdue.length > 0 && (
+			{data.overdue.length > 0 && (
 				<div className="row">
 					<div className="col-md-12">
 						<div className="hpanel hred">
@@ -288,7 +224,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 									</tr>
 								</thead>
 								<tbody>
-									{(data.quarters || []).map((q) => (
+									{data.quarters.map((q) => (
 										<tr key={q.Quarter}>
 											<td><strong>Q{q.Quarter}</strong></td>
 											<td>&euro; {formatCurrency(parseFloat(q.TotalRevenue))}</td>
@@ -300,7 +236,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 											</td>
 										</tr>
 									))}
-									{(!data.quarters || data.quarters.length === 0) && (
+									{data.quarters.length === 0 && (
 										<tr><td colSpan={4} className="text-center text-muted">No data</td></tr>
 									)}
 								</tbody>
@@ -325,14 +261,14 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 									</tr>
 								</thead>
 								<tbody>
-									{(data.topClients || []).map((c, i) => (
+									{data.topClients.map((c, i) => (
 										<tr key={i}>
 											<td>{c.Name}</td>
 											<td>&euro; {formatCurrency(parseFloat(c.Revenue))}</td>
 											<td>{c.InvoiceCount}</td>
 										</tr>
 									))}
-									{(!data.topClients || data.topClients.length === 0) && (
+									{data.topClients.length === 0 && (
 										<tr><td colSpan={3} className="text-center text-muted">No data</td></tr>
 									)}
 								</tbody>

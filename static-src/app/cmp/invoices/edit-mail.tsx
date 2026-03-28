@@ -103,8 +103,8 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
           </div>
           <div className="modal-footer">
             <div style={a}>
-              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/pdf"} target="_blank"><i className="far fa-file-pdf" />&nbsp;{parentMeta.Invoiceid}.pdf</a></p>
-              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/xml"} target="_blank"><i className="fas fa-building-columns" />&nbsp;{parentMeta.Invoiceid}.xml</a></p>
+              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/pdf"} target="_blank" rel="noreferrer"><i className="far fa-file-pdf" />&nbsp;{parentMeta.Invoiceid}.pdf</a></p>
+              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/xml"} target="_blank" rel="noreferrer"><i className="fas fa-building-columns" />&nbsp;{parentMeta.Invoiceid}.xml</a></p>
               {hourFile}
             </div>
             <a onClick={this.send.bind(this)} className="btn btn-primary" style={{float:"right"}}> Send</a>
