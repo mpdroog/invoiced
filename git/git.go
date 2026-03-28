@@ -14,7 +14,9 @@ import (
 	githttp "github.com/go-git/go-git/v6/plumbing/transport/http"
 	"github.com/go-git/go-git/v6/plumbing/transport/ssh"
 	"github.com/julienschmidt/httprouter"
+	appconfig "github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/idx"
 	"github.com/mpdroog/invoiced/middleware"
 	"github.com/mpdroog/invoiced/writer"
 )
@@ -326,6 +328,11 @@ func DiscardAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	// Rebuild search index after reset
+	if err := idx.Rebuild(appconfig.DbPath); err != nil {
+		log.Printf("git.DiscardAll rebuild index: %s", err.Error())
+	}
+
 	if err := writer.Encode(w, r, PullPushResponse{
 		Success: true,
 		Message: "Discarded all local changes",
@@ -388,6 +395,11 @@ func ResetTo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	// Rebuild search index after reset
+	if err := idx.Rebuild(appconfig.DbPath); err != nil {
+		log.Printf("git.ResetTo rebuild index: %s", err.Error())
+	}
+
 	if err := writer.Encode(w, r, PullPushResponse{
 		Success: true,
 		Message: fmt.Sprintf("Reset to commit %s", hash[:7]),
@@ -436,6 +448,11 @@ func Pull(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			log.Printf("git.Pull encode: %s", err.Error())
 		}
 		return
+	}
+
+	// Rebuild search index after pull
+	if err := idx.Rebuild(appconfig.DbPath); err != nil {
+		log.Printf("git.Pull rebuild index: %s", err.Error())
 	}
 
 	if err := writer.Encode(w, r, PullPushResponse{
