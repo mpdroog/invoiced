@@ -13,11 +13,18 @@
     "noEmit": true,
     "jsx": "react",
 
-    "strict": false,
-    "noImplicitAny": false,
-    "noUnusedLocals": false,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
 
     "baseUrl": ".",
     "paths": {

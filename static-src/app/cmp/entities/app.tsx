@@ -16,21 +16,29 @@ interface IMetricDay {
   RevenueTotal: string
   RevenueEx: string
 }
-interface IMetrics {
-  metrics?: IDictionary
+interface IEntityYear {
+  Years?: string[];
+  YearRevenue?: Record<string, string>;
+  Name: string;
+  VAT: string;
 }
 
-export default class Entities extends React.Component<{}, IMetrics> {
-  constructor() {
-    super();
+interface IEntitiesState {
+  entities: Record<string, IEntityYear>;
+  metrics?: IDictionary;
+}
+
+export default class Entities extends React.Component<Record<string, never>, IEntitiesState> {
+  constructor(props: Record<string, never>) {
+    super(props);
     this.state = {
-      "entities": []
+      entities: {}
     };
   }
 
 	render() {
     let items:React.JSX.Element[] = [];
-    let curYear:int = new Date().getFullYear();
+    let curYear: number = new Date().getFullYear();
     for (var key in this.state.entities) {
     	if (! this.state.entities.hasOwnProperty(key)) {
     		// ignore
@@ -39,7 +47,7 @@ export default class Entities extends React.Component<{}, IMetrics> {
 			let ukey = "entity_" + key;
 			let entity = this.state.entities[key];
 
-			let hasCurYear: bool = false;
+			let hasCurYear: boolean = false;
 			let accountingYears: React.JSX.Element[] = [];
 			let prevRevenue: number = 0;
 
@@ -52,7 +60,7 @@ export default class Entities extends React.Component<{}, IMetrics> {
 		    	continue;
 		    }
 		    let yearStr = sortedYears[k];
-		    let year:int = parseInt(yearStr);
+		    let year: number = parseInt(yearStr);
 		    if (year === curYear) {
 		    	hasCurYear = true;
 		    }

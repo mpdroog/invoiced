@@ -6,26 +6,37 @@ import Import from "./edit-import";
 import {Autocomplete, LockedInput} from "../../shared/components";
 
 interface IHourLineState {
-  Hours: number
-  Day: string
-  Start: string
-  Stop: string
-  Description: string
-  HourRate: number
+  Hours: number;
+  Day: string;
+  Start: string;
+  Stop: string;
+  Description: string;
+  HourRate?: number;
 }
+
+interface HourEditProps {
+  entity: string;
+  year: string;
+  id?: string;
+  bucket?: string;
+}
+
 interface IHourState {
-  start?: string
-  stop?: string
-  description?: string
-  day?: Moment.Moment
-  Lines?: IHourLineState[]
-  Name?: string
-  Project?: string
-  Status?: string
-  Total?: string
+  start: string;
+  stop: string;
+  description: string;
+  day: Moment.Moment;
+  import: boolean;
+  HourRate: number;
+  Lines: IHourLineState[];
+  Name: string;
+  Project: string;
+  Status: string;
+  Total: string;
 }
-export default class HourEdit extends React.Component<{}, IHourState> {
-  constructor(props) {
+
+export default class HourEdit extends React.Component<HourEditProps, IHourState> {
+  constructor(props: HourEditProps) {
     super(props);
     this.state = {
       start: "",
@@ -59,7 +70,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     });
   }
 
-  private importLine(lines) {
+  private importLine(lines: Array<{day: string; text: string; fromTo: string[][]}>): void {
     let total = new Big("0.00");
     let out = this.state.Lines;
     for (let i = 0; i < lines.length; i++) {
@@ -129,11 +140,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     });
   }
 
-  private updateDate(date: Moment.Moment) {
-    this.setState({day: date});
-  }
-
-  private updateTotal() {
+  private updateTotal(): string {
     let total = new Big("0.00");
     this.state.Lines.forEach(function(val) {
       total = total.plus(val.Hours);
@@ -141,68 +148,66 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     return total.toFixed(2).toString();
   }
 
-  private update(e: InputEvent) {
-    console.log(e.target.value);
-    let elem = e.target as any;
+  private update(e: React.ChangeEvent<HTMLInputElement>): void {
+    const elem = e.target;
 
     if (elem.id === "hour-start") {
-      this.setState({start: e.target.value});
+      this.setState({start: elem.value});
     }
     if (elem.id === "hour-stop") {
-      this.setState({stop: e.target.value});
+      this.setState({stop: elem.value});
     }
     if (elem.id === "hour-description") {
-      this.setState({description: e.target.value});
+      this.setState({description: elem.value});
     }
     if (elem.id === "hour-name") {
-      this.setState({Name: e.target.value});
+      this.setState({Name: elem.value});
     }
     if (elem.id === "hour-day") {
-      this.setState({day: Moment(e.target.value)});
+      this.setState({day: Moment(elem.value)});
     }
     if (elem.id === "hour-project") {
-      let prevMonth = Moment().subtract(1, 'months');
+      const prevMonth = Moment().subtract(1, 'months');
 
-      let diff = {};
-      if (e.target.value !== this.state.Project) {
-        diff["Project"] = e.target.value;
+      const diff: Partial<IHourState> = {};
+      if (elem.value !== this.state.Project) {
+        diff.Project = elem.value;
       }
       if (this.state.Name === "") {
-        diff["Name"] = e.target.value + "-" + prevMonth.format("YYYY-MM");
+        diff.Name = elem.value + "-" + prevMonth.format("YYYY-MM");
       }
 
       console.log("diff", diff);
-      if (Object.keys(diff).length > 0) this.setState(diff);
+      if (Object.keys(diff).length > 0) this.setState(diff as IHourState);
     }
   }
 
-  private selectProject(prj) {
+  private selectProject(prj: {Name: string; HourRate: number}): void {
     console.log("Change", prj);
-    let prevMonth = Moment().subtract(1, 'months');
-    let s = {
+    const prevMonth = Moment().subtract(1, 'months');
+    const s: Partial<IHourState> = {
       Project: prj.Name,
       HourRate: prj.HourRate,
     };
     if (this.state.Name === "") {
-      s["Name"] = prj.Name + "-" + prevMonth.format("YYYY-MM");
+      s.Name = prj.Name + "-" + prevMonth.format("YYYY-MM");
     }
-    this.setState(s);
+    this.setState(s as IHourState);
   }
 
-  private lineRemove(key: number) {
+  private lineRemove(key: number): void {
     console.log(`Deleted ${key} idx `, this.state.Lines.splice(key, 1)[0]);
     this.setState({Lines: this.state.Lines});
   }
 
-  private save(e: BrowserEvent) {
+  private save(e: React.MouseEvent<HTMLButtonElement>): void {
     e.preventDefault();
-    let req = this.state;
+    const req = {...this.state};
     req.Total = this.updateTotal();
 
     Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts`, req)
     .then(res => {
       console.log(res.data);
-      this.props.id = res.data.Name;
       this.setState(res.data);
       history.replaceState({}, "", `#${this.props.entity}/${this.props.year}/hours/edit/concepts/${res.data.Name}`);
     })
@@ -211,7 +216,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     });
   }
 
-  private bill(e: BrowserEvent) {
+  private bill(e: React.MouseEvent<HTMLButtonElement>): void {
     e.preventDefault();
     let args = this.state;
     Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts/${args.Name}/bill`, args)
@@ -234,7 +239,7 @@ export default class HourEdit extends React.Component<{}, IHourState> {
     return str;
   }
 
-  private toggleImport(e) {
+  private toggleImport(e: React.MouseEvent<HTMLButtonElement>): void {
     e.preventDefault();
     this.setState({import: !this.state.import});
   }

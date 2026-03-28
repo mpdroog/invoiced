@@ -7,9 +7,24 @@ import {InvoiceMail} from "./edit-mail";
 import Big from "big.js";
 import * as Struct from "./edit-struct";
 
-export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceState> {
-  private revisions: IInvoiceState[];
-  constructor(props) {
+interface InvoiceEditProps {
+  entity: string;
+  year: string;
+  id?: string;
+  bucket?: string;
+}
+
+interface InvoiceEditState extends Struct.IInvoiceState {
+  State: {
+    email: boolean;
+  };
+}
+
+export default class InvoiceEdit extends React.Component<InvoiceEditProps, InvoiceEditState> {
+  private revisions: Partial<Struct.IInvoiceState>[];
+  private errors: Record<string, string>;
+
+  constructor(props: InvoiceEditProps) {
     super(props);
     this.revisions = [];
     this.errors = {};
@@ -110,7 +125,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
     });
   }
 
-  private parseInput(data: IInvoiceState, newbucket) {
+  private parseInput(data: Struct.IInvoiceState, newbucket?: string): void {
     if (newbucket) {
       this.props.bucket = newbucket;
     }
@@ -148,7 +163,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
     this.revisions.push({}); // TODO :)
   }
 
-  private defaultDecimal(val, isNeg) {
+  private defaultDecimal(val: string, isNeg: boolean): string {
     if (val === "") {
       return "0.00";
     }
@@ -176,7 +191,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
     return val;
   }
 
-  private lineUpdate(line: IInvoiceLine) {
+  private lineUpdate(line: Struct.IInvoiceLine): Struct.IInvoiceLine {
     line.Quantity = this.defaultDecimal(line.Quantity, false);
     line.Price = this.defaultDecimal(line.Price, true);
 
@@ -184,7 +199,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
     return line;
   }
 
-  private totalUpdate(lines: IInvoiceLine[]) {
+  private totalUpdate(lines: Struct.IInvoiceLine[]): Struct.IInvoiceTotal {
     let ex = new Big(0);
     lines.forEach(function(val: IInvoiceLine) {
       console.log("Add", val.Total);
@@ -205,7 +220,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
     };
   }
 
-  handleChange(e: InputEvent) {
+  handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void {
     console.log("handleChange", e.target.dataset["key"]);
     let indices = e.target.dataset["key"].split('.');
     this.triggerChange(indices, e.target.value);
@@ -262,7 +277,7 @@ export default class InvoiceEdit extends React.Component<{}, Struct.IInvoiceStat
     location.assign(url);
   }
 
-  private selectCustomer(data) {
+  private selectCustomer(data: {Name: string; Street1: string; Street2: string; VAT: string; COC: string; NoteAdd?: string; BillingEmail?: string[]}): void {
     console.log("Select customer", data);
     this.setState({
       Customer: {

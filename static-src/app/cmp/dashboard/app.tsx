@@ -1,6 +1,6 @@
 import * as React from "react";
 import Axios from "axios";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Moment from "moment";
 import './dashboard.css';
 
@@ -98,9 +98,14 @@ function formatCurrency(value: number): string {
 	return parts.join(",");
 }
 
-export default class Dashboard extends React.Component<{}, IState> {
-	constructor(p, s) {
-		super(p, s);
+interface DashboardProps {
+	entity: string;
+	year: string;
+}
+
+export default class Dashboard extends React.Component<DashboardProps, IState> {
+	constructor(props: DashboardProps) {
+		super(props);
 		this.state = {
 			data: null,
 			commits: [],
@@ -108,7 +113,7 @@ export default class Dashboard extends React.Component<{}, IState> {
 		};
 	}
 
-	render() {
+	render(): React.JSX.Element {
 		const { data, commits, loading } = this.state;
 		const entity = this.props.entity;
 		const year = this.props.year;

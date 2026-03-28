@@ -2,11 +2,23 @@ import * as React from "react";
 import Invoices from "./list-bucket";
 import Axios from "axios";
 import { decode as msgpackDecode } from '@msgpack/msgpack';
+import {IInvoiceState} from "./edit-struct";
 
-export default class InvoicesPage extends React.Component<{}, {}> {
-  constructor(props) {
+interface InvoicesPageProps {
+  entity: string;
+  year: string;
+}
+
+interface InvoicesPageState {
+  concepts: Record<string, IInvoiceState[]>;
+  pending: Record<string, IInvoiceState[]>;
+  paid: Record<string, IInvoiceState[]>;
+}
+
+export default class InvoicesPage extends React.Component<InvoicesPageProps, InvoicesPageState> {
+  constructor(props: InvoicesPageProps) {
     super(props);
-    this.state = {concepts: [], pending: [], paid: []};
+    this.state = {concepts: {}, pending: {}, paid: {}};
   }
 
   componentDidMount() {

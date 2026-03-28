@@ -1,13 +1,32 @@
 import * as React from "react";
 import Axios from "axios";
+import {IInvoiceMail, IInvoiceMeta} from "./edit-struct";
 
-export class InvoiceMail extends React.Component<{}, {}> {
-  constructor(props) {
+interface InvoiceMailParent {
+  props: {
+    entity: string;
+    year: string;
+    bucket?: string;
+  };
+  state: {
+    Mail: IInvoiceMail;
+    Meta: IInvoiceMeta;
+  };
+  setState: (state: {Mail: IInvoiceMail}) => void;
+}
+
+interface InvoiceMailProps {
+  parent: InvoiceMailParent;
+  hide: boolean;
+  onHide: (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void;
+}
+
+export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string, never>> {
+  constructor(props: InvoiceMailProps) {
     super(props);
   }
 
-  send(e) {
-    let that = this;
+  send(e: React.MouseEvent<HTMLAnchorElement>): void {
     let parent = this.props.parent;
     let req = JSON.parse(JSON.stringify(parent.state.Mail));
     console.log("Send!", req);
@@ -22,9 +41,9 @@ export class InvoiceMail extends React.Component<{}, {}> {
     });
   }
 
-  private update(e) {
-    const id = e.target.id;
-    var mail = this.props.parent.state.Mail;
+  private update(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void {
+    const id = e.target.id as keyof IInvoiceMail;
+    const mail = {...this.props.parent.state.Mail};
     mail[id] = e.target.value;
     this.props.parent.setState({Mail: mail});
   }

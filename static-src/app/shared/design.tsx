@@ -21,11 +21,16 @@ interface MenuState {
     searching: boolean;
 }
 
-class Menu extends React.Component<{company: string, year: string}, MenuState> {
-    private boundRefresh: () => void;
-    private searchTimeout: any = null;
+interface MenuProps {
+    company: string;
+    year: string;
+}
 
-    constructor(props) {
+class Menu extends React.Component<MenuProps, MenuState> {
+    private boundRefresh: () => void;
+    private searchTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    constructor(props: MenuProps) {
         super(props);
         this.state = {
             ahead: 0,
@@ -245,11 +250,17 @@ export function calendar({ year }) {
     </div>);
 }
 
-export class Design extends React.Component {
-  constructor(props) {
+interface DesignProps {
+    entity: string;
+    year: string;
+    children?: React.ReactNode;
+}
+
+export class Design extends React.Component<DesignProps> {
+  constructor(props: DesignProps) {
     super(props);
   }
-  render() {
+  render(): React.JSX.Element {
     return <div>
         <Menu company={this.props.entity} year={this.props.year}/>
         {this.props.children}

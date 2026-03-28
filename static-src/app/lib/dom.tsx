@@ -1,10 +1,17 @@
+interface DOMNode extends HTMLElement {
+  dataset: DOMStringMap;
+  attributes: NamedNodeMap;
+  nodeName: string;
+  parentNode: (Node & ParentNode) | null;
+}
+
 export class DOM {
-  static eventFilter(e: any, nodeName: string): BrowserEventTarget {
+  static eventFilter(e: React.MouseEvent | MouseEvent, nodeName: string): DOMNode | null {
     if (e.target) {
-      var node = e.target;
-      while (node !== window && node !== null) {
-        if (node.nodeName === nodeName) {
-          return node;
+      let node: (Node & ParentNode) | null = e.target as Node;
+      while (node !== null && node !== window) {
+        if ((node as HTMLElement).nodeName === nodeName) {
+          return node as DOMNode;
         }
         node = node.parentNode;
       }

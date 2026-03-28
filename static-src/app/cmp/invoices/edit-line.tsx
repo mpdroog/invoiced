@@ -1,14 +1,22 @@
 import * as React from "react";
 import Big from "big.js";
 import {DOM} from "../../lib/dom";
+import {IInvoiceLine, IInvoiceState} from "./edit-struct";
 
-export class InvoiceLineEdit extends React.Component<{}, {}> {
-  private revisions: IInvoiceState[];
-  constructor(props) {
+interface InvoiceLineEditProps {
+  parent: {
+    state: IInvoiceState & { Meta: { Status: string } };
+    setState: (state: Partial<IInvoiceState>) => void;
+    handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  };
+}
+
+export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Record<string, never>> {
+  constructor(props: InvoiceLineEditProps) {
     super(props);
   }
 
-  private lineAdd(e) {
+  private lineAdd(e: React.MouseEvent<HTMLButtonElement>): void {
     e.preventDefault();
     let parent = this.props.parent;
     if (parent.state.Meta.Status === 'FINAL') {
@@ -25,17 +33,22 @@ export class InvoiceLineEdit extends React.Component<{}, {}> {
     parent.setState({Lines: parent.state.Lines});
   }
 
-  private lineRemove(e) {
+  private lineRemove(e: React.MouseEvent<HTMLButtonElement>): void {
     e.preventDefault();
-    let node = DOM.eventFilter(e, "BUTTON");
-    let key = node.dataset["idx"];
-    let parent = this.props.parent;
+    const node = DOM.eventFilter(e, "BUTTON");
+    if (!node) return;
+    const key = node.dataset["idx"];
+    if (key === undefined) return;
+    const parent = this.props.parent;
 
     if (parent.state.Meta.Status === 'FINAL') {
       console.log("Finalized, not allowing changes!");
       return;
     }
-    let line: IInvoiceLine = parent.state.Lines[key];
+    const keyNum = parseInt(key, 10);
+    const lines = parent.state.Lines;
+    if (!lines) return;
+    const line: IInvoiceLine = lines[keyNum];
     let isEmpty = line.Description === ""
       && line.Quantity === "0.00"
       && line.Price === "0.00"

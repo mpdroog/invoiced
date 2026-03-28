@@ -22,12 +22,22 @@ import PurchasesList from "./cmp/purchases/list";
 import TaxesList from "./cmp/taxes/list";
 import GitPage from "./cmp/git/app";
 
-declare function handleErr(e: any): void;
+declare function handleErr(e: unknown): void;
 
-function hashChange() {
-      let url = location.hash.substr(1).split("/");
-      let inject: any = null;
-      let props: any = null;
+type PageComponent = React.ComponentType<RouteProps>;
+
+interface RouteProps {
+      entity: string;
+      year: string;
+      id?: string;
+      bucket?: string;
+      key?: string;
+}
+
+function hashChange(): void {
+      const url = location.hash.substr(1).split("/");
+      let inject: PageComponent | null = null;
+      let props: RouteProps | null = null;
 
       if (url[0] === '') {
             url.shift();

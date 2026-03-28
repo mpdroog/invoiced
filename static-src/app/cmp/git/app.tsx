@@ -38,8 +38,13 @@ interface GitState {
   historyLoading: boolean;
 }
 
-export default class GitPage extends React.Component<{}, GitState> {
-  constructor(props) {
+interface GitPageProps {
+  entity: string;
+  year: string;
+}
+
+export default class GitPage extends React.Component<GitPageProps, GitState> {
+  constructor(props: GitPageProps) {
     super(props);
     this.state = {
       loading: true,

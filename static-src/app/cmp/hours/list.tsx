@@ -4,23 +4,30 @@ import {DOM} from "../../lib/dom";
 import { decode as msgpackDecode } from '@msgpack/msgpack';
 
 interface IHourPagination {
-  from?: string
-  count?: number
-}
-interface IHourState {
-  pagination?: IHourPagination
-  hours?: string[]
+  from?: number;
+  count?: number;
 }
 
-export default class Hours extends React.Component<{}, IHourState> {
-  constructor(p, s) {
-    super(p, s);
+interface HoursListProps {
+  entity: string;
+  year: string;
+  bucket?: string;
+}
+
+interface IHourState {
+  pagination: IHourPagination;
+  hours: Record<string, string[]> | null;
+}
+
+export default class Hours extends React.Component<HoursListProps, IHourState> {
+  constructor(props: HoursListProps) {
+    super(props);
     this.state = {
-      "pagination": {
-        "from": 0,
-        "count": 50
+      pagination: {
+        from: 0,
+        count: 50
       },
-      "hours": null
+      hours: null
     };
   }
 

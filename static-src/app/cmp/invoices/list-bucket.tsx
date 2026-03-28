@@ -10,9 +10,9 @@ interface IInvoicePagination {
 interface IInvoiceListState {
   pagination?: IInvoicePagination
   invoices?: IInvoiceState[]
-  isBalance: bool
+  isBalance: boolean
   sortField: string
-  sortAsc: bool
+  sortAsc: boolean
 }
 
 interface IInvoiceListProps {
@@ -93,7 +93,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     });
   }
 
-  private setPaid(e) {
+  private setPaid(e: React.MouseEvent<HTMLAnchorElement>): void {
     e.preventDefault();
     let node = DOM.eventFilter(e, "A");
     let id = node.dataset.id;
@@ -113,7 +113,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     });
   }
 
-  private conceptLine(key: string, inv: IInvoiceState, bucket: string, isPending: bool): React.JSX.Element {
+  private conceptLine(key: string, inv: IInvoiceState, bucket: string, isPending: boolean): React.JSX.Element {
     var today = new Date().toISOString().split('T')[0];
     var expiryClass = "";
     if (isPending && inv.Meta.Duedate && inv.Meta.Duedate <= today) {
@@ -148,11 +148,11 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     </tr>;
   }
 
-  private openUpload(e) {
+  private openUpload(e: React.MouseEvent<HTMLAnchorElement>): void {
     e.preventDefault();
-    document.getElementById('js-balance-field').click();
+    document.getElementById('js-balance-field')?.click();
   }
-  private uploadBalance(e) {
+  private uploadBalance(e: React.ChangeEvent<HTMLInputElement>): void {
     if (e.target.files.length === 0) {
       return;
     }
@@ -175,7 +175,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
   }
 
   // TODO: Ugly hack...
-  private bucket(invoiceId) {
+  private bucket(invoiceId: string): string {
     return 'Q' + invoiceId.split("-")[0].split("Q")[1];
   }
 
