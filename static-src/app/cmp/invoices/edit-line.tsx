@@ -48,7 +48,8 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
     const keyNum = parseInt(key, 10);
     const lines = parent.state.Lines;
     if (!lines) return;
-    const line: IInvoiceLine = lines[keyNum];
+    const line = lines[keyNum];
+    if (!line) return;
     const isEmpty = line.Description === ""
       && line.Quantity === "0.00"
       && line.Price === "0.00"

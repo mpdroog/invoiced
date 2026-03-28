@@ -40,6 +40,7 @@ export default class InvoicesPage extends React.Component<InvoicesPageProps, Inv
           continue;
         }
         const item = data.Invoices[key];
+        if (!item) continue;
         if (key.endsWith("/sales-invoices-paid/")) {
           s.paid[key] = item;
         } else if (key.endsWith("/sales-invoices-unpaid/")) {

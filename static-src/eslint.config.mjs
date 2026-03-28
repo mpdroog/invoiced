@@ -52,6 +52,10 @@ export default [
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
       '@typescript-eslint/prefer-optional-chain': 'warn',
 
+      // Promise rules - catch forgotten await and unhandled rejections
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+
       // React rules
       'react/prop-types': 'off',
       'react/react-in-jsx-scope': 'off',

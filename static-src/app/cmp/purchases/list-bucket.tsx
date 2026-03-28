@@ -145,6 +145,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     }
 
     const file = e.target.files[0];
+    if (!file) return;
     const form = new FormData();
     form.append('file', file, file.name);
 
@@ -169,9 +170,11 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
           continue;
         }
         const parts = dir.split("/").filter(p => p.length > 0);
-        const bucket = parts[parts.length - 2]; // Get Q1, Q2, etc.
+        const bucket = parts[parts.length - 2] ?? ""; // Get Q1, Q2, etc.
 
-        this.props.items[dir].forEach((inv: IPurchaseInvoice) => {
+        const items = this.props.items[dir];
+        if (!items) continue;
+        items.forEach((inv: IPurchaseInvoice) => {
           // Use sanitized filename as key (from ID + Supplier.Name)
           const key = inv.ID ? (inv.Supplier?.Name?.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + inv.ID.toLowerCase().replace(/[^a-z0-9]/g, '-')) : dir;
           invoiceList.push({key, inv, bucket});
@@ -181,7 +184,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
 
     invoiceList = this.sortInvoices(invoiceList);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0] ?? "";
 
     invoiceList.forEach(({key, inv, bucket}) => {
       const expiryClass = isUnpaid && inv.Duedate && inv.Duedate <= today ? 'bg-danger' : '';
@@ -312,6 +315,10 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
     }
 
     const line = this.props.invoice.Lines[this.state.selectedLine];
+    if (!line) {
+      alert("Line not found");
+      return;
+    }
     const concept = this.state.concepts.find(c => c.Meta.Conceptid === this.state.selectedConcept);
 
     if (!concept) {

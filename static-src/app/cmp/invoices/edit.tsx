@@ -151,15 +151,23 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let node: any = this.state;
     for (let i = 0; i < indices.length-1; i++) {
-      node = node[ indices[i] ];
+      const key = indices[i];
+      if (key === undefined) return;
+      node = node[key];
     }
-    node[indices[indices.length-1]] = val;
+    const lastKey = indices[indices.length-1];
+    if (lastKey === undefined) return;
+    node[lastKey] = val;
 
     // Any post-processing
     const lines = this.state.Lines;
-    if (indices[0] === "Lines" && lines) {
-      const idx = parseInt(indices[1], 10);
-      lines[idx] = this.lineUpdate(lines[idx]);
+    const lineIdx = indices[1];
+    if (indices[0] === "Lines" && lines && lineIdx !== undefined) {
+      const idx = parseInt(lineIdx, 10);
+      const line = lines[idx];
+      if (line) {
+        lines[idx] = this.lineUpdate(line);
+      }
       const newState = {...this.state, Lines: lines, Total: this.totalUpdate(lines)};
       this.setState(newState);
     } else {
@@ -423,8 +431,8 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
         <tr><td className="text">VAT</td><td className="pr">
           <LockedInput type="text" value={(inv.Bank || {Vat: "", Coc: "", Iban: "", Bic: ""}).Vat} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Vat" required={true} /></td></tr>
         <tr><td className="text">CoC</td><td className="pr"><LockedInput type="text" value={(inv.Bank || {Vat: "", Coc: "", Iban: "", Bic: ""}).Coc} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Coc" required={true} /></td></tr>
-        <tr><td className="text">IBAN</td><td className="pr"><LockedInput type="text" value={inv.Bank.Iban} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Iban" required={true} /></td></tr>
-        <tr><td className="text">BIC</td><td className="pr"><LockedInput type="text" value={inv.Bank.Bic} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Bic" required={true} /></td></tr>
+        <tr><td className="text">IBAN</td><td className="pr"><LockedInput type="text" value={inv.Bank?.Iban ?? ""} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Iban" required={true} /></td></tr>
+        <tr><td className="text">BIC</td><td className="pr"><LockedInput type="text" value={inv.Bank?.Bic ?? ""} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Bic" required={true} /></td></tr>
       </tbody></table>
       <small><i className="fa fa-info"></i> Edit these from your settings file.</small>
     </div>

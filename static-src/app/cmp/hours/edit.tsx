@@ -73,26 +73,28 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
   private importLine(lines: Array<{day: string | null; text: string; fromTo: string[][]}>): void {
     let total = new Big("0.00");
     const out = [...this.state.Lines];
-    for (let i = 0; i < lines.length; i++) {
-      const lineItem = lines[i];
-      if (!lineItem.day) continue;
-      for (let i2 = 0; i2 < lineItem.fromTo.length; i2++) {
-        const fromTo = lineItem.fromTo[i2];
-        const start = Moment(fromTo[0], 'HH:mm')
-        const stop = Moment(fromTo[1], 'HH:mm');
+    for (const lineItem of lines) {
+      if (!lineItem?.day) continue;
+      for (const fromTo of lineItem.fromTo) {
+        if (!fromTo) continue;
+        const startTime = fromTo[0];
+        const stopTime = fromTo[1];
+        if (!startTime || !stopTime) continue;
+        const start = Moment(startTime, 'HH:mm')
+        const stop = Moment(stopTime, 'HH:mm');
         if (! start.isValid()) {
-          throw new Error("Failed parsing start=" + fromTo[0]);
+          throw new Error("Failed parsing start=" + startTime);
         }
         if (! stop.isValid()) {
-          throw new Error("Failed parsing start=" + fromTo[0]);
+          throw new Error("Failed parsing stop=" + stopTime);
         }
         // Momentjs fails us, do the math ourselves..
         const diff = stop.diff(start)/1000/60/60;
         console.log(diff);
 
         out.push({
-          Start: fromTo[0],
-          Stop: fromTo[1],
+          Start: startTime,
+          Stop: stopTime,
           Hours: diff,
           Description: lineItem.text,
           Day: lineItem.day

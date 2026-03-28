@@ -4,7 +4,8 @@ import Axios from "axios";
 // Format number with space as thousands separator: 51868.65 -> 51 868.65
 function formatCurrency(value: number): string {
 	const parts = value.toFixed(2).split(".");
-	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+	const intPart = parts[0] ?? "0";
+	parts[0] = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 	return parts.join(",");
 }
 
@@ -46,6 +47,7 @@ export default class Entities extends React.Component<Record<string, never>, IEn
     	}
 			const ukey = "entity_" + key;
 			const entity = this.state.entities[key];
+			if (!entity) continue;
 
 			let hasCurYear: boolean = false;
 			const accountingYears: React.JSX.Element[] = [];

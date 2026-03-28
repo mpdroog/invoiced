@@ -49,6 +49,7 @@ export default class PurchasesPage extends React.Component<PurchasesPageProps, P
           continue;
         }
         const item = data.Invoices[key];
+        if (!item) continue;
         if (key.endsWith("/purchase-invoices-paid/")) {
           s.paid[key] = item;
         } else if (key.endsWith("/purchase-invoices-unpaid/")) {

@@ -79,8 +79,10 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
         if (!Object.prototype.hasOwnProperty.call(this.state.hours, bucket)) {
           continue;
         }
+        const bucketItems = this.state.hours[bucket];
+        if (!bucketItems) continue;
         items++;
-        this.state.hours[bucket].forEach(function(elem) {
+        bucketItems.forEach(function(elem) {
           res.push(<tr key={bucket+elem}>
             <td>{bucket}</td>
             <td>{elem}</td>

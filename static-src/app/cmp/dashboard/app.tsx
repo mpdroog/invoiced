@@ -94,7 +94,8 @@ interface IState {
 // Format number with space as thousands separator: 51868.65 -> 51 868,65
 function formatCurrency(value: number): string {
 	const parts = value.toFixed(2).split(".");
-	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+	const intPart = parts[0] ?? "0";
+	parts[0] = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 	return parts.join(",");
 }
 
@@ -147,8 +148,8 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 			const prevRev = data.monthlyPrevYear?.[prevKey] ? parseFloat(data.monthlyPrevYear[prevKey].RevenueEx) || 0 : 0;
 			const prevHours = data.monthlyPrevYear?.[prevKey] ? parseFloat(data.monthlyPrevYear[prevKey].Hours) || 0 : 0;
 
-			revstats.push({month: months[m-1], current: currentRev, previous: prevRev});
-			hourstats.push({month: months[m-1], current: currentHours, previous: prevHours});
+			revstats.push({month: months[m-1] ?? "", current: currentRev, previous: prevRev});
+			hourstats.push({month: months[m-1] ?? "", current: currentHours, previous: prevHours});
 
 			sum += currentRev;
 		}

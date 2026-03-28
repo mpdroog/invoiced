@@ -127,6 +127,7 @@ export class Autocomplete extends React.Component<AutocompleteProps, Autocomplet
   	const key = (e.target as HTMLAnchorElement).dataset["key"];
   	if (key === undefined) return;
   	const data = this.state.suggestions[parseInt(key, 10)];
+  	if (!data) return;
 	  this.props.onSelect(data);
     this.setState({show: false});
   }

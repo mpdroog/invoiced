@@ -53,16 +53,19 @@ function parseDate(line: string): string | false {
 	if (dayMonth.length !== 2) {
 		return false;
 	}
-	if (dayMonth[0].length === 1) {
-		dayMonth[0] = "0" + dayMonth[0];
+	const day = dayMonth[0];
+	const month = dayMonth[1];
+	if (!day || !month) {
+		return false;
 	}
-	const monthKey = dayMonth[1].toLowerCase() as MonthKey;
+	const paddedDay = day.length === 1 ? "0" + day : day;
+	const monthKey = month.toLowerCase() as MonthKey;
 
 	const monthNum = monthMap[monthKey];
 	if (!monthNum) {
 		return false;
 	}
-	const dateStr = currentYear + "-" + monthNum + "-" + dayMonth[0];
+	const dateStr = currentYear + "-" + monthNum + "-" + paddedDay;
 	const date = new Date(dateStr);
 	if (isNaN(date.getTime())) {
 		return false;
@@ -92,7 +95,9 @@ function importText(lines: string[]): ImportResult {
 
 	for (let i = 0; i < lines.length; i++) {
 		const lineNum = i + 1;
-		const line = lines[i].trim();
+		const rawLine = lines[i];
+		if (!rawLine) continue;
+		const line = rawLine.trim();
 		if (line.length === 0) {
 			// ignore empty lines
 			continue;

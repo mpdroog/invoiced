@@ -49,8 +49,8 @@ function hashChange(): void {
 
       if (inject === null) {
             props = {
-                  entity: url.shift(),
-                  year: url.shift()
+                  entity: url.shift() ?? "",
+                  year: url.shift() ?? ""
             };
             switch (url.shift()) {
                   case "hours":

@@ -48,10 +48,10 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
 
   private getSortValue(inv: IInvoiceState, field: string): string | number {
     switch (field) {
-      case "Invoice": return inv.Meta.Invoiceid || inv.Meta.Conceptid || "";
-      case "Customer": return inv.Customer.Name || "";
-      case "Amount": return parseFloat(inv.Total.Total) || 0;
-      case "Duedate": return inv.Meta.Duedate || "";
+      case "Invoice": return inv.Meta?.Invoiceid || inv.Meta?.Conceptid || "";
+      case "Customer": return inv.Customer?.Name || "";
+      case "Amount": return parseFloat(inv.Total?.Total ?? "0") || 0;
+      case "Duedate": return inv.Meta?.Duedate || "";
       default: return "";
     }
   }
@@ -121,7 +121,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
   }
 
   private conceptLine(key: string, inv: IInvoiceState, bucket: string, isPending: boolean): React.JSX.Element {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0] ?? "";
     let expiryClass = "";
     if (isPending && inv.Meta?.Duedate && inv.Meta.Duedate <= today) {
       expiryClass = 'bg-danger';
@@ -149,10 +149,10 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     console.log(bucket);
     return <tr key={key}>
       <td>{key}</td>
-      <td>{inv.Meta.Invoiceid}</td>
-      <td>{inv.Customer.Name}</td>
-      <td>&euro; {inv.Total.Total}</td>
-      <td>{inv.Meta.Duedate}</td>
+      <td>{inv.Meta?.Invoiceid}</td>
+      <td>{inv.Customer?.Name}</td>
+      <td>&euro; {inv.Total?.Total}</td>
+      <td>{inv.Meta?.Duedate}</td>
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
         <a className="btn btn-default btn-hover-primary" href={"/api/v1/invoice/" + this.props.entity + "/" + this.props.year + "/" + bucket + "/" + key + "/pdf"}><i className="fa fa-file-pdf-o"></i></a>
@@ -165,12 +165,13 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     document.getElementById('js-balance-field')?.click();
   }
   private uploadBalance(e: React.ChangeEvent<HTMLInputElement>): void {
-    if (e.target.files.length === 0) {
+    if (!e.target.files || e.target.files.length === 0) {
       return;
     }
 
     console.log("Upload");
     const file = e.target.files[0];
+    if (!file) return;
     const form = new FormData();
     form.append('file', file, file.name);
 
@@ -206,10 +207,12 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
         }
         // Extract quarter from directory path (3rd element from end): .../Q1/sales-invoices-paid/ -> Q1
         const parts = dir.split("/").filter(p => p.length > 0);
-        const bucket = this.props.bucket === "concepts" ? "concepts" : parts[parts.length - 2];
+        const bucket = this.props.bucket === "concepts" ? "concepts" : (parts[parts.length - 2] ?? "");
 
-        this.props.items[dir].forEach((inv) => {
-          const key: string = inv.Meta.Conceptid;
+        const items = this.props.items[dir];
+        if (!items) continue;
+        items.forEach((inv) => {
+          const key: string = inv.Meta?.Conceptid ?? "";
           invoiceList.push({key, inv, bucket});
         });
       }
