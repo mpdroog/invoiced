@@ -2,6 +2,7 @@ import * as React from "react";
 import Axios from "axios";
 import {IInvoiceState} from "./edit-struct";
 import {DOM} from "../../lib/dom";
+import {ActionLink} from "../../shared/ActionButton";
 
 interface IInvoicePagination {
   from?: number;
@@ -76,48 +77,24 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     });
   }
 
-  private delete(e: React.MouseEvent<HTMLAnchorElement>): void {
-    e.preventDefault();
+  private async delete(e: React.MouseEvent<HTMLAnchorElement>): Promise<void> {
     const node = DOM.eventFilter(e, "A");
     if (!node) return;
     const id = node.dataset["target"];
     const bucket = node.dataset["bucket"];
-    const isDisabled = node.dataset["disabled"] === "true";
 
-    if (isDisabled) {
-      console.log("btn disabled");
-      return;
-    }
-
-    Axios.delete(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${id}`)
-    .then(() => {
-      location.reload();
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+    await Axios.delete(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${id}`);
+    location.reload();
   }
 
-  private setPaid(e: React.MouseEvent<HTMLAnchorElement>): void {
-    e.preventDefault();
+  private async setPaid(e: React.MouseEvent<HTMLAnchorElement>): Promise<void> {
     const node = DOM.eventFilter(e, "A");
     if (!node) return;
     const id = node.dataset["id"];
     const bucket = node.dataset["bucket"];
-    const isDisabled = node.dataset["disabled"] === "true";
 
-    if (isDisabled) {
-      console.log("btn disabled");
-      return;
-    }
-
-    Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${id}/paid`, {})
-    .then(() => {
-      location.reload();
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+    await Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${id}/paid`, {});
+    location.reload();
   }
 
   private conceptLine(key: string, inv: IInvoiceState, bucket: string, isPending: boolean): React.JSX.Element {
@@ -139,8 +116,8 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td className={expiryClass}>{meta.Duedate}</td>
       <td>
         <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fas fa-pencil"></i></a>
-        <a className={"btn btn-default btn-hover-danger " + (isDeleteDisabled ? " disabled" : "")} data-target={key} data-status={meta.Status} data-disabled={String(isDeleteDisabled)} onClick={this.delete.bind(this)}><i className="fas fa-trash"></i></a>
-        <a className={"btn btn-default btn-hover-danger " + (isPaidDisabled ? " disabled" : "")} data-id={key} data-bucket={bucket} data-disabled={String(isPaidDisabled)} onClick={this.setPaid.bind(this)}><i className="fas fa-check"></i></a>
+        <ActionLink className="btn btn-default btn-hover-danger" disabled={isDeleteDisabled} data-target={key} data-bucket={bucket} onClick={this.delete.bind(this)}><i className="fas fa-trash"></i></ActionLink>
+        <ActionLink className="btn btn-default btn-hover-danger" disabled={isPaidDisabled} data-id={key} data-bucket={bucket} onClick={this.setPaid.bind(this)}><i className="fas fa-check"></i></ActionLink>
       </td>
     </tr>;
   }

@@ -4,6 +4,7 @@ import Big from "big.js";
 import Moment from "moment";
 import Import from "./edit-import";
 import {Autocomplete, LockedInput} from "../../shared/components";
+import {ActionButton} from "../../shared/ActionButton";
 
 interface IHourLineState {
   Hours: number;
@@ -248,32 +249,20 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     this.setState({Lines: newLines, Total: this.updateTotalFromLines(newLines)});
   }
 
-  private save(e: React.MouseEvent<HTMLButtonElement>): void {
-    e.preventDefault();
+  private async save(): Promise<void> {
     const req = {...this.state};
     req.Total = this.updateTotal();
 
-    Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts`, req)
-    .then(res => {
-      console.log(res.data);
-      this.setState(res.data);
-      history.replaceState({}, "", `#${this.props.entity}/${this.props.year}/hours/edit/concepts/${res.data.Name}`);
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+    const res = await Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts`, req);
+    console.log(res.data);
+    this.setState(res.data);
+    history.replaceState({}, "", `#${this.props.entity}/${this.props.year}/hours/edit/concepts/${res.data.Name}`);
   }
 
-  private bill(e: React.MouseEvent<HTMLButtonElement>): void {
-    e.preventDefault();
+  private async bill(): Promise<void> {
     const args = this.state;
-    Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts/${args.Name}/bill`, args)
-    .then(res => {
-      location.href = `#${this.props.entity}/${this.props.year}/invoices/edit/concepts/${res.headers["x-redirect-invoice"]}`
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+    const res = await Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts/${args.Name}/bill`, args);
+    location.href = `#${this.props.entity}/${this.props.year}/invoices/edit/concepts/${res.headers["x-redirect-invoice"]}`;
   }
 
   private shortHand(d: number): string {
@@ -343,8 +332,8 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
               <button type="button" className="btn btn-default btn-hover-warning" disabled={this.undoStack.length === 0 || !isEditable} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i>&nbsp;Undo</button>
               <button type="button" className="btn btn-default btn-hover-warning" disabled={this.redoStack.length === 0 || !isEditable} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i>&nbsp;Redo</button>
               <button type="button" className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.toggleImport.bind(this)}><i className="fas fa-arrow-up"></i>&nbsp;Import</button>
-              <button type="button" className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i>&nbsp;Save</button>
-              <button type="button" className="btn btn-default btn-hover-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fas fa-share"></i>&nbsp;Bill</button>
+              <ActionButton className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i>&nbsp;Save</ActionButton>
+              <ActionButton className="btn btn-default btn-hover-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fas fa-share"></i>&nbsp;Bill</ActionButton>
             </div>
           </div>
           Sum ({this.state.Total} hours/{parseFloat(this.state.Total) * this.state.HourRate} EUR)

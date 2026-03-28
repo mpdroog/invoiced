@@ -1,6 +1,7 @@
 import * as React from "react";
 import Axios from "axios";
 import {IInvoiceMail, IInvoiceMeta} from "./edit-struct";
+import {ActionLink} from "../../shared/ActionButton";
 
 interface InvoiceMailParent {
   props: {
@@ -26,7 +27,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
     super(props);
   }
 
-  send(e: React.MouseEvent<HTMLAnchorElement>): void {
+  async send(): Promise<void> {
     const parent = this.props.parent;
     const mail = parent.state.Mail;
     const meta = parent.state.Meta;
@@ -34,14 +35,10 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
     const req = JSON.parse(JSON.stringify(mail));
     console.log("Send!", req);
 
-    Axios.post('/api/v1/invoice/'+parent.props.entity+'/'+parent.props.year+'/'+parent.props.bucket+'/'+meta.Conceptid+'/email', req)
-    .then(() => {
-      parent.setState({Mail: mail});
-      this.props.onHide(e);
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+    await Axios.post('/api/v1/invoice/'+parent.props.entity+'/'+parent.props.year+'/'+parent.props.bucket+'/'+meta.Conceptid+'/email', req);
+    parent.setState({Mail: mail});
+    // Close modal by simulating click event
+    this.props.onHide({} as React.MouseEvent<HTMLAnchorElement>);
   }
 
   private update(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void {
@@ -107,7 +104,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
               <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/xml"} target="_blank" rel="noreferrer"><i className="fas fa-building-columns" />&nbsp;{parentMeta.Invoiceid}.xml</a></p>
               {hourFile}
             </div>
-            <a onClick={this.send.bind(this)} className="btn btn-primary" style={{float:"right"}}> Send</a>
+            <ActionLink onClick={this.send.bind(this)} className="btn btn-primary" style={{float:"right"}}> Send</ActionLink>
           </div>
         </div>
       </div>

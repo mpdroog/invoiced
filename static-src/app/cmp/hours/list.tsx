@@ -2,6 +2,7 @@ import * as React from "react";
 import Axios from "axios";
 import {DOM} from "../../lib/dom";
 import { decode as msgpackDecode } from '@msgpack/msgpack';
+import {ActionLink} from "../../shared/ActionButton";
 
 interface IHourPagination {
   from?: number;
@@ -51,21 +52,15 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
     });
   }
 
-  private delete(e: React.MouseEvent<HTMLAnchorElement>): void {
-    e.preventDefault();
+  private async delete(e: React.MouseEvent<HTMLAnchorElement>): Promise<void> {
     const node = DOM.eventFilter(e, "A");
     if (!node) return;
     const id = node.dataset["target"];
     const bucket = node.dataset["bucket"];
     if (!id || !bucket) return;
 
-    Axios.delete(`/api/v1/hour/${this.props.entity}/${this.props.year}/${bucket}/${id}`)
-    .then(() => {
-      location.reload();
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+    await Axios.delete(`/api/v1/hour/${this.props.entity}/${this.props.year}/${bucket}/${id}`);
+    location.reload();
   }
 
   render(): React.JSX.Element {
@@ -88,7 +83,7 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
             <td>{elem}</td>
             <td>
               <a className="btn btn-default btn-hover-primary" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+bucket+"/"+elem}><i className="fas fa-pencil"></i></a>
-              <a className="btn btn-default btn-hover-danger " data-target={elem} data-bucket={bucket} onClick={that.delete.bind(that)}><i className="fas fa-trash"></i></a>
+              <ActionLink className="btn btn-default btn-hover-danger" data-target={elem} data-bucket={bucket} onClick={that.delete.bind(that)}><i className="fas fa-trash"></i></ActionLink>
             </td></tr>);
         });
       }

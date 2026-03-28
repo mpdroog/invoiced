@@ -1,5 +1,6 @@
 import * as React from "react";
 import Axios from "axios";
+import {ActionButton, ActionLink} from "../../shared/ActionButton";
 
 interface IPurchaseInvoice {
   ID: string
@@ -88,34 +89,22 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     });
   }
 
-  private setPaid(e: React.MouseEvent<HTMLAnchorElement>, key: string, bucket: string): void {
-    e.preventDefault();
+  private async setPaid(key: string, bucket: string): Promise<void> {
     if (!confirm("Mark this purchase invoice as paid?")) {
       return;
     }
 
-    Axios.post(`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}/paid`, {})
-    .then(() => {
-      location.reload();
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+    await Axios.post(`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}/paid`, {});
+    location.reload();
   }
 
-  private delete(e: React.MouseEvent<HTMLAnchorElement>, key: string, bucket: string): void {
-    e.preventDefault();
+  private async delete(key: string, bucket: string): Promise<void> {
     if (!confirm("Delete this purchase invoice?")) {
       return;
     }
 
-    Axios.delete(`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}`)
-    .then(() => {
-      location.reload();
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+    await Axios.delete(`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}`);
+    location.reload();
   }
 
   private showAddLineModal(inv: IPurchaseInvoice): void {
@@ -196,15 +185,15 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
           <a className="btn btn-default btn-hover-primary" href={`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}/pdf`} target="_blank" rel="noreferrer">
             <i className="far fa-file-pdf"></i>
           </a>
-          {isUnpaid && <a className="btn btn-default btn-hover-success " onClick={(e) => this.setPaid(e, key, bucket)}>
+          {isUnpaid && <ActionLink className="btn btn-default btn-hover-success" onClick={() => this.setPaid(key, bucket)}>
             <i className="fas fa-check"></i>
-          </a>}
+          </ActionLink>}
           <a className="btn btn-default btn-hover-info" onClick={() => this.showAddLineModal(inv)}>
             <i className="fas fa-plus"></i> Add to Invoice
           </a>
-          <a className="btn btn-default btn-hover-danger " onClick={(e) => this.delete(e, key, bucket)}>
+          <ActionLink className="btn btn-default btn-hover-danger" onClick={() => this.delete(key, bucket)}>
             <i className="fas fa-trash"></i>
-          </a>
+          </ActionLink>
         </td>
       </tr>);
     });
@@ -306,7 +295,7 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
     });
   }
 
-  private addLine(): void {
+  private async addLine(): Promise<void> {
     if (!this.state.selectedConcept) {
       alert("Please select an invoice");
       return;
@@ -344,14 +333,9 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
     concept.Total.Total = (totalEx + totalTax).toFixed(2);
 
     // Save updated concept
-    Axios.post('/api/v1/invoice/'+this.props.entity+'/'+this.props.year, concept)
-    .then(() => {
-      alert("Line added successfully!");
-      this.props.onClose();
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+    await Axios.post('/api/v1/invoice/'+this.props.entity+'/'+this.props.year, concept);
+    alert("Line added successfully!");
+    this.props.onClose();
   }
 
   render(): React.JSX.Element {
@@ -406,7 +390,7 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
           </div>
           <div className="modal-footer">
             <button type="button" onClick={this.props.onClose} className="btn btn-default">Cancel</button>
-            <button type="button" onClick={() => this.addLine()} className="btn btn-primary">Add Line</button>
+            <ActionButton onClick={() => this.addLine()} className="btn btn-primary">Add Line</ActionButton>
           </div>
         </div>
       </div>

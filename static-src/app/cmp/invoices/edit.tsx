@@ -2,6 +2,7 @@ import * as React from "react";
 import Axios from "axios";
 import Moment from "moment";
 import {Autocomplete, LockedInput} from "../../shared/components";
+import {ActionButton} from "../../shared/ActionButton";
 import {InvoiceLineEdit} from "./edit-line";
 import {InvoiceMail} from "./edit-mail";
 import Big from "big.js";
@@ -243,50 +244,27 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     this.triggerChange(indices, e.target.value);
   }
 
-  private save(e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>): void {
-    e.preventDefault();
+  private async save(): Promise<void> {
     const req = JSON.parse(JSON.stringify(this.state));
     console.log(req);
 
-    Axios.post('/api/v1/invoice/'+this.props.entity+'/'+this.props.year, req)
-    .then(res => {
-      this.parseInput.call(this, res.data);
-    })
-    .catch(err => {
-      if (err.response?.status === 417) {
-        this.errors = err.response.data.Fields;
-        prettyErr(err.response.data);
-        return;
-      }
-      handleErr(err);
-    });
+    const res = await Axios.post('/api/v1/invoice/'+this.props.entity+'/'+this.props.year, req);
+    this.parseInput.call(this, res.data);
   }
 
-  private reset(e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>): void {
-    e.preventDefault();
+  private async reset(): Promise<void> {
     const meta = this.state.Meta;
     if (!meta) return;
-    Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/reset`, {})
-    .then(res => {
-      // Reset always moves to concepts bucket
-      this.parseInput(res.data, "concepts");
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+    const res = await Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/reset`, {});
+    // Reset always moves to concepts bucket
+    this.parseInput(res.data, "concepts");
   }
 
-  private finalize(e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>): void {
-    e.preventDefault();
+  private async finalize(): Promise<void> {
     const meta = this.state.Meta;
     if (!meta) return;
-    Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/finalize`, {})
-    .then(res => {
-      this.parseInput(res.data, res.headers["x-bucket-change"]);
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+    const res = await Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/finalize`, {});
+    this.parseInput(res.data, res.headers["x-bucket-change"]);
   }
 
   private pdf(): void {
@@ -375,12 +353,12 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
               <div className="btn-group nm7">
                 <button type="button" className="btn btn-default btn-hover-warning" disabled={this.undoStack.length === 0 || meta.Status === "FINAL"} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i> Undo</button>
                 <button type="button" className="btn btn-default btn-hover-warning" disabled={this.redoStack.length === 0 || meta.Status === "FINAL"} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i> Redo</button>
-                <button type="button" className="btn btn-default btn-hover-success" disabled={meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i> Save</button>
-                <button type="button" className="btn btn-default btn-hover-danger" disabled={meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fas fa-lock"></i> Finalize</button>
+                <ActionButton type="button" className="btn btn-default btn-hover-success" disabled={meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i> Save</ActionButton>
+                <ActionButton type="button" className="btn btn-default btn-hover-danger" disabled={meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fas fa-lock"></i> Finalize</ActionButton>
                 <button type="button" className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.pdf.bind(this)}><i className="far fa-file-pdf"></i> PDF</button>
                 <button type="button" className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.email.bind(this)}><i className="fas fa-paper-plane"></i> E-mail</button>
 
-                <button type="button" className="btn btn-default btn-hover-danger" disabled={meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fas fa-unlock"></i> Reset</button>
+                <ActionButton type="button" className="btn btn-default btn-hover-danger" disabled={meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fas fa-unlock"></i> Reset</ActionButton>
 
               </div>
 

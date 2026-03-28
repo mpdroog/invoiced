@@ -1,5 +1,6 @@
 import * as React from "react";
 import Axios from "axios";
+import {ActionButton} from "../../shared/ActionButton";
 
 interface TaxData {
   Ex: string;
@@ -28,15 +29,9 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
     //this.ajax();
   }
 
-  private ajax(): void {
-    const that = this;
-    Axios.post('/api/v1/taxes/'+this.props.entity+'/'+this.props.year+'/'+this.state.quarter)
-    .then(res => {
-      that.setState({data: res.data});
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+  private async ajax(): Promise<void> {
+    const res = await Axios.post('/api/v1/taxes/'+this.props.entity+'/'+this.props.year+'/'+this.state.quarter);
+    this.setState({data: res.data});
   }
 
   private setQuarter(e: React.ChangeEvent<HTMLInputElement>): void {
@@ -94,7 +89,7 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
           <div className="row">
           <div className="col-md-8">
             <input type="text" value={this.state.quarter} onChange={this.setQuarter.bind(this)} />
-            <button type="submit" onClick={this.ajax.bind(this)}>Get numbers</button>
+            <ActionButton onClick={this.ajax.bind(this)}>Get numbers</ActionButton>
 
             {sum}
           </div>
