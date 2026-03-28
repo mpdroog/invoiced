@@ -4,12 +4,9 @@
   "description": "Invoice Daemon",
   "author": "MP Droog <rootdev@gmail.com>",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
+    "build": "tsc --noEmit && eslint app/ && vite build",
     "lint": "eslint app/",
-    "lint:fix": "eslint app/ --fix",
-    "typecheck": "tsc --noEmit"
+    "lint:fix": "eslint app/ --fix"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

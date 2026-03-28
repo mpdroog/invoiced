@@ -16,9 +16,10 @@ go run main.go                     # Run directly
 ### Frontend (ReactJS/TypeScript/Vite)
 ```bash
 cd static-src
-yarn install                       # Install dependencies
-npm run build                      # Build to ../static/assets/
-npm run dev                        # Dev server on port 5173 (proxies /api to localhost:9999)
+npm install                        # Install dependencies
+npm run build                      # Typecheck + lint + build to ../static/assets/
+npm run lint                       # Run ESLint only
+npm run lint:fix                   # Auto-fix ESLint errors
 ```
 
 ### Tests
@@ -91,5 +92,7 @@ Generated via `utils.CreateInvoiceId()` combining current date and sequential co
 
 ### Frontend
 - Located in `static-src/`, built to `static/assets/`
-- React 15, TypeScript, Vite bundler
-- Axios for API calls, Chartist for metrics visualization
+- React 18, TypeScript (strict mode), Vite bundler
+- Axios for API calls, Recharts for metrics visualization
+- ESLint with TypeScript rules (no-floating-promises, no-misused-promises)
+- TypeScript strict settings: strictNullChecks, noUncheckedIndexedAccess
