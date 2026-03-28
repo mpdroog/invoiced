@@ -8,8 +8,8 @@ require (
 	github.com/boltdb/bolt v1.3.1
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/getlantern/systray v1.0.4
-	github.com/go-git/go-billy/v6 v6.0.0-20251217170237-e9738f50a3cd
-	github.com/go-git/go-git/v6 v6.0.0-20251231065035-29ae690a9f19
+	github.com/go-git/go-billy/v6 v6.0.0-20260226131633-45bd0956d66f
+	github.com/go-git/go-git/v6 v6.0.0-20260324221343-cd85c8c75d34
 	github.com/go-pascal/iban v0.0.0-20241112083453-0f5c4ae9807d
 	github.com/itshosted/webutils v1.0.1
 	github.com/julienschmidt/httprouter v1.3.0
@@ -21,7 +21,7 @@ require (
 	github.com/shopspring/decimal v1.4.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/xuri/excelize/v2 v2.10.0
-	golang.org/x/crypto v0.46.0
+	golang.org/x/crypto v0.48.0
 	gopkg.in/gomail.v1 v1.0.0-20150320132819-11b919ab4933
 	gopkg.in/validator.v2 v2.0.1
 	gopkg.in/vmihailenco/msgpack.v2 v2.9.2
@@ -40,7 +40,7 @@ require (
 	github.com/blevesearch/zap/v12 v12.0.10 // indirect
 	github.com/blevesearch/zap/v13 v13.0.2 // indirect
 	github.com/blevesearch/zap/v14 v14.0.1 // indirect
-	github.com/cloudflare/circl v1.6.1 // indirect
+	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/couchbase/vellum v1.0.2 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d // indirect
@@ -60,7 +60,7 @@ require (
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
-	github.com/kevinburke/ssh_config v1.4.0 // indirect
+	github.com/kevinburke/ssh_config v1.5.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -81,10 +81,11 @@ require (
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	go.etcd.io/bbolt v1.3.5 // indirect
-	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/net v0.50.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/term v0.38.0 // indirect
-	golang.org/x/text v0.33.0 // indirect
+	golang.org/x/term v0.40.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v2 v2.0.0-20150314193201-9b4a113f96b3 // indirect
