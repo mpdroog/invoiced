@@ -164,7 +164,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
     let content = null;
 
     if (this.state.loading) {
-      content = <p><i className="fa fa-spinner fa-spin"></i> Loading git status...</p>;
+      content = <p><i className="fas fa-spinner fa-spin"></i> Loading git status...</p>;
     } else if (this.state.error) {
       content = <div className="alert alert-danger">{this.state.error}</div>;
     } else if (this.state.status) {
@@ -197,9 +197,9 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
                     title="Reset to this commit"
                   >
                     {this.state.reverting === c.fullHash ? (
-                      <i className="fa fa-spinner fa-spin"></i>
+                      <i className="fas fa-spinner fa-spin"></i>
                     ) : (
-                      <i className="fa fa-undo"></i>
+                      <i className="fas fa-rotate-left"></i>
                     )}
                   </button>
                 </td>
@@ -224,9 +224,9 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
               disabled={this.state.pulling || this.state.pushing || this.state.reverting !== null}
             >
               {this.state.pulling ? (
-                <span><i className="fa fa-spinner fa-spin"></i> Pulling...</span>
+                <span><i className="fas fa-spinner fa-spin"></i> Pulling...</span>
               ) : (
-                <span><i className="fa fa-cloud-download"></i> Pull from Remote</span>
+                <span><i className="fas fa-cloud-arrow-down"></i> Pull from Remote</span>
               )}
             </button>
             <button
@@ -235,9 +235,9 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
               disabled={this.state.pushing || this.state.pulling || this.state.reverting !== null || status.ahead === 0}
             >
               {this.state.pushing ? (
-                <span><i className="fa fa-spinner fa-spin"></i> Pushing...</span>
+                <span><i className="fas fa-spinner fa-spin"></i> Pushing...</span>
               ) : (
-                <span><i className="fa fa-cloud-upload"></i> Push to Remote</span>
+                <span><i className="fas fa-cloud-arrow-up"></i> Push to Remote</span>
               )}
             </button>
             {status.ahead > 0 && (
@@ -247,9 +247,9 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
                 disabled={this.state.pushing || this.state.pulling || this.state.reverting !== null}
               >
                 {this.state.reverting === 'all' ? (
-                  <span><i className="fa fa-spinner fa-spin"></i> Discarding...</span>
+                  <span><i className="fas fa-spinner fa-spin"></i> Discarding...</span>
                 ) : (
-                  <span><i className="fa fa-undo"></i> Discard All</span>
+                  <span><i className="fas fa-rotate-left"></i> Discard All</span>
                 )}
               </button>
             )}
@@ -270,11 +270,11 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
       const hist = this.state.history;
       historyPanel = <div className="hpanel hgreen m-t-md">
         <div className="panel-heading hbuilt">
-          <i className="fa fa-history"></i> Previous Commits
+          <i className="fas fa-history"></i> Previous Commits
         </div>
         <div className="panel-body">
           {this.state.historyLoading ? (
-            <p><i className="fa fa-spinner fa-spin"></i> Loading...</p>
+            <p><i className="fas fa-spinner fa-spin"></i> Loading...</p>
           ) : (
             <div>
               <table className="table table-striped">
@@ -303,7 +303,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
                   onClick={() => this.loadHistory(hist.page - 1)}
                   disabled={hist.page === 0 || this.state.historyLoading}
                 >
-                  <i className="fa fa-chevron-left"></i> Newer
+                  <i className="fas fa-chevron-left"></i> Newer
                 </button>
                 <span className="text-muted">Page {hist.page + 1}</span>
                 <button
@@ -311,7 +311,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
                   onClick={() => this.loadHistory(hist.page + 1)}
                   disabled={!hist.hasMore || this.state.historyLoading}
                 >
-                  Older <i className="fa fa-chevron-right"></i>
+                  Older <i className="fas fa-chevron-right"></i>
                 </button>
               </div>
             </div>
@@ -323,10 +323,10 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
     return <div className="normalheader">
       <div className="hpanel hblue">
         <div className="panel-heading hbuilt">
-          <i className="fa fa-git"></i> Git Status
+          <i className="fab fa-git"></i> Git Status
           <div className="panel-tools">
             <button className="btn btn-default btn-xs" onClick={this.loadStatus.bind(this)}>
-              <i className="fa fa-refresh"></i> Refresh
+              <i className="fas fa-rotate"></i> Refresh
             </button>
           </div>
         </div>

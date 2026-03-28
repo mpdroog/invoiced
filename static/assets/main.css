@@ -68,3 +68,20 @@
     vertical-align: top;
 }
 
+/* FontAwesome 6 hover animations */
+.btn-hover-danger:hover .fas,
+.btn-hover-danger:hover .far,
+.btn-hover-success:hover .fas,
+.btn-hover-success:hover .far {
+    animation: fa-beat 0.5s ease infinite;
+}
+
+.btn-hover-info:hover .fas {
+    animation: fa-bounce 0.5s ease infinite;
+}
+
+/* Lock icon shake on hover */
+a:hover .fa-hover-shake {
+    animation: fa-shake 0.5s ease infinite;
+}
+

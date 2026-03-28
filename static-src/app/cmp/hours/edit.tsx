@@ -254,7 +254,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
 
     this.state.Lines.forEach(function(item:IHourLineState, idx:number) {
       lines.push(<tr key={idx}>
-        <td><button className="btn btn-default btn-hover-danger faa-parent animated-hover" onClick={that.lineRemove.bind(that, idx)}><i className="fa fa-trash faa-flash"></i></button></td>
+        <td><button className="btn btn-default btn-hover-danger " onClick={that.lineRemove.bind(that, idx)}><i className="fas fa-trash"></i></button></td>
         <td>{item.Day}</td>
         <td>{item.Start}</td><td>{item.Stop}</td><td>{that.shortHand(item.Hours)}</td><td>{item.Description}</td>
       </tr>);
@@ -281,7 +281,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
             </div>
             <div className="col-sm-1">            
               <button onClick={this.recalc.bind(this)} className="btn btn-default btn-hover-success">
-                <i className="fa fa-plus"></i>
+                <i className="fas fa-plus"></i>
                 &nbsp;Add
               </button>
 	          </div>
@@ -295,9 +295,9 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
         <div className="panel-heading hbuilt">
           <div className="panel-tools">
             <div className="btn-group nm7">
-              <button className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.toggleImport.bind(this)}><i className="fa fa-arrow-up"></i>&nbsp;Import</button>
-              <button className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i>&nbsp;Save</button>
-              <button className="btn btn-default btn-hover-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fa fa-share"></i>&nbsp;Bill</button>
+              <button className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.toggleImport.bind(this)}><i className="fas fa-arrow-up"></i>&nbsp;Import</button>
+              <button className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i>&nbsp;Save</button>
+              <button className="btn btn-default btn-hover-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fas fa-share"></i>&nbsp;Bill</button>
             </div>
           </div>
           Sum ({this.state.Total} hours/{parseFloat(this.state.Total) * this.state.HourRate} EUR)

@@ -87,8 +87,8 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
             <td>{bucket}</td>
             <td>{elem}</td>
             <td>
-              <a className="btn btn-default btn-hover-primary" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+bucket+"/"+elem}><i className="fa fa-pencil"></i></a>
-              <a className="btn btn-default btn-hover-danger faa-parent animated-hover" data-target={elem} data-bucket={bucket} onClick={that.delete.bind(that)}><i className="fa fa-trash faa-flash"></i></a>
+              <a className="btn btn-default btn-hover-primary" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+bucket+"/"+elem}><i className="fas fa-pencil"></i></a>
+              <a className="btn btn-default btn-hover-danger " data-target={elem} data-bucket={bucket} onClick={that.delete.bind(that)}><i className="fas fa-trash"></i></a>
             </td></tr>);
         });
       }
@@ -102,7 +102,7 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
           <div className="panel-heading hbuilt">
             <div className="panel-tools">
               <div className="btn-group nm7">
-                <a href={"#"+that.props.entity+"/"+that.props.year+"/hours/add"} id="js-new" className="btn btn-default btn-hover-primary showhide"><i className="fa fa-plus"></i> New</a>
+                <a href={"#"+that.props.entity+"/"+that.props.year+"/hours/add"} id="js-new" className="btn btn-default btn-hover-primary showhide"><i className="fas fa-plus"></i> New</a>
               </div>
             </div>
             Hour registration

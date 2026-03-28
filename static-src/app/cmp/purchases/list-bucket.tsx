@@ -196,16 +196,16 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
         <td className={expiryClass}>{inv.Duedate}</td>
         <td>
           <a className="btn btn-default btn-hover-primary" href={`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}/pdf`} target="_blank">
-            <i className="fa fa-file-pdf-o"></i>
+            <i className="far fa-file-pdf"></i>
           </a>
-          {isUnpaid && <a className="btn btn-default btn-hover-success faa-parent animated-hover" onClick={(e) => this.setPaid(e, key, bucket)}>
-            <i className="fa fa-check faa-flash"></i>
+          {isUnpaid && <a className="btn btn-default btn-hover-success " onClick={(e) => this.setPaid(e, key, bucket)}>
+            <i className="fas fa-check"></i>
           </a>}
           <a className="btn btn-default btn-hover-info" onClick={() => this.showAddLineModal(inv)}>
-            <i className="fa fa-plus"></i> Add to Invoice
+            <i className="fas fa-plus"></i> Add to Invoice
           </a>
-          <a className="btn btn-default btn-hover-danger faa-parent animated-hover" onClick={(e) => this.delete(e, key, bucket)}>
-            <i className="fa fa-trash faa-flash"></i>
+          <a className="btn btn-default btn-hover-danger " onClick={(e) => this.delete(e, key, bucket)}>
+            <i className="fas fa-trash"></i>
           </a>
         </td>
       </tr>);
@@ -219,7 +219,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     if (isUnpaid) {
       headerButtons = <div>
         <a id="js-upload-btn" onClick={this.openUpload.bind(this)} className="btn btn-default btn-hover-primary showhide">
-          <i className="fa fa-upload"></i> Upload XML
+          <i className="fas fa-upload"></i> Upload XML
         </a>
       </div>;
     }
@@ -368,7 +368,7 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
               <span>&times;</span>
             </button>
             <h4 className="modal-title">
-              <i className="fa fa-plus"></i> Add Line from Purchase Invoice {inv.ID}
+              <i className="fas fa-plus"></i> Add Line from Purchase Invoice {inv.ID}
             </h4>
           </div>
           <div className="modal-body">

@@ -67,7 +67,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
     const a: React.CSSProperties = {float: "left", width: "350px", textAlign: "left"};
     let hourFile: React.JSX.Element = <div/>;
     if (parentMeta.HourFile.length > 0) {
-      hourFile = <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/text"} target="_blank" rel="noreferrer"><i className="fa fa-file-o" />&nbsp;hours.txt</a></p>;
+      hourFile = <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/text"} target="_blank" rel="noreferrer"><i className="far fa-file" />&nbsp;hours.txt</a></p>;
     }
 
   	return <div className="modal" style={s} tabIndex={-1} role="dialog">
@@ -80,7 +80,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
             <h4 className="modal-title">
             	<div className="row">
           		<div className="col-sm-1">
-	              <i className="fa fa-send"></i>
+	              <i className="fas fa-paper-plane"></i>
           		</div>
 	          	<div className="col-sm-10">
 	              <input type="text" className="form-control" onChange={this.update.bind(this)} id="Subject" value={parentMail.Subject}/>
@@ -103,8 +103,8 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
           </div>
           <div className="modal-footer">
             <div style={a}>
-              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/pdf"} target="_blank"><i className="fa fa-file-pdf-o" />&nbsp;{parentMeta.Invoiceid}.pdf</a></p>
-              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/xml"} target="_blank"><i className="fa fa-bank" />&nbsp;{parentMeta.Invoiceid}.xml</a></p>
+              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/pdf"} target="_blank"><i className="far fa-file-pdf" />&nbsp;{parentMeta.Invoiceid}.pdf</a></p>
+              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/xml"} target="_blank"><i className="fas fa-building-columns" />&nbsp;{parentMeta.Invoiceid}.xml</a></p>
               {hourFile}
             </div>
             <a onClick={this.send.bind(this)} className="btn btn-primary" style={{float:"right"}}> Send</a>

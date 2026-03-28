@@ -40,7 +40,7 @@ export class LockedInput extends React.Component<LockedInputProps, LockedInputSt
 		<input className="form-control" data-key={this.props['data-key']} disabled={locked} type={this.props.type} onChange={this.props.onChange} value={this.props.value} placeholder={this.props.placeholder} id={this.props.id} />
         <div className="input-group-addon">
         	<a onClick={this.toggle.bind(this)}>
-        		<i className={"fa faa-ring animated-hover " + icon}></i>
+        		<i className={"fas fa-hover-shake " + icon}></i>
         	</a>
         </div>
     </div>;
@@ -161,7 +161,7 @@ export class Autocomplete extends React.Component<AutocompleteProps, Autocomplet
 
   let req: React.JSX.Element | null = null;
   if (this.props.required) {
-    req = <i className="fa fa-asterisk text-danger fa-input"></i>;
+    req = <i className="fas fa-asterisk text-danger fa-input"></i>;
   }
 	return <div style={p} tabIndex={1} onBlur={this.onBlur.bind(this)}>
 		<input type="text" className="form-control" onFocus={this.onFocus.bind(this)} onChange={this.lookup.bind(this)} value={this.props.value} disabled={this.props.disabled} placeholder={this.props.placeholder} data-key={this.props['data-key']} id={this.props.id} autoComplete="off" />

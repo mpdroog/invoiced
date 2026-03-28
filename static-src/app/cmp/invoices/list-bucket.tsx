@@ -138,9 +138,9 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td>&euro; {total.Total}</td>
       <td className={expiryClass}>{meta.Duedate}</td>
       <td>
-        <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
-        <a className={"btn btn-default btn-hover-danger faa-parent animated-hover" + (isDeleteDisabled ? " disabled" : "")} data-target={key} data-status={meta.Status} data-disabled={String(isDeleteDisabled)} onClick={this.delete.bind(this)}><i className="fa fa-trash faa-flash"></i></a>
-        <a className={"btn btn-default btn-hover-danger faa-parent animated-hover" + (isPaidDisabled ? " disabled" : "")} data-id={key} data-bucket={bucket} data-disabled={String(isPaidDisabled)} onClick={this.setPaid.bind(this)}><i className="fa fa-check faa-flash"></i></a>
+        <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fas fa-pencil"></i></a>
+        <a className={"btn btn-default btn-hover-danger " + (isDeleteDisabled ? " disabled" : "")} data-target={key} data-status={meta.Status} data-disabled={String(isDeleteDisabled)} onClick={this.delete.bind(this)}><i className="fas fa-trash"></i></a>
+        <a className={"btn btn-default btn-hover-danger " + (isPaidDisabled ? " disabled" : "")} data-id={key} data-bucket={bucket} data-disabled={String(isPaidDisabled)} onClick={this.setPaid.bind(this)}><i className="fas fa-check"></i></a>
       </td>
     </tr>;
   }
@@ -154,8 +154,8 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td>&euro; {inv.Total?.Total}</td>
       <td>{inv.Meta?.Duedate}</td>
       <td>
-        <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fa fa-pencil"></i></a>
-        <a className="btn btn-default btn-hover-primary" href={"/api/v1/invoice/" + this.props.entity + "/" + this.props.year + "/" + bucket + "/" + key + "/pdf"}><i className="fa fa-file-pdf-o"></i></a>
+        <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fas fa-pencil"></i></a>
+        <a className="btn btn-default btn-hover-primary" href={"/api/v1/invoice/" + this.props.entity + "/" + this.props.year + "/" + bucket + "/" + key + "/pdf"}><i className="far fa-file-pdf"></i></a>
       </td>
     </tr>;
   }
@@ -238,13 +238,13 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     if (this.props.bucket === "concepts") {
       headerButtons = <div>
         <a id="js-new" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/add"} className="btn btn-default btn-hover-primary showhide">
-          <i className="fa fa-plus"></i> New
+          <i className="fas fa-plus"></i> New
         </a>
       </div>;
     }
     if (this.props.bucket === "sales-invoices-unpaid") {
       headerButtons = <div><a id="js-balance" onClick={this.openUpload.bind(this)} className="btn btn-default btn-hover-primary showhide">
-          <i className="fa fa-upload"></i> Bankbalance
+          <i className="fas fa-upload"></i> Bankbalance
         </a>
       </div>;
     }
@@ -253,7 +253,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     const balanceUpload = <div>
       <form className="form-inline hidden" method="post" encType="multipart/form-data" action={url}>
         <input id="js-balance-field" accept=".xml" className="form-control" name="file" type="file" onChange={this.uploadBalance.bind(this)} />
-        <button className="btn btn-default btn-hover-primary" type="submit"><i className="fa fa-arrow-up"></i> Upload</button>
+        <button className="btn btn-default btn-hover-primary" type="submit"><i className="fas fa-arrow-up"></i> Upload</button>
       </form>
     </div>;
 

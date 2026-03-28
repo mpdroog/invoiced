@@ -99,7 +99,7 @@ export default class Entities extends React.Component<Record<string, never>, IEn
 			    <div className="hpanel">
 			        <div className="panel-body">
 			            <h2 className="font-light m-b-xs">
-			                <i className="fa fa-building"></i>
+			                <i className="fas fa-building"></i>
 			                &nbsp;Your Companies
 			            </h2>
 			            <table className="table">

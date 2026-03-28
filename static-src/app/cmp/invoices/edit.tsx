@@ -337,12 +337,12 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
           <div className="panel-heading hbuilt">
             <div className="panel-tools">
               <div className="btn-group nm7">
-                <button className="btn btn-default btn-hover-success" disabled={this.revisions.length === 0 || meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fa fa-floppy-o"></i> Save</button>
-                <button className="btn btn-default btn-hover-danger" disabled={meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fa fa-lock"></i> Finalize</button>
-                <button className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.pdf.bind(this)}><i className="fa fa-file-pdf-o"></i> PDF</button>
-                <button className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.email.bind(this)}><i className="fa fa-send"></i> E-mail</button>
+                <button className="btn btn-default btn-hover-success" disabled={this.revisions.length === 0 || meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i> Save</button>
+                <button className="btn btn-default btn-hover-danger" disabled={meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fas fa-lock"></i> Finalize</button>
+                <button className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.pdf.bind(this)}><i className="far fa-file-pdf"></i> PDF</button>
+                <button className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.email.bind(this)}><i className="fas fa-paper-plane"></i> E-mail</button>
 
-                <button className="btn btn-default btn-hover-danger" disabled={meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fa fa-unlock"></i> Reset</button>
+                <button className="btn btn-default btn-hover-danger" disabled={meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fas fa-unlock"></i> Reset</button>
 
               </div>
 
@@ -373,8 +373,8 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     </div>
     <div className="col-sm-3">
       <Autocomplete data-key="Customer.Name" onSelect={that.selectCustomer.bind(that)} onChange={that.handleChange.bind(that)} required={true} placeholder="Company Name" url={"/api/v1/debtors/"+that.props.entity+"/search"} value={customer.Name} />
-      <div className="pr"><input className="form-control" type="text" data-key="Customer.Street1" onChange={that.handleChange.bind(this)} value={customer.Street1} placeholder="Street1" /><i className="fa fa-asterisk text-danger fa-input"></i></div>
-      <div className="pr"><input className="form-control" type="text" data-key="Customer.Street2" onChange={that.handleChange.bind(this)} value={customer.Street2} placeholder="Street2" /><i className="fa fa-asterisk text-danger fa-input"></i></div>
+      <div className="pr"><input className="form-control" type="text" data-key="Customer.Street1" onChange={that.handleChange.bind(this)} value={customer.Street1} placeholder="Street1" /><i className="fas fa-asterisk text-danger fa-input"></i></div>
+      <div className="pr"><input className="form-control" type="text" data-key="Customer.Street2" onChange={that.handleChange.bind(this)} value={customer.Street2} placeholder="Street2" /><i className="fas fa-asterisk text-danger fa-input"></i></div>
 
       <input className="form-control" type="text" data-key="Customer.Vat" onChange={that.handleChange.bind(this)} value={customer.Vat} placeholder="VAT-number"/>
       <input className="form-control" type="text" data-key="Customer.Coc" onChange={that.handleChange.bind(this)} value={customer.Coc} placeholder="Chamber Of Commerce (CoC)"/>
@@ -421,7 +421,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
 
   <div className="row notes col-sm-12">
     <p>Notes</p>
-    <small><i className="fa fa-info"></i> This text is added to the invoice</small>
+    <small><i className="fas fa-info"></i> This text is added to the invoice</small>
     <textarea className="form-control" data-key="Notes" onChange={this.handleChange.bind(this)} value={inv.Notes}/>
   </div>
   <div className="row banking">
@@ -434,7 +434,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
         <tr><td className="text">IBAN</td><td className="pr"><LockedInput type="text" value={inv.Bank?.Iban ?? ""} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Iban" required={true} /></td></tr>
         <tr><td className="text">BIC</td><td className="pr"><LockedInput type="text" value={inv.Bank?.Bic ?? ""} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Bic" required={true} /></td></tr>
       </tbody></table>
-      <small><i className="fa fa-info"></i> Edit these from your settings file.</small>
+      <small><i className="fas fa-info"></i> Edit these from your settings file.</small>
     </div>
   </div>
 </div>

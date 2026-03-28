@@ -110,8 +110,8 @@ class Menu extends React.Component<MenuProps, MenuState> {
 
     private getResultIcon(type: string): string {
         switch (type) {
-            case 'invoice': return 'fa-money';
-            case 'hour': return 'fa-clock-o';
+            case 'invoice': return 'fa-money-bill';
+            case 'hour': return 'fa-clock';
             case 'purchase': return 'fa-shopping-cart';
             default: return 'fa-file';
         }
@@ -144,7 +144,7 @@ class Menu extends React.Component<MenuProps, MenuState> {
                         <div className="search-dropdown">
                             {searching ? (
                                 <div className="search-loading">
-                                    <i className="fa fa-spinner fa-spin"></i> Searching...
+                                    <i className="fas fa-spinner fa-spin"></i> Searching...
                                 </div>
                             ) : searchResults.length > 0 ? (
                                 searchResults.map((r, i) => (
@@ -153,7 +153,7 @@ class Menu extends React.Component<MenuProps, MenuState> {
                                         className="search-result-item"
                                         onClick={() => this.handleResultClick(r)}
                                     >
-                                        <i className={'fa ' + this.getResultIcon(r.type) + ' search-result-icon'}></i>
+                                        <i className={'fas ' + this.getResultIcon(r.type) + ' search-result-icon'}></i>
                                         <strong>{r.title}</strong>
                                         <span className="search-result-subtitle">{r.subtitle}</span>
                                         <div className="search-result-meta">
@@ -173,32 +173,32 @@ class Menu extends React.Component<MenuProps, MenuState> {
                     <ul className="nav navbar-nav no-borders">
                         <li>
                             <a href={"#"+company+"/"+year} id="js-dashboard">
-                                <i className="fa fa-dashboard"></i>
+                                <i className="fas fa-gauge"></i>
                             </a>
                         </li>
                         <li>
                             <a href={"#"+company+"/"+year+"/hours"} id="js-hours">
-                                <i className="fa fa-clock-o"></i>
+                                <i className="far fa-clock"></i>
                             </a>
                         </li>
                         <li>
                             <a href={"#"+company+"/"+year+"/invoices"} id="js-invoices">
-                                <i className="fa fa-money"></i>
+                                <i className="fas fa-money-bill"></i>
                             </a>
                         </li>
                         <li>
                             <a href={"#"+company+"/"+year+"/purchases"} id="js-purchases" title="Purchase Invoices">
-                                <i className="fa fa-shopping-cart"></i>
+                                <i className="fas fa-shopping-cart"></i>
                             </a>
                         </li>
                         <li>
                             <a href={"#"+company+"/"+year+"/taxes"} id="js-taxes">
-                                <i className="fa fa-bank"></i>
+                                <i className="fas fa-building-columns"></i>
                             </a>
                         </li>
                         <li>
                             <a href={"#"+company+"/"+year+"/git"} id="js-git">
-                                <i className="fa fa-cloud-upload"></i>
+                                <i className="fas fa-cloud-arrow-up"></i>
                                 {ahead > 0 && <span className="label label-danger">{ahead}</span>}
                             </a>
                         </li>

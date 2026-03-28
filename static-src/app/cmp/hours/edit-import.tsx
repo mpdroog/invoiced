@@ -212,7 +212,7 @@ export default class HourImport extends React.Component<IImportProps, IImportSta
               <span aria-hidden="true"> &times;</span>
             </button>
             <h4 className="modal-title">
-              <i className="fa fa-arrow-up"></i>
+              <i className="fas fa-arrow-up"></i>
               &nbsp;Import
             </h4>
           </div>
