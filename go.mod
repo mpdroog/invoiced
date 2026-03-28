@@ -4,8 +4,6 @@ go 1.25.0
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/blevesearch/bleve v1.0.10
-	github.com/boltdb/bolt v1.3.1
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/getlantern/systray v1.0.4
 	github.com/go-git/go-billy/v6 v6.0.0-20260226131633-45bd0956d66f
@@ -16,7 +14,6 @@ require (
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/lextoumbourou/idle v0.0.0-20150614083601-8eb78af3d865
-	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/shopspring/decimal v1.4.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
@@ -31,19 +28,8 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
-	github.com/RoaringBitmap/roaring v0.4.23 // indirect
-	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect
-	github.com/blevesearch/mmap-go v1.0.2 // indirect
-	github.com/blevesearch/segment v0.9.0 // indirect
-	github.com/blevesearch/snowballstem v0.9.0 // indirect
-	github.com/blevesearch/zap/v11 v11.0.10 // indirect
-	github.com/blevesearch/zap/v12 v12.0.10 // indirect
-	github.com/blevesearch/zap/v13 v13.0.2 // indirect
-	github.com/blevesearch/zap/v14 v14.0.1 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
-	github.com/couchbase/vellum v1.0.2 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
-	github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/getlantern/context v0.0.0-20190109183933-c447772a6520 // indirect
@@ -52,35 +38,25 @@ require (
 	github.com/getlantern/hex v0.0.0-20190417191902-c6586a6fe0b7 // indirect
 	github.com/getlantern/hidden v0.0.0-20190325191715-f02dbb02be55 // indirect
 	github.com/getlantern/ops v0.0.0-20190325191751-d70cb0d6f85f // indirect
-	github.com/glycerine/go-unsnap-stream v0.0.0-20181221182339-f9677308dec2 // indirect
 	github.com/go-git/gcfg/v2 v2.0.2 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/kevinburke/ssh_config v1.5.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
-	github.com/philhofer/fwd v1.0.0 // indirect
 	github.com/pjbgf/sha1cd v0.5.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/richardlehane/mscfb v1.0.5 // indirect
 	github.com/richardlehane/msoleps v1.0.4 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
-	github.com/steveyen/gtreap v0.1.0 // indirect
-	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	github.com/tiendc/go-deepcopy v1.7.2 // indirect
-	github.com/tinylib/msgp v1.1.0 // indirect
-	github.com/willf/bitset v1.1.10 // indirect
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
-	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/net v0.50.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
