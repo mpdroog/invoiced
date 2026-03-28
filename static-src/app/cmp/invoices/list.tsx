@@ -1,7 +1,7 @@
 import * as React from "react";
 import Invoices from "./list-bucket";
 import Axios from "axios";
-import Msgpack from 'msgpack-lite';
+import { decode as msgpackDecode } from '@msgpack/msgpack';
 
 export default class InvoicesPage extends React.Component<{}, {}> {
   constructor(props) {
@@ -19,7 +19,7 @@ export default class InvoicesPage extends React.Component<{}, {}> {
       count: 0
     }, headers: {'Accept': 'application/x-msgpack'}, responseType: 'arraybuffer'})
     .then(res => {
-      res.data = Msgpack.decode(new Uint8Array(res.data));
+      res.data = msgpackDecode(new Uint8Array(res.data));
       let s = {concepts: [], pending: [], paid: []};
 
       // invoices

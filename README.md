@@ -1,123 +1,66 @@
-<a href="https://www.buymeacoffee.com/mpdroog">
-    <img alt="Buy me a coffee" src="https://img.shields.io/static/v1.svg?label=%20&message=Buy%20me%20a%20coffee&color=579fbf&logo=buy%20me%20a%20coffee&logoColor=white"/>
-</a>
+# InvoiceD
 
-InvoiceD
-===========
-Simple hour registration + invoice generator.
+A self-hosted invoicing and hour registration system for freelancers and small businesses.
 
-What makes us better than the competition (non-technical):
+## Why InvoiceD?
 
-* Audit trail, every change is recorded and easily revertable!
-* Always available, no internet? no problem!! The whole system runs from your own PC (if you want)
-* ~~Searching for an old invoice? We got a powersearch, so finding it should be a breeze!~~
-* We're FAST, instantly loading pages :D
-* ~~Completely free! (But if you pay 1EUR/month we'll give you backups)~~
-* Quick keys, you don't need to use your mouse all the time :)
+**Own your data** - All data is stored as human-readable TOML files on your filesystem. No database lock-in, no proprietary formats. If something breaks, you can read and edit your invoices with any text editor.
 
-What makes us better than the competition (technical):
+**Built-in audit trail** - Every change is automatically committed to a local Git repository. Full version history, easy rollback, and optional sync to remote Git for backups.
 
-* we save all userdata as TOML-files onto the filesystem (human readable and possibly readable after corruption)
-* we commit changes to a local Git-repository (free version control of precious data with an audit-trail of changes)
-* we push/pull with remote GIT nodes on change (distributed accounting/easy backups)
-* ~~we index everything (Bleve) so we got a power search!~~
-* we're good looking
-* we're FAST (average page loading time of 400ms!)
-* we're opensource (sourcecode is free, adjustable and we like contributions back)
+**Works offline** - Runs entirely on your machine. No internet required, no cloud dependency, no subscription fees.
 
-Technical background
-===========
-- The backend is Golang/~~Bleve~~/Git
-- The frontend is ReactJS/TypeScript/Vite (static-src)
+**Fast** - Pages load instantly. No waiting for cloud servers.
 
-1] contrib/desktop( invoiced )
-2] static
+## Features
 
-1] contrib/desktop
-Implements the desktop specific stuff
-and runs the invoice-daemon into a sub-process
+- Hour registration with conversion to invoices
+- PDF invoice generation with UBL XML export
+- Multi-entity support (manage multiple companies)
+- CAMT053 bank statement import for payment matching
+- VAT handling for NL, EU (reverse charge), and international exports
+- Quarterly tax summaries
 
-2] static
-Is offered by invoiced and contains all HTML+CSS+JS
-that uses the invoiced API to build it's UI.
+## Quick Start
 
-How to build
-===========
-Frontend
-```
-# Install NodeJS
-# Install yarn (better npm)
-cd static-src
-yarn install
-npm run build                      # Build to ../static/assets/
-npm run dev                        # Dev server on port 5173 (proxies /api to localhost:9999)
-```
+### Build
 
-Backend
-```
-# Install go
-go get github.com/mpdroog/invoiced
-cd $GOPATH/src/github.com/mpdroog/invoiced
+```bash
+# Frontend
+cd static-src && yarn install && npm run build
+
+# Backend
 go build
 ```
 
-Installing
-```
-# First create some keys
-cd contrib/gen
-$ go build && ./gen
-Enter Password: <XXX>
-entities.toml input
-IV:   &d13dfa0685c88dd2df7a4afb4359ed8
-Salt: 9c7cd736769046bd6779599e71785f65
-Hash: 8476a5883163ada1ebfb80257a2303ec6167059a6329e212b561f37004009c5f
-cd -
+### Setup
 
-# Init db (~ is your homedir)
+```bash
+# Generate auth credentials
+cd contrib/gen && go build && ./gen
+
+# Initialize database
 mkdir ~/billingdb
-cd ~/billingdb
-git clone https://github.com/mpdroog/acct-example .
-vi entities.toml
->>
-IV="PASTE_IV_HERE"
-Version=1
+git clone https://github.com/mpdroog/acct-example ~/billingdb
+# Edit ~/billingdb/entities.toml with your company details and generated credentials
 
-[company.name]
-Name="YOUR_COMPANY"
-COC="YOUR_Chamber_Of_Commerce_Number"
-VAT="YOUR_VAT_NUMBER"
-IBAN="YOUR_IBAN_NUMBER"
-BIC="YOUR_BANK_BIC"
-Salt="PASTE_SALT_HERE"
-
-[[user]]
-Email="you@yourcompany.com"
-Hash="PASTE_HASH_HERE"
-Company=["name"]
-Name="YourName"
-Address1="Street houseno"
-Address2="Postal City"
-<<
-
-git add .
-git commit -m "Update company/auth details"
-
-cd -
-vi config.toml
->>
-[queues.support]
-User = "myemail@gmail.com"
-Pass = "supersecret"
-Host = "smtp.gmail.com"
-Port = 465
-From = "myemail@gmail.com"
-FromReply = "myemail@gmail.com"
-Display = "MyCompany"
-Subject = ""
-BCC = ["myemail@gmail.com"]
->>
-
+# Run
 ./invoiced -v -d ~/billingdb
-open "http://localhost:9999"
+# Open http://localhost:9999
 ```
 
+See [CLAUDE.md](CLAUDE.md) for detailed build commands and architecture overview.
+
+## Tech Stack
+
+- **Backend**: Go with Git integration
+- **Frontend**: React, TypeScript, Vite
+- **Storage**: TOML files + Git
+
+## License
+
+Open source - contributions welcome.
+
+<a href="https://www.buymeacoffee.com/mpdroog">
+    <img alt="Buy me a coffee" src="https://img.shields.io/static/v1.svg?label=%20&message=Buy%20me%20a%20coffee&color=579fbf&logo=buy%20me%20a%20coffee&logoColor=white"/>
+</a>

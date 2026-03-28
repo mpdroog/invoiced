@@ -1,9 +1,14 @@
 import * as React from "react";
 import Axios from "axios";
-import ChartistGraph from 'react-chartist';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import Moment from "moment";
-import './chartist.css';
 import './dashboard.css';
+
+// Chart colors - must match CSS variables in dashboard.css
+const CHART_COLORS = {
+	current: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-current').trim() || '#62cb31',
+	previous: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-previous').trim() || '#3498db'
+};
 
 interface IDictionary {
 	[index: string]: IMetricDay;
@@ -119,8 +124,8 @@ export default class Dashboard extends React.Component<{}, IState> {
 		const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 		const prevYear = parseInt(year) - 1;
 
-		let revstats = {labels: months, series: [[], []]};
-		let hourstats = {labels: months, series: [[], []]};
+		let revstats: {month: string, current: number, previous: number}[] = [];
+		let hourstats: {month: string, current: number, previous: number}[] = [];
 		let sum = 0;
 
 		// Build data for each month (1-12)
@@ -137,21 +142,11 @@ export default class Dashboard extends React.Component<{}, IState> {
 			const prevRev = data.monthlyPrevYear?.[prevKey] ? parseFloat(data.monthlyPrevYear[prevKey].RevenueEx) || 0 : 0;
 			const prevHours = data.monthlyPrevYear?.[prevKey] ? parseFloat(data.monthlyPrevYear[prevKey].Hours) || 0 : 0;
 
-			revstats.series[0].push(currentRev);
-			revstats.series[1].push(prevRev);
-			hourstats.series[0].push(currentHours);
-			hourstats.series[1].push(prevHours);
+			revstats.push({month: months[m-1], current: currentRev, previous: prevRev});
+			hourstats.push({month: months[m-1], current: currentHours, previous: prevHours});
 
 			sum += currentRev;
 		}
-
-		let chartOptions = {
-			axisX: {
-				labelInterpolationFnc: function(value, index) {
-					return index % 2 === 0 ? value : null;
-				}
-			}
-		};
 
 		const growthPositive = data.yearComparison && parseFloat(data.yearComparison.GrowthAmount) >= 0;
 
@@ -352,8 +347,17 @@ export default class Dashboard extends React.Component<{}, IState> {
 								<span className="legend-prev">{prevYear}</span>
 							</span>
 						</div>
-						<div className="panel-body">
-							<ChartistGraph data={revstats} options={chartOptions} type={"Line"} />
+						<div className="panel-body chart-container">
+							<ResponsiveContainer width="100%" height="100%">
+								<LineChart data={revstats}>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis dataKey="month" tick={{fontSize: 12}} interval={1} />
+									<YAxis tick={{fontSize: 12}} />
+									<Tooltip formatter={(value: number) => `€ ${value.toFixed(2)}`} />
+									<Line type="monotone" dataKey="current" stroke={CHART_COLORS.current} name={year} strokeWidth={2} dot={false} />
+									<Line type="monotone" dataKey="previous" stroke={CHART_COLORS.previous} name={String(prevYear)} strokeWidth={2} dot={false} />
+								</LineChart>
+							</ResponsiveContainer>
 						</div>
 					</div>
 				</div>
@@ -367,8 +371,17 @@ export default class Dashboard extends React.Component<{}, IState> {
 								<span className="legend-prev">{prevYear}</span>
 							</span>
 						</div>
-						<div className="panel-body">
-							<ChartistGraph data={hourstats} options={chartOptions} type={"Line"} />
+						<div className="panel-body chart-container">
+							<ResponsiveContainer width="100%" height="100%">
+								<LineChart data={hourstats}>
+									<CartesianGrid strokeDasharray="3 3" />
+									<XAxis dataKey="month" tick={{fontSize: 12}} interval={1} />
+									<YAxis tick={{fontSize: 12}} />
+									<Tooltip formatter={(value: number) => `${value.toFixed(1)} hrs`} />
+									<Line type="monotone" dataKey="current" stroke={CHART_COLORS.current} name={year} strokeWidth={2} dot={false} />
+									<Line type="monotone" dataKey="previous" stroke={CHART_COLORS.previous} name={String(prevYear)} strokeWidth={2} dot={false} />
+								</LineChart>
+							</ResponsiveContainer>
 						</div>
 					</div>
 				</div>

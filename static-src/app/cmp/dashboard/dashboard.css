@@ -1,3 +1,8 @@
+:root {
+    --chart-color-current: #62cb31;
+    --chart-color-previous: #3498db;
+}
+
 .hpanel.stats .panel-body {
     text-align: center;
     padding: 20px;
@@ -72,7 +77,7 @@
 }
 
 .chart-legend .legend-current {
-    color: var(--chart-color-a);
+    color: var(--chart-color-current);
     margin-right: 15px;
 }
 
@@ -81,13 +86,13 @@
     display: inline-block;
     width: 12px;
     height: 3px;
-    background-color: var(--chart-color-a);
+    background-color: var(--chart-color-current);
     margin-right: 5px;
     vertical-align: middle;
 }
 
 .chart-legend .legend-prev {
-    color: var(--chart-color-b);
+    color: var(--chart-color-previous);
 }
 
 .chart-legend .legend-prev::before {
@@ -95,7 +100,11 @@
     display: inline-block;
     width: 12px;
     height: 3px;
-    background-color: var(--chart-color-b);
+    background-color: var(--chart-color-previous);
     margin-right: 5px;
     vertical-align: middle;
+}
+
+.chart-container {
+    height: 250px;
 }

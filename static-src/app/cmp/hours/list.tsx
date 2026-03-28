@@ -1,7 +1,7 @@
 import * as React from "react";
 import Axios from "axios";
 import {DOM} from "../../lib/dom";
-import Msgpack from 'msgpack-lite';
+import { decode as msgpackDecode } from '@msgpack/msgpack';
 
 interface IHourPagination {
   from?: string
@@ -33,7 +33,7 @@ export default class Hours extends React.Component<{}, IHourState> {
     let year = this.props.year;
     Axios.get('/api/v1/hours/'+entity+'/'+year, {params: this.state.pagination, headers: {'Accept': 'application/x-msgpack'}, responseType: 'arraybuffer'})
     .then(res => {
-      res.data = Msgpack.decode(new Uint8Array(res.data));
+      res.data = msgpackDecode(new Uint8Array(res.data));
       this.setState({hours: res.data});
       window.rootdev = {
         invoiced: res.data

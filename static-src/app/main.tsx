@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
+import { createRoot, Root } from "react-dom/client";
 import Axios from "axios";
 import {Design} from "./shared/design";
 
@@ -93,28 +93,34 @@ function hashChange() {
       }
 
       let page = null;
+      // Use location.hash as key to force unmount/remount on navigation
+      // This matches React 15 behavior where we called unmountComponentAtNode
+      const routeKey = location.hash || '/';
       if (props !== null) {
             props.id = url.shift();
+            props.key = routeKey;
             page = React.createElement(inject, props);
-            page = React.createElement(Design, props, page);
+            page = React.createElement(Design, {...props, key: routeKey}, page);
       } else {
-            page = React.createElement(inject, props);
+            page = React.createElement(inject, {key: routeKey});
       }
-      console.log("ReactDOM.render()", props);
-      ReactDOM.render(page, root);
+      console.log("root.render()", props);
+      reactRoot.render(page);
 }
+
+let reactRoot: Root;
 
 try {
       let splash = document.getElementById("js-splash");
-      let root = document.getElementById('root');
-      if (root === null) {
+      let rootEl = document.getElementById('root');
+      if (rootEl === null) {
             throw "document.getElementById(root) returned null?";
       }
 
+      reactRoot = createRoot(rootEl);
       hashChange();
       splash && splash.remove();
       window.onhashchange = function() {
-            ReactDOM.unmountComponentAtNode(root);
             hashChange();
       };
 
