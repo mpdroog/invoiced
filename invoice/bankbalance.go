@@ -2,24 +2,26 @@ package invoice
 
 import (
 	"bytes"
-	"fmt"
-	"github.com/julienschmidt/httprouter"
-	"github.com/mpdroog/invoiced/config"
-	"github.com/mpdroog/invoiced/db"
-	"github.com/mpdroog/invoiced/invoice/camt053"
-	"github.com/mpdroog/invoiced/writer"
 	"io"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/mpdroog/invoiced/config"
+	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/httputil"
+	"github.com/mpdroog/invoiced/invoice/camt053"
+	"github.com/mpdroog/invoiced/writer"
 )
 
+// Reply contains the result of processing bank statements.
 type Reply struct {
 	OK  int
 	ERR int
 }
 
-// Parse bankbalance in CAMT053-format
+// Balance parses a bank balance in CAMT053 format and marks matching invoices as paid.
 func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
@@ -27,11 +29,14 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var buf bytes.Buffer
 	file, header, e := r.FormFile("file")
 	if e != nil {
-		log.Printf("invoice.Balance FormFile: %s", e.Error())
-		http.Error(w, "Failed reading file", 500)
+		httputil.InternalError(w, "invoice.Balance FormFile", e)
 		return
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	name := strings.Split(header.Filename, ".")
 	if strings.ToLower(name[1]) != "xml" {
@@ -40,15 +45,13 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	if _, e := io.Copy(&buf, file); e != nil {
-		log.Printf("invoice.Balance io.Copy: %s", e.Error())
-		http.Error(w, "Failed loading file into memory", 500)
+		httputil.InternalError(w, "invoice.Balance io.Copy", e)
 		return
 	}
 
 	p, e := camt053.FilterPaymentsReceived(&buf)
 	if e != nil {
-		log.Printf("invoice.Balance FilterPaymentsReceived: %s", e.Error())
-		http.Error(w, "Failed parsing file", 500)
+		httputil.InternalError(w, "invoice.Balance FilterPaymentsReceived", e)
 		return
 	}
 
@@ -56,14 +59,14 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Read CAMT053 bankbalance"),
+		Message: "Read CAMT053 bankbalance",
 	}
 	e = db.Update(change, func(t *db.Txn) error {
 		for _, payment := range p {
 			if config.Verbose {
 				log.Printf(
 					"Parse payments(%s) %sEUR with comment=%s from=%s(%s)\n",
-					payment.Id, payment.Amount, payment.Comment, payment.Name, payment.IBAN,
+					payment.ID, payment.Amount, payment.Comment, payment.Name, payment.IBAN,
 				)
 			}
 
@@ -87,13 +90,12 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return nil
 	})
 	if e != nil {
-		log.Printf("invoice.Balance commit: %s", e.Error())
-		http.Error(w, "Commit failed", 500)
+		httputil.InternalError(w, "invoice.Balance commit", e)
 		return
 	}
 
 	if e := writer.Encode(w, r, res); e != nil {
-		log.Printf("invoice.Balance encode: %s", e.Error())
+		httputil.LogErr("invoice.Balance encode", e)
 	}
 }
 
@@ -101,9 +103,9 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 func balanceSetPaid(t *db.Txn, entity, year, name, payDate, amount string) (bool, error) {
 	b := strings.Index(name, "Q")
 	e := strings.Index(name, "-")
-	bucket := name[b+1 : e]
-	from := fmt.Sprintf("%s/%s/Q%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)
-	to := fmt.Sprintf("%s/%s/Q%s/sales-invoices-paid/%s.toml", entity, year, bucket, name)
+	bucket := "Q" + name[b+1:e]
+	from := db.InvoicePath(entity, year, bucket, name, false)
+	to := db.InvoicePath(entity, year, bucket, name, true)
 
 	u := new(Invoice)
 	if e := t.Open(from, u); e != nil {

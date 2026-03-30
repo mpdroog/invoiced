@@ -1,22 +1,23 @@
-// camt053 implements low-level XML parsing of the banktransaction
+// Package camt053 implements low-level XML parsing of the banktransaction
 // file.
 package camt053
 
 import (
 	"encoding/xml"
+	"errors"
 	"io"
 )
 
+// ParseStatement is a callback function for processing bank statements.
 type ParseStatement func(head GrpHdr, stmt Stmt) error
 
-// Read token by token to easilly parse both big and small files :)
-// http://blog.davidsingleton.org/parsing-huge-xml-files-with-go/
+// Read parses CAMT053 XML token by token to handle both big and small files.
 func Read(r io.Reader, fn ParseStatement) error {
 	dec := xml.NewDecoder(r)
 
 	for {
 		t, e := dec.Token()
-		if e != nil && e != io.EOF {
+		if e != nil && !errors.Is(e, io.EOF) {
 			return e
 		}
 		if t == nil {
@@ -25,8 +26,7 @@ func Read(r io.Reader, fn ParseStatement) error {
 
 		var head GrpHdr
 		var stmt Stmt
-		switch node := t.(type) {
-		case xml.StartElement:
+		if node, ok := t.(xml.StartElement); ok {
 			if node.Name.Local == "GrpHdr" {
 				if e := dec.DecodeElement(&head, &node); e != nil {
 					return e

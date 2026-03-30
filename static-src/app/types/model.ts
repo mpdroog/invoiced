@@ -2,6 +2,9 @@
 
 //////////
 // source: dashboard.go
+/*
+Package model defines shared data structures for invoices, hours, and taxes.
+*/
 
 /**
  * TaxSummary contains aggregated tax data for a quarter
@@ -114,6 +117,9 @@ export interface DashboardResponse {
 //////////
 // source: hour.go
 
+/**
+ * HourLine represents a single time entry for hour tracking.
+ */
 export interface HourLine {
   Day: string;
   Start: string;
@@ -121,6 +127,9 @@ export interface HourLine {
   Hours: number /* float64 */;
   Description: string;
 }
+/**
+ * Hour represents a collection of hour entries for a project.
+ */
 export interface Hour {
   Project: string;
   Name: string;
@@ -134,17 +143,26 @@ export interface Hour {
 //////////
 // source: invoice.go
 
+/**
+ * InvoiceMail contains email settings for an invoice.
+ */
 export interface InvoiceMail {
   From: string;
   Subject: string;
   To: string;
   Body: string;
 }
+/**
+ * InvoiceEntity contains the seller/entity details.
+ */
 export interface InvoiceEntity {
   Name: string;
   Street1: string;
   Street2: string;
 }
+/**
+ * InvoiceCustomer contains the buyer/customer details.
+ */
 export interface InvoiceCustomer {
   Name: string;
   Street1: string;
@@ -153,6 +171,9 @@ export interface InvoiceCustomer {
   Coc: string;
   Tax: string; // Simple string so we know what to tax
 }
+/**
+ * InvoiceMeta contains invoice metadata like dates and IDs.
+ */
 export interface InvoiceMeta {
   Conceptid: string;
   Status: string;
@@ -164,23 +185,35 @@ export interface InvoiceMeta {
   Freefield: string;
   HourFile: string;
 }
+/**
+ * InvoiceLine represents a single line item on an invoice.
+ */
 export interface InvoiceLine {
   Description: string;
   Quantity: string;
   Price: string;
   Total: string;
 }
+/**
+ * InvoiceTotal contains the invoice totals.
+ */
 export interface InvoiceTotal {
   Ex: string;
   Tax: string;
   Total: string;
 }
+/**
+ * InvoiceBank contains banking details for payment.
+ */
 export interface InvoiceBank {
   Vat: string;
   Coc: string;
   Iban: string;
   Bic: string;
 }
+/**
+ * Invoice represents a complete invoice document.
+ */
 export interface Invoice {
   Company: string;
   Entity: InvoiceEntity;

@@ -13,12 +13,12 @@ func TestRead(t *testing.T) {
 	}
 	buf := bufio.NewReader(f)
 
-	if e := Read(buf, func(head GrpHdr, stmt Stmt) error {
+	if e := Read(buf, func(_ GrpHdr, stmt Stmt) error {
 		/*for _, ntry := range stmt.Ntry {
-			if ntry.NtryDtls.TxDtls.BkTxCd.Prtry.Cd == PAYMENT_RECEIVED_RABO {
+			if ntry.NtryDtls.TxDtls.BkTxCd.Prtry.Cd == PaymentReceivedRabo {
 				fmt.Printf(
 					"%s %s %s %sEUR %s %s %s - %s (%s)\n",
-					stmt.Id, ntry.NtryDtls.TxDtls.RltdPties.Cdtr.Nm, ntry.NtryDtls.TxDtls.RltdPties.CdtrAcct.Id.IBAN,
+					stmt.ID, ntry.NtryDtls.TxDtls.RltdPties.Cdtr.Nm, ntry.NtryDtls.TxDtls.RltdPties.CdtrAcct.ID.IBAN,
 					ntry.Amt, ntry.CdtDbtInd,
 					ntry.NtryDtls.TxDtls.RmtInf.Ustrd,
 					ntry.BookgDt.Dt,
@@ -32,8 +32,8 @@ func TestRead(t *testing.T) {
 		if stmt.ElctrncSeqNb < 16141 || stmt.ElctrncSeqNb > 16206 {
 			t.Fatalf("Invalid ElctrncSeqNb")
 		}
-		if stmt.Acct.Id.IBAN != "NL59RABO3181240869" && stmt.Acct.Id.IBAN != "NL17RABO0310029597" {
-			t.Fatalf("Invalid IBAN=%s", stmt.Acct.Id.IBAN)
+		if stmt.Acct.ID.IBAN != "NL59RABO3181240869" && stmt.Acct.ID.IBAN != "NL17RABO0310029597" {
+			t.Fatalf("Invalid IBAN=%s", stmt.Acct.ID.IBAN)
 		}
 		return nil
 	}); e != nil {
@@ -56,18 +56,18 @@ func TestFilterPaymentsReceived(t *testing.T) {
 		t.Errorf("Payments received != 3, got %d", len(p))
 	}
 	if p[0].IBAN != "NL62ABNA0408441224" {
-		t.Errorf("Payment(%s) invalid IBAN=%s", p[0].Id, p[0].IBAN)
+		t.Errorf("Payment(%s) invalid IBAN=%s", p[0].ID, p[0].IBAN)
 	}
 	if p[0].Amount != "4425.25" {
-		t.Errorf("Payment(%s) invalid amount=%s", p[0].Id, p[0].Amount)
+		t.Errorf("Payment(%s) invalid amount=%s", p[0].ID, p[0].Amount)
 	}
 	if p[0].Comment != "2016Q3-0004" {
-		t.Errorf("Payment(%s) invalid comment=%s", p[0].Id, p[0].Comment)
+		t.Errorf("Payment(%s) invalid comment=%s", p[0].ID, p[0].Comment)
 	}
 	if p[0].Date != "2016-08-15" {
-		t.Errorf("Payment(%s) invalid date=%s", p[0].Id, p[0].Date)
+		t.Errorf("Payment(%s) invalid date=%s", p[0].ID, p[0].Date)
 	}
 	if p[0].Name != "XS NEWS B V" {
-		t.Errorf("Payment(%s) invalid name=%s", p[0].Id, p[0].Name)
+		t.Errorf("Payment(%s) invalid name=%s", p[0].ID, p[0].Name)
 	}
 }

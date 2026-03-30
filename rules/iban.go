@@ -6,7 +6,7 @@ import (
 	"reflect"
 )
 
-func iban(v interface{}, param string) error {
+func iban(v interface{}, _ string) error {
 	st := reflect.ValueOf(v)
 	if st.Kind() != reflect.String {
 		return fmt.Errorf("iban only validates strings")

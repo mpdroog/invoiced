@@ -13,6 +13,7 @@ import (
 	"github.com/jung-kurt/gofpdf"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/httputil"
 	"github.com/mpdroog/invoiced/writer"
 	"gopkg.in/gomail.v1"
 	"gopkg.in/validator.v2"
@@ -27,6 +28,7 @@ func sanitizeEmailHeader(s string) string {
 	return strings.TrimSpace(s)
 }
 
+// Job represents an email job with recipients and attachments.
 type Job struct {
 	To      []string
 	Subject string
@@ -34,6 +36,7 @@ type Job struct {
 	Files   []string
 }
 
+// Email sends an invoice via email with PDF and XML attachments.
 func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	bucket := ps.ByName("bucket")
@@ -46,8 +49,7 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	m := new(InvoiceMail)
 	if e := writer.Decode(r, m); e != nil {
-		log.Printf("invoice.Email %s", e.Error())
-		http.Error(w, "invoice.Email failed to decode input", 400)
+		httputil.BadRequest(w, "invoice.Email decode", e)
 		return
 	}
 	if e := validator.Validate(m); e != nil {
@@ -58,10 +60,7 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("invoice.Email with id=%s", name)
 	}
 
-	paths := []string{
-		fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name),
-		fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name),
-	}
+	paths := db.InvoiceSearchPaths(entity, year, bucket, name)
 
 	var f *gofpdf.Fpdf
 	u := new(Invoice)
@@ -76,10 +75,7 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if e != nil {
 			return e
 		}
-		f, e = pdf(db.Path+entity, u)
-		if e != nil {
-			return e
-		}
+		f = pdf(db.Path+entity, u)
 
 		buf := new(bytes.Buffer)
 		if e := f.Output(buf); e != nil {
@@ -112,7 +108,11 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			if e != nil {
 				return e
 			}
-			defer f.Close()
+			defer func() {
+				if err := f.Close(); err != nil {
+					log.Printf("close: %s", err)
+				}
+			}()
 			if _, e := io.Copy(hourbuf, f); e != nil {
 				return e
 			}
@@ -134,7 +134,7 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return e
 		}
 
-		var conf config.ConfigQueue
+		var conf config.Queue
 		for _, conf = range config.C.Queues {
 			// TODO: Nasty hack to get first item...
 			break
@@ -179,8 +179,7 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return mailer.Send(msg)
 	})
 	if e != nil {
-		log.Printf("invoice.Email %s", e.Error())
-		http.Error(w, fmt.Sprintf("invoice.Email failed loading file from disk"), 400)
+		httputil.BadRequest(w, "invoice.Email", e)
 		return
 	}
 }

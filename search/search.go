@@ -1,3 +1,4 @@
+// Package search provides full-text search across invoices, hours, and purchases.
 package search
 
 import (
@@ -9,10 +10,12 @@ import (
 	"github.com/mpdroog/invoiced/writer"
 )
 
-type SearchResponse struct {
+// SearchResponse contains search results.
+type SearchResponse struct { //nolint:revive // maintaining public API
 	Results []idx.SearchResult `json:"results"`
 }
 
+// Search handles search queries across invoices, hours, and purchases.
 func Search(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	query := r.URL.Query().Get("q")

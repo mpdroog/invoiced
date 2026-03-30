@@ -1,3 +1,4 @@
+// Package metrics provides dashboard metrics and revenue analytics.
 package metrics
 
 import (
@@ -14,6 +15,7 @@ import (
 	"github.com/mpdroog/invoiced/writer"
 )
 
+// Dashboard returns monthly metrics for a year.
 func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year, err := strconv.Atoi(ps.ByName("year"))

@@ -2,6 +2,9 @@
 
 //////////
 // source: auth.go
+/*
+Package middleware provides HTTP authentication and session management.
+*/
 
 /**
  * SessionMaxAge is the maximum age of a session in seconds (8 hours)
@@ -11,16 +14,25 @@ export const SessionMaxAge = 8 * 60 * 60;
  * IVSize is the size of random bytes to generate (24 bytes = 32 base64 chars)
  */
 export const IVSize = 24;
+/**
+ * Sess represents an authenticated user session.
+ */
 export interface Sess {
   Email: string;
   Created: number /* int64 */;
   Version: number /* int */;
 }
+/**
+ * Entities contains all company and user configuration.
+ */
 export interface Entities {
   Version: number /* int */;
   Company: { [key: string]: Entity};
   User: User[];
 }
+/**
+ * Entity represents a company configuration.
+ */
 export interface Entity {
   Years: string[];
   YearRevenue: { [key: string]: string}; // Revenue per year (EUR)
@@ -30,6 +42,9 @@ export interface Entity {
   IBAN: string;
   BIC: string;
 }
+/**
+ * User represents a user with access to companies.
+ */
 export interface User {
   Email: string;
   Company: string[];

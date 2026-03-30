@@ -2,14 +2,8 @@ package invoice
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"github.com/julienschmidt/httprouter"
-	"github.com/jung-kurt/gofpdf"
-	"github.com/mpdroog/invoiced/config"
-	"github.com/mpdroog/invoiced/db"
-	"github.com/mpdroog/invoiced/utils"
-	"github.com/mpdroog/invoiced/writer"
-	"gopkg.in/validator.v2"
 	"io"
 	"log"
 	"math/rand"
@@ -17,20 +11,32 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/jung-kurt/gofpdf"
+	"github.com/mpdroog/invoiced/config"
+	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/httputil"
+	"github.com/mpdroog/invoiced/utils"
+	"github.com/mpdroog/invoiced/writer"
+	"gopkg.in/validator.v2"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
+
+// EUTaxComment is the VAT reverse charge text for EU invoices.
 const EUTaxComment = "VAT Reverse charge"
+
+// WorldTaxComment is the export text for non-EU invoices.
 const WorldTaxComment = "Export"
 
+// InputError represents validation errors for user input.
 type InputError struct {
 	Error  string
 	Fields validator.ErrorMap
 }
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
+// Note: rand.Seed is no longer needed as of Go 1.20
 
 // http://stackoverflow.com/questions/22892120/how-to-generate-a-random-string-of-a-fixed-length-in-golang
 func randStringBytesRmndr(n int) string {
@@ -41,6 +47,7 @@ func randStringBytesRmndr(n int) string {
 	return string(b)
 }
 
+// Delete removes a concept invoice.
 func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	if name == "" {
@@ -56,31 +63,24 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Message: fmt.Sprintf("Delete concept invoice %s", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
-		from := fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name)
+		path := db.ConceptInvoicePath(entity, year, name)
 		u := new(Invoice)
-		if e := t.Open(from, u); e != nil {
-			return e
+		if e := t.Open(path, u); e != nil {
+			return fmt.Errorf("open: %w", e)
 		}
 		if len(u.Meta.Invoiceid) > 0 {
-			return fmt.Errorf("Reject deleting finalized invoice (this will break your accounting history)")
+			return fmt.Errorf("reject deleting finalized invoice (this will break your accounting history)")
 		}
-
-		return t.Remove(fmt.Sprintf(
-			"%s/%s/concepts/sales-invoices/%s.toml", entity, year, name,
-		))
+		return t.Remove(path)
 	})
 	if e != nil {
-		log.Printf("invoice.Delete e=%s", e.Error())
-		http.Error(w, e.Error(), http.StatusInternalServerError)
+		httputil.InternalError(w, "invoice.Delete", e)
 		return
 	}
 
-	// TODO: something cleaner?
 	w.Header().Set("Content-Type", "application/json")
-	if _, e := w.Write([]byte("{'ok': true}")); e != nil {
-		log.Printf("invoice.Delete %s", e.Error())
-		http.Error(w, "invoice.Delete fail", http.StatusInternalServerError)
-		return
+	if _, e := w.Write([]byte(`{"ok": true}`)); e != nil {
+		httputil.LogErr("invoice.Delete", e)
 	}
 }
 
@@ -92,7 +92,7 @@ func vatCountry(nr string) string {
 	return country
 }
 
-// Lock invoice for changes and set invoiceid
+// Finalize locks an invoice for changes and assigns an invoice ID.
 func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	if name == "" {
@@ -113,10 +113,10 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Message: fmt.Sprintf("Finalize concept invoice %s", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
-		from := fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name)
+		from := db.ConceptInvoicePath(entity, year, name)
 		u = new(Invoice)
 		if e := t.Open(from, u); e != nil {
-			return e
+			return fmt.Errorf("open: %w", e)
 		}
 		if len(u.Meta.Issuedate) == 0 {
 			u.Meta.Issuedate = time.Now().Format("2006-01-02")
@@ -126,9 +126,9 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if u.Meta.Invoiceid == "" {
 			idx, e := NextInvoiceID(entity, t)
 			if e != nil {
-				return e
+				return fmt.Errorf("next invoice id: %w", e)
 			}
-			u.Meta.Invoiceid = utils.CreateInvoiceId(time.Now(), idx)
+			u.Meta.Invoiceid = utils.CreateInvoiceID(time.Now(), idx)
 			u.Mail.Subject += " #" + u.Meta.Invoiceid
 			if config.Verbose {
 				log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
@@ -147,7 +147,6 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 					}
 					u.Notes += WorldTaxComment
 				}
-
 			} else {
 				// old style for older invoices (before 2024Q3)
 				if vatCountry(u.Customer.Vat) != "nl" && !strings.Contains(u.Notes, EUTaxComment) {
@@ -159,34 +158,32 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			}
 		}
 
-		// TODO: Uniqueness check?
-
 		now, e := time.Parse("2006-01-02", u.Meta.Issuedate)
 		if e != nil {
-			return e
+			return fmt.Errorf("parse issue date: %w", e)
 		}
 		bucketTo = fmt.Sprintf("Q%d", utils.YearQuarter(now))
-		to := fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucketTo, name)
+		to := db.InvoicePath(entity, year, bucketTo, name, false)
 		if e := t.Save(to, true, u); e != nil {
-			return e
+			return fmt.Errorf("save: %w", e)
 		}
 		if e := t.Remove(from); e != nil {
-			return e
+			return fmt.Errorf("remove: %w", e)
 		}
 		return nil
 	})
 	if e != nil {
-		log.Printf("invoice.Finalize %s", e.Error())
-		http.Error(w, "invoice.Finalize fail", http.StatusInternalServerError)
+		httputil.InternalError(w, "invoice.Finalize", e)
 		return
 	}
 
 	w.Header().Set("X-Bucket-Change", bucketTo)
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("invoice.Finalize %s", e.Error())
+		httputil.LogErr("invoice.Finalize", e)
 	}
 }
 
+// Reset moves a finalized invoice back to concept status.
 func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	bucket := ps.ByName("bucket")
@@ -196,43 +193,41 @@ func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("invoice.Reset with conceptid=%s", name)
 	}
 
-	from := fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)
+	from := db.InvoicePath(entity, year, bucket, name, false)
 	bucketTo := "concepts"
-	to := ""
 	u := new(Invoice)
 
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Reset invoice to concept"),
+		Message: "Reset invoice to concept",
 	}
 	e := db.Update(change, func(t *db.Txn) error {
 		if e := t.Open(from, u); e != nil {
-			return e
+			return fmt.Errorf("open: %w", e)
 		}
-		to = fmt.Sprintf("%s/%s/%s/sales-invoices/%s.toml", entity, year, bucketTo, u.Meta.Conceptid)
+		to := db.ConceptInvoicePath(entity, year, u.Meta.Conceptid)
 		u.Meta.Status = "CONCEPT"
 		if e := t.Save(to, true, u); e != nil {
-			return e
+			return fmt.Errorf("save: %w", e)
 		}
 		if e := t.Remove(from); e != nil {
-			return e
+			return fmt.Errorf("remove: %w", e)
 		}
 		return nil
 	})
 	if e != nil {
-		log.Printf("invoice.Reset %s", e.Error())
-		http.Error(w, fmt.Sprintf("invoice.Reset failed loading file from disk"), 400)
+		httputil.BadRequest(w, "invoice.Reset", e)
 		return
 	}
 
 	w.Header().Set("X-Bucket-Change", bucketTo)
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("invoice.Reset %s", e.Error())
+		httputil.LogErr("invoice.Reset", e)
 	}
 }
 
-// Mark invoice as paid
+// Paid marks an invoice as paid and moves it to the paid folder.
 func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	bucket := ps.ByName("bucket")
@@ -242,8 +237,8 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("invoice.Paid with conceptid=%s", name)
 	}
 
-	from := fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)
-	to := fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name)
+	from := db.InvoicePath(entity, year, bucket, name, false)
+	to := db.InvoicePath(entity, year, bucket, name, true)
 	u := new(Invoice)
 
 	change := db.Commit{
@@ -253,28 +248,28 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	e := db.Update(change, func(t *db.Txn) error {
 		if e := t.Open(from, u); e != nil {
-			return fmt.Errorf("Paid::Open %v", e)
+			return fmt.Errorf("open: %w", e)
 		}
 		u.Meta.Paydate = time.Now().Format("2006-01-02")
 		if e := t.Save(to, true, u); e != nil {
-			return fmt.Errorf("Paid::Save %v", e)
+			return fmt.Errorf("save: %w", e)
 		}
 		if e := t.Remove(from); e != nil {
-			return fmt.Errorf("Paid::Remove %v", e)
+			return fmt.Errorf("remove: %w", e)
 		}
 		return nil
 	})
 	if e != nil {
-		log.Printf("invoice.Paid %s", e.Error())
-		http.Error(w, fmt.Sprintf("invoice.Paid failed loading file from disk"), 400)
+		httputil.BadRequest(w, "invoice.Paid", e)
 		return
 	}
 
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("invoice.Paid %s", e.Error())
+		httputil.LogErr("invoice.Paid", e)
 	}
 }
 
+// Save creates or updates a concept invoice.
 func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
@@ -285,27 +280,28 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	u := new(Invoice)
 	if e := writer.Decode(r, u); e != nil {
-		log.Printf("invoice.Save %s", e.Error())
-		http.Error(w, "invoice.Save failed to decode input", 400)
+		httputil.BadRequest(w, "invoice.Save decode", e)
 		return
 	}
 	if e := validator.Validate(u); e != nil {
 		// Errors as JSON
 		w.WriteHeader(http.StatusExpectationFailed)
-		input := InputError{
-			Error:  "Input invalid",
-			Fields: e.(validator.ErrorMap),
-		}
-		if e := writer.Encode(w, r, input); e != nil {
-			log.Printf("invoice.Save writer.Encode=%s", e.Error())
+		var errMap validator.ErrorMap
+		if errors.As(e, &errMap) {
+			input := InputError{
+				Error:  "Input invalid",
+				Fields: errMap,
+			}
+			if e := writer.Encode(w, r, input); e != nil {
+				httputil.LogErr("invoice.Save encode", e)
+			}
+		} else {
+			httputil.LogErr("invoice.Save validate", e)
 		}
 		return
 	}
 
-	isNew := true
-	if u.Meta.Status != "NEW" {
-		isNew = false
-	}
+	isNew := u.Meta.Status == "NEW"
 
 	if u.Meta.Conceptid == "" {
 		u.Meta.Conceptid = randStringBytesRmndr(12)
@@ -321,35 +317,35 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Message: fmt.Sprintf("Update invoice %s", u.Meta.Conceptid),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
-		return t.Save(fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, u.Meta.Conceptid), isNew, u)
+		path := db.ConceptInvoicePath(entity, year, u.Meta.Conceptid)
+		return t.Save(path, isNew, u)
 	})
 	if e != nil {
-		log.Printf("invoice.Save %s", e.Error())
-		http.Error(w, fmt.Sprintf("invoice.Save failed writing to disk"), 400)
+		httputil.BadRequest(w, "invoice.Save", e)
 		return
 	}
 
 	w.Header().Set("X-Bucket-Change", "concepts")
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("invoice.Save %s", e.Error())
+		httputil.LogErr("invoice.Save", e)
 	}
 }
 
+// Load retrieves a single invoice by ID.
 func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 	bucket := ps.ByName("bucket")
-	log.Printf("invoice.Load with conceptid=%s", name)
+	if config.Verbose {
+		log.Printf("invoice.Load with conceptid=%s", name)
+	}
 
 	var paths []string
 	if bucket == "concepts" {
-		paths = []string{fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, name)}
+		paths = []string{db.ConceptInvoicePath(entity, year, name)}
 	} else {
-		paths = []string{
-			fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name),
-			fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name),
-		}
+		paths = db.InvoiceSearchPaths(entity, year, bucket, name)
 	}
 
 	u := new(Invoice)
@@ -357,37 +353,31 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return t.OpenFirst(paths, u)
 	})
 	if e != nil {
-		log.Printf("invoice.Load %s", e.Error())
-		http.Error(w, fmt.Sprintf("invoice.Load failed loading file from disk"), 400)
+		httputil.BadRequest(w, "invoice.Load", e)
 		return
 	}
 
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("invoice.Load %s", e.Error())
+		httputil.LogErr("invoice.Load", e)
 	}
 }
 
+// List returns all invoices for a year with pagination.
 func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 	args := r.URL.Query()
 
-	paths := []string{
-		fmt.Sprintf("%s/%s/concepts/sales-invoices", entity, year),
-		fmt.Sprintf("%s/%s/{all}/sales-invoices-paid", entity, year),
-		fmt.Sprintf("%s/%s/{all}/sales-invoices-unpaid", entity, year),
-	}
+	paths := db.InvoiceListPaths(entity, year)
 
 	from, e := strconv.Atoi(args.Get("from"))
 	if e != nil {
-		log.Printf("invoice.List from: %s", e.Error())
-		http.Error(w, "invoice.List fail", http.StatusInternalServerError)
+		httputil.InternalError(w, "invoice.List from", e)
 		return
 	}
 	count, e := strconv.Atoi(args.Get("count"))
 	if e != nil {
-		log.Printf("invoice.List count: %s", e.Error())
-		http.Error(w, "invoice.List fail", http.StatusInternalServerError)
+		httputil.InternalError(w, "invoice.List count", e)
 		return
 	}
 
@@ -396,7 +386,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	mem := new(Invoice)
 
 	e = db.View(func(t *db.Txn) error {
-		_, e := t.List(paths, db.Pagination{From: from, Count: count}, &mem, func(filename, filepath, fpath string) error {
+		_, e := t.List(paths, db.Pagination{From: from, Count: count}, &mem, func(_, _, fpath string) error {
 			list[fpath] = append(list[fpath], mem)
 			mem = new(Invoice)
 			return nil
@@ -411,8 +401,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return e
 	})
 	if e != nil {
-		log.Printf("invoice.List %s", e.Error())
-		http.Error(w, fmt.Sprintf("invoice.List failed scanning disk"), 400)
+		httputil.BadRequest(w, "invoice.List", e)
 		return
 	}
 
@@ -425,23 +414,18 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("invoice.List count=%d", len(list))
 	}
 	if e := writer.Encode(w, r, res); e != nil {
-		log.Printf("invoice.List %s", e.Error())
+		httputil.LogErr("invoice.List", e)
 	}
 }
 
 // validateHourFilePath validates that an HourFile path belongs to the expected entity.
 // Path security checks (traversal, absolute paths) are handled by db.pathFilter.
 func validateHourFilePath(path, entity string) error {
-	if path == "" {
-		return nil
-	}
-	if !strings.HasPrefix(path, entity+"/") {
-		return fmt.Errorf("invalid hourfile path: must belong to entity %s", entity)
-	}
-	return nil
+	return db.ValidateEntityPath(path, entity)
 }
 
-func Text(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// Text returns the raw hour file associated with an invoice.
+func Text(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	bucket := ps.ByName("bucket")
 	entity := ps.ByName("entity")
@@ -450,47 +434,45 @@ func Text(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("invoice.Text with id=%s", name)
 	}
 
-	paths := []string{
-		fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name),
-		fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name),
-	}
+	paths := db.InvoiceSearchPaths(entity, year, bucket, name)
 
 	u := new(Invoice)
 	e := db.View(func(t *db.Txn) error {
-		e := t.OpenFirst(paths, u)
-		if e != nil {
-			return e
+		if e := t.OpenFirst(paths, u); e != nil {
+			return fmt.Errorf("open: %w", e)
 		}
 		path := u.Meta.HourFile
 		if path == "" {
-			http.Error(w, fmt.Sprintf("Invoice has no hourfile"), 404)
+			http.Error(w, "Invoice has no hourfile", 404)
 			return nil
 		}
 
-		// Validate HourFile path to prevent path traversal attacks
 		if err := validateHourFilePath(path, entity); err != nil {
-			return err
+			return fmt.Errorf("validate path: %w", err)
 		}
 
 		f, e := t.OpenRaw(path)
 		if e != nil {
-			return e
+			return fmt.Errorf("open hourfile: %w", e)
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Printf("close: %s", err)
+			}
+		}()
 
 		if _, e := io.Copy(w, f); e != nil {
-			return e
+			return fmt.Errorf("copy: %w", e)
 		}
 		return nil
 	})
 	if e != nil {
-		log.Printf("invoice.Text %s", e.Error())
-		http.Error(w, fmt.Sprintf("invoice.Text failed loading hourfile"), 400)
-		return
+		httputil.BadRequest(w, "invoice.Text", e)
 	}
 }
 
-func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// Pdf generates and returns a PDF version of an invoice.
+func Pdf(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	bucket := ps.ByName("bucket")
 	entity := ps.ByName("entity")
@@ -499,72 +481,63 @@ func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("invoice.Pdf with id=%s", name)
 	}
 
-	paths := []string{
-		fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name),
-		fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name),
-	}
+	paths := db.InvoiceSearchPaths(entity, year, bucket, name)
 
 	var f *gofpdf.Fpdf
 	u := new(Invoice)
 	e := db.View(func(t *db.Txn) error {
-		e := t.OpenFirst(paths, u)
-		if e != nil {
-			return e
+		if e := t.OpenFirst(paths, u); e != nil {
+			return fmt.Errorf("open: %w", e)
 		}
-		f, e = pdf(db.Path+entity, u)
-		return e
+		f = pdf(db.Path+entity, u)
+		return nil
 	})
 	if e != nil {
-		log.Printf("invoice.Pdf %s", e.Error())
-		http.Error(w, fmt.Sprintf("invoice.Pdf failed loading file from disk"), 400)
+		httputil.BadRequest(w, "invoice.Pdf", e)
 		return
 	}
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.pdf"`, u.Meta.Invoiceid))
 	w.Header().Set("Content-Type", "application/pdf")
 	if e := f.Output(w); e != nil {
-		log.Printf("invoice.Pdf output: %s", e.Error())
-		http.Error(w, "invoice.Pdf fail", http.StatusInternalServerError)
-		return
+		httputil.InternalError(w, "invoice.Pdf output", e)
 	}
 }
 
-func Xml(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// XML generates and returns a UBL XML version of an invoice.
+func XML(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	bucket := ps.ByName("bucket")
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 	if config.Verbose {
-		log.Printf("invoice.Xml with id=%s", name)
+		log.Printf("invoice.XML with id=%s", name)
 	}
 
-	paths := []string{
-		fmt.Sprintf("%s/%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name),
-		fmt.Sprintf("%s/%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name),
-	}
+	paths := db.InvoiceSearchPaths(entity, year, bucket, name)
 
 	var ubl *bytes.Buffer
 	u := new(Invoice)
 	e := db.View(func(t *db.Txn) error {
-		e := t.OpenFirst(paths, u)
-		if e != nil {
-			return e
+		if e := t.OpenFirst(paths, u); e != nil {
+			return fmt.Errorf("open: %w", e)
 		}
-		ubl, e = UBL(u)
-		return e
+		var err error
+		ubl, err = UBL(u)
+		if err != nil {
+			return fmt.Errorf("generate ubl: %w", err)
+		}
+		return nil
 	})
 	if e != nil {
-		log.Printf("invoice.Xml %s", e.Error())
-		http.Error(w, fmt.Sprintf("invoice.Xml failed loading file from disk"), 400)
+		httputil.BadRequest(w, "invoice.XML", e)
 		return
 	}
 
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.pdf"`, u.Meta.Invoiceid))
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.xml"`, u.Meta.Invoiceid))
 	w.Header().Set("Content-Type", "application/xml")
 	if _, e := w.Write(ubl.Bytes()); e != nil {
-		log.Printf("invoice.Xml write: %s", e.Error())
-		http.Error(w, "invoice.Xml fail", http.StatusInternalServerError)
-		return
+		httputil.InternalError(w, "invoice.XML write", e)
 	}
 }
 

@@ -2,7 +2,9 @@ package idx
 
 import (
 	"bufio"
+	"context"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,6 +16,14 @@ import (
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/model"
 	"github.com/mpdroog/invoiced/purchase"
+)
+
+// Status constants
+const (
+	statusConcept = "CONCEPT"
+	statusPaid    = "PAID"
+	statusUnpaid  = "UNPAID"
+	bucketConcept = "concepts"
 )
 
 // PathParts contains parsed components from a TOML file path
@@ -44,18 +54,18 @@ func parseInvoicePath(relPath string) *PathParts {
 
 	year, _ := strconv.Atoi(matches[2])
 	quarter := 0
-	if matches[3] != "concepts" {
+	if matches[3] != bucketConcept {
 		q := matches[3][1] - '0' // Q1 -> 1
 		quarter = int(q)
 	}
 
 	// Determine status from bucket name
 	bucket := matches[4]
-	status := "CONCEPT"
+	status := statusConcept
 	if strings.Contains(bucket, "-paid") {
-		status = "PAID"
+		status = statusPaid
 	} else if strings.Contains(bucket, "-unpaid") {
-		status = "UNPAID"
+		status = statusUnpaid
 	}
 
 	return &PathParts{
@@ -77,8 +87,8 @@ func parseHourPath(relPath string) *PathParts {
 
 	year, _ := strconv.Atoi(matches[2])
 	quarter := 0
-	status := "CONCEPT"
-	if matches[3] != "concepts" {
+	status := statusConcept
+	if matches[3] != bucketConcept {
 		q := matches[3][1] - '0'
 		quarter = int(q)
 		status = "FINAL"
@@ -107,9 +117,9 @@ func parsePurchasePath(relPath string) *PathParts {
 
 	// Determine status from bucket name
 	bucket := matches[4]
-	status := "UNPAID"
+	status := statusUnpaid
 	if strings.Contains(bucket, "-paid") {
-		status = "PAID"
+		status = statusPaid
 	}
 
 	return &PathParts{
@@ -160,17 +170,17 @@ func DeletePath(relPath string) error {
 	}
 
 	if parts := parseInvoicePath(relPath); parts != nil {
-		_, err := DB.Exec("DELETE FROM invoices WHERE id = ?", parts.ID)
+		_, err := DB.ExecContext(context.Background(), "DELETE FROM invoices WHERE id = ?", parts.ID)
 		return err
 	}
 
 	if parts := parseHourPath(relPath); parts != nil {
-		_, err := DB.Exec("DELETE FROM hours WHERE id = ?", parts.ID)
+		_, err := DB.ExecContext(context.Background(), "DELETE FROM hours WHERE id = ?", parts.ID)
 		return err
 	}
 
 	if parts := parsePurchasePath(relPath); parts != nil {
-		_, err := DB.Exec("DELETE FROM purchase_invoices WHERE id = ?", parts.ID)
+		_, err := DB.ExecContext(context.Background(), "DELETE FROM purchase_invoices WHERE id = ?", parts.ID)
 		return err
 	}
 
@@ -190,23 +200,27 @@ func syncInvoice(p *PathParts) error {
 	if err != nil {
 		if os.IsNotExist(err) {
 			// File deleted, remove from index
-			_, err := DB.Exec("DELETE FROM invoices WHERE id = ?", p.ID)
+			_, err := DB.ExecContext(context.Background(), "DELETE FROM invoices WHERE id = ?", p.ID)
 			return err
 		}
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	var inv model.Invoice
 	buf := bufio.NewReader(file)
-	if _, err := toml.DecodeReader(buf, &inv); err != nil {
+	if _, err := toml.NewDecoder(buf).Decode(&inv); err != nil {
 		return fmt.Errorf("idx: decode invoice %s: %w", p.FullPath, err)
 	}
 
 	// Determine tax category from Notes
 	taxCat := deriveTaxCategory(&inv)
 
-	_, err = DB.Exec(`
+	_, err = DB.ExecContext(context.Background(), `
 		INSERT OR REPLACE INTO invoices
 		(id, entity, year, quarter, status, customer_name, customer_vat, invoiceid,
 		 issuedate, duedate, paydate, tax_category, total_ex, total_tax, total_inc,
@@ -242,16 +256,20 @@ func syncHour(p *PathParts) error {
 	file, err := os.Open(p.FullPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			_, err := DB.Exec("DELETE FROM hours WHERE id = ?", p.ID)
+			_, err := DB.ExecContext(context.Background(), "DELETE FROM hours WHERE id = ?", p.ID)
 			return err
 		}
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	var h model.Hour
 	buf := bufio.NewReader(file)
-	if _, err := toml.DecodeReader(buf, &h); err != nil {
+	if _, err := toml.NewDecoder(buf).Decode(&h); err != nil {
 		return fmt.Errorf("idx: decode hour %s: %w", p.FullPath, err)
 	}
 
@@ -261,7 +279,7 @@ func syncHour(p *PathParts) error {
 		issuedate = extractIssuedateFromFilename(p.ID)
 	}
 
-	_, err = DB.Exec(`
+	_, err = DB.ExecContext(context.Background(), `
 		INSERT OR REPLACE INTO hours
 		(id, entity, year, quarter, status, project, name, total_hours, hour_rate, issuedate, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -282,20 +300,24 @@ func syncPurchase(p *PathParts) error {
 	file, err := os.Open(p.FullPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			_, err := DB.Exec("DELETE FROM purchase_invoices WHERE id = ?", p.ID)
+			_, err := DB.ExecContext(context.Background(), "DELETE FROM purchase_invoices WHERE id = ?", p.ID)
 			return err
 		}
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	var inv purchase.PurchaseInvoice
 	buf := bufio.NewReader(file)
-	if _, err := toml.DecodeReader(buf, &inv); err != nil {
+	if _, err := toml.NewDecoder(buf).Decode(&inv); err != nil {
 		return fmt.Errorf("idx: decode purchase %s: %w", p.FullPath, err)
 	}
 
-	_, err = DB.Exec(`
+	_, err = DB.ExecContext(context.Background(), `
 		INSERT OR REPLACE INTO purchase_invoices
 		(id, entity, year, quarter, status, supplier_name, supplier_vat, invoiceid,
 		 issuedate, duedate, paydate, total_ex, total_tax, total_inc, currency,

@@ -1,3 +1,4 @@
+// Package purchase handles purchase invoice management.
 package purchase
 
 import (
@@ -12,30 +13,27 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/httputil"
 	"github.com/mpdroog/invoiced/utils"
 	"github.com/mpdroog/invoiced/writer"
 )
 
+// List returns all purchase invoices for a year.
 func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 	args := r.URL.Query()
 
-	paths := []string{
-		fmt.Sprintf("%s/%s/{all}/purchase-invoices-unpaid", entity, year),
-		fmt.Sprintf("%s/%s/{all}/purchase-invoices-paid", entity, year),
-	}
+	paths := db.PurchaseListPaths(entity, year)
 
 	from, e := strconv.Atoi(args.Get("from"))
 	if e != nil {
-		log.Printf("purchase.List from: %s", e.Error())
-		http.Error(w, "purchase.List fail", http.StatusInternalServerError)
+		httputil.InternalError(w, "purchase.List from", e)
 		return
 	}
 	count, e := strconv.Atoi(args.Get("count"))
 	if e != nil {
-		log.Printf("purchase.List count: %s", e.Error())
-		http.Error(w, "purchase.List fail", http.StatusInternalServerError)
+		httputil.InternalError(w, "purchase.List count", e)
 		return
 	}
 
@@ -43,7 +41,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	mem := new(PurchaseInvoice)
 
 	e = db.View(func(t *db.Txn) error {
-		_, e := t.List(paths, db.Pagination{From: from, Count: count}, &mem, func(filename, filepath, fpath string) error {
+		_, e := t.List(paths, db.Pagination{From: from, Count: count}, &mem, func(_, _, fpath string) error {
 			list[fpath] = append(list[fpath], mem)
 			mem = new(PurchaseInvoice)
 			return nil
@@ -51,8 +49,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return e
 	})
 	if e != nil {
-		log.Printf("purchase.List %s", e.Error())
-		http.Error(w, fmt.Sprintf("purchase.List failed scanning disk"), 400)
+		httputil.BadRequest(w, "purchase.List", e)
 		return
 	}
 
@@ -64,20 +61,23 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("purchase.List count=%d", len(list))
 	}
 	if e := writer.Encode(w, r, res); e != nil {
-		log.Printf("purchase.List %s", e.Error())
+		httputil.LogErr("purchase.List", e)
 	}
 }
 
+// Load retrieves a single purchase invoice by ID.
 func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 	bucket := ps.ByName("bucket")
-	log.Printf("purchase.Load with id=%s", name)
+	if config.Verbose {
+		log.Printf("purchase.Load with id=%s", name)
+	}
 
 	paths := []string{
-		fmt.Sprintf("%s/%s/%s/purchase-invoices-paid/%s.toml", entity, year, bucket, name),
-		fmt.Sprintf("%s/%s/%s/purchase-invoices-unpaid/%s.toml", entity, year, bucket, name),
+		db.PurchasePath(entity, year, bucket, name, true),
+		db.PurchasePath(entity, year, bucket, name, false),
 	}
 
 	u := new(PurchaseInvoice)
@@ -85,13 +85,12 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return t.OpenFirst(paths, u)
 	})
 	if e != nil {
-		log.Printf("purchase.Load %s", e.Error())
-		http.Error(w, fmt.Sprintf("purchase.Load failed loading file from disk"), 400)
+		httputil.BadRequest(w, "purchase.Load", e)
 		return
 	}
 
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("purchase.Load %s", e.Error())
+		httputil.LogErr("purchase.Load", e)
 	}
 }
 
@@ -110,7 +109,11 @@ func Upload(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		http.Error(w, "Missing file", 400)
 		return
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	if !strings.HasSuffix(strings.ToLower(header.Filename), ".xml") {
 		http.Error(w, "Only XML files accepted", 400)
@@ -165,13 +168,12 @@ func Upload(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 
 	if e != nil {
-		log.Printf("purchase.Upload %s", e.Error())
-		http.Error(w, "Failed to save purchase invoice", 500)
+		httputil.InternalError(w, "purchase.Upload", e)
 		return
 	}
 
 	if e := writer.Encode(w, r, inv); e != nil {
-		log.Printf("purchase.Upload %s", e.Error())
+		httputil.LogErr("purchase.Upload", e)
 	}
 }
 
@@ -186,8 +188,8 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("purchase.Paid with id=%s", name)
 	}
 
-	from := fmt.Sprintf("%s/%s/%s/purchase-invoices-unpaid/%s.toml", entity, year, bucket, name)
-	to := fmt.Sprintf("%s/%s/%s/purchase-invoices-paid/%s.toml", entity, year, bucket, name)
+	from := db.PurchasePath(entity, year, bucket, name, false)
+	to := db.PurchasePath(entity, year, bucket, name, true)
 	u := new(PurchaseInvoice)
 
 	change := db.Commit{
@@ -198,15 +200,15 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	e := db.Update(change, func(t *db.Txn) error {
 		if e := t.Open(from, u); e != nil {
-			return fmt.Errorf("Paid::Open %v", e)
+			return fmt.Errorf("open: %w", e)
 		}
 		u.Status = "PAID"
 		u.Paydate = time.Now().Format("2006-01-02")
 		if e := t.Save(to, true, u); e != nil {
-			return fmt.Errorf("Paid::Save %v", e)
+			return fmt.Errorf("save: %w", e)
 		}
 		if e := t.Remove(from); e != nil {
-			return fmt.Errorf("Paid::Remove %v", e)
+			return fmt.Errorf("remove: %w", e)
 		}
 
 		// Also move PDF if exists
@@ -218,26 +220,26 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 
 	if e != nil {
-		log.Printf("purchase.Paid %s", e.Error())
-		http.Error(w, "Failed to mark as paid", 400)
+		httputil.BadRequest(w, "purchase.Paid", e)
 		return
 	}
 
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("purchase.Paid %s", e.Error())
+		httputil.LogErr("purchase.Paid", e)
 	}
 }
 
 // PDF serves the embedded PDF file
-func PDF(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func PDF(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	bucket := ps.ByName("bucket")
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 
+	// PDF paths (same as TOML but with .pdf extension)
 	paths := []string{
-		fmt.Sprintf("%s/%s/%s/purchase-invoices-paid/%s.pdf", entity, year, bucket, name),
-		fmt.Sprintf("%s/%s/%s/purchase-invoices-unpaid/%s.pdf", entity, year, bucket, name),
+		strings.TrimSuffix(db.PurchasePath(entity, year, bucket, name, true), ".toml") + ".pdf",
+		strings.TrimSuffix(db.PurchasePath(entity, year, bucket, name, false), ".toml") + ".pdf",
 	}
 
 	e := db.View(func(t *db.Txn) error {
@@ -246,7 +248,11 @@ func PDF(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			if err != nil {
 				continue
 			}
-			defer f.Close()
+			defer func() {
+				if err := f.Close(); err != nil {
+					log.Printf("close: %s", err)
+				}
+			}()
 
 			w.Header().Set("Content-Type", "application/pdf")
 			w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.pdf"`, name))
@@ -255,7 +261,10 @@ func PDF(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			for {
 				n, err := f.Read(buf)
 				if n > 0 {
-					w.Write(buf[:n])
+					if _, werr := w.Write(buf[:n]); werr != nil {
+						log.Printf("purchase.PDF write: %s", werr)
+						break
+					}
 				}
 				if err != nil {
 					break
@@ -267,8 +276,7 @@ func PDF(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 
 	if e != nil {
-		log.Printf("purchase.PDF %s", e.Error())
-		http.Error(w, "PDF not found", 404)
+		httputil.NotFound(w, "purchase.PDF", e)
 	}
 }
 
@@ -293,8 +301,8 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	e := db.Update(change, func(t *db.Txn) error {
 		// Try both paid and unpaid locations
 		paths := []string{
-			fmt.Sprintf("%s/%s/%s/purchase-invoices-paid/%s.toml", entity, year, bucket, name),
-			fmt.Sprintf("%s/%s/%s/purchase-invoices-unpaid/%s.toml", entity, year, bucket, name),
+			db.PurchasePath(entity, year, bucket, name, true),
+			db.PurchasePath(entity, year, bucket, name, false),
 		}
 
 		for _, path := range paths {
@@ -309,13 +317,14 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 
 	if e != nil {
-		log.Printf("purchase.Delete %s", e.Error())
-		http.Error(w, e.Error(), http.StatusInternalServerError)
+		httputil.InternalError(w, "purchase.Delete", e)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"ok": true}`))
+	if _, err := w.Write([]byte(`{"ok": true}`)); err != nil {
+		log.Printf("purchase.Delete write: %s", err)
+	}
 }
 
 func sanitizeFilename(s string) string {

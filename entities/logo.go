@@ -3,26 +3,32 @@ package entities
 import (
 	"bufio"
 	"bytes"
-	"fmt"
-	"github.com/julienschmidt/httprouter"
-	"github.com/mpdroog/invoiced/db"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/httputil"
 )
 
-func Logo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+// Logo returns the company logo image.
+func Logo(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	entity := strings.ToLower(ps.ByName("entity"))
 
 	buffer := new(bytes.Buffer)
 	e := db.View(func(t *db.Txn) error {
-		fd, e := t.OpenRaw(fmt.Sprintf("%s/logo.png", entity))
+		fd, e := t.OpenRaw(db.LogoPath(entity))
 		if e != nil {
 			return e
 		}
-		defer fd.Close()
+		defer func() {
+			if err := fd.Close(); err != nil {
+				log.Printf("entities.Logo close: %s", err)
+			}
+		}()
 
 		buf := bufio.NewReader(fd)
 		if _, e := io.Copy(buffer, buf); e != nil {
@@ -31,14 +37,13 @@ func Logo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return nil
 	})
 	if e != nil {
-		log.Printf("Logo e=%s", e.Error())
-		http.Error(w, "Failed reading logo", 500)
+		httputil.InternalError(w, "entities.Logo", e)
 		return
 	}
 
-	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Content-Type", "image/png")
 	w.Header().Set("Content-Length", strconv.Itoa(buffer.Len()))
 	if _, err := w.Write(buffer.Bytes()); err != nil {
-		log.Println("unable to write image.")
+		httputil.LogErr("entities.Logo write", err)
 	}
 }

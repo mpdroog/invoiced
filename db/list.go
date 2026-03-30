@@ -3,48 +3,52 @@ package db
 import (
 	"bufio"
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/mpdroog/invoiced/config"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/BurntSushi/toml"
+	"github.com/mpdroog/invoiced/config"
 )
 
-const MAX_FILES = 1000
-const DEADLINE = "5s"
+const maxFiles = 1000
+const listDeadline = "5s"
 
 var deadline time.Duration
 
+// Pagination specifies offset and limit for list queries.
 type Pagination struct {
 	From  int // TODO: possible?
 	Count int
 }
 
+// PaginationHeader contains the total count for paginated results.
 type PaginationHeader struct {
 	Total int
 }
 
 func init() {
 	var e error
-	deadline, e = time.ParseDuration(DEADLINE)
+	deadline, e = time.ParseDuration(listDeadline)
 	if e != nil {
 		panic(e)
 	}
 }
 
-func (t *Txn) RawList(path string) ([]fs.FileInfo, error) {
-	return ioutil.ReadDir(path)
+// RawList returns directory entries for the given path.
+func (t *Txn) RawList(path string) ([]fs.DirEntry, error) {
+	return os.ReadDir(path)
 }
 
+// List iterates over TOML files in the given paths and calls f for each.
 func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, string, string) error) (PaginationHeader, error) {
 	var page PaginationHeader
 
-	if p.Count > MAX_FILES {
-		return page, fmt.Errorf("Pagination.Count exceeds MAX_FILES(%d)", MAX_FILES)
+	if p.Count > maxFiles {
+		return page, fmt.Errorf("pagination.Count exceeds maxFiles(%d)", maxFiles)
 	}
 	timeout := time.Now().Add(deadline)
 
@@ -67,11 +71,11 @@ func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, 
 	i := 0
 	for _, path := range paths {
 		if time.Now().After(timeout) {
-			return page, fmt.Errorf("Deadline Timeout")
+			return page, fmt.Errorf("deadline timeout")
 		}
 		// TODO: pagination??
 
-		files, e := ioutil.ReadDir(path)
+		files, e := os.ReadDir(path)
 		if os.IsNotExist(e) {
 			// No such folder (git only tracks folders when they have content)
 			continue
@@ -83,7 +87,7 @@ func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, 
 		abs := path
 		for _, file := range files {
 			if time.Now().After(timeout) {
-				return page, fmt.Errorf("Deadline Timeout")
+				return page, fmt.Errorf("deadline timeout")
 			}
 
 			if file.IsDir() {
@@ -111,23 +115,27 @@ func (t *Txn) List(path []string, p Pagination, mem interface{}, f func(string, 
 					log.Printf("Read %s\n", abs+file.Name())
 				}
 
-				file, e := os.Open(abs + file.Name())
+				fd, e := os.Open(filepath.Clean(filepath.Join(abs, file.Name())))
 				if e != nil {
 					return e
 				}
 
-				buf := bufio.NewReader(file)
-				if _, e := toml.DecodeReader(buf, mem); e != nil {
-					file.Close() /* ignore err, write err takes precedence */
+				buf := bufio.NewReader(fd)
+				if _, e := toml.NewDecoder(buf).Decode(mem); e != nil {
+					if err := fd.Close(); err != nil {
+						log.Printf("db.List close: %s", err)
+					}
 					return e
 				}
-				title := filepath.Base(file.Name())
-				if e := f(title[0:strings.LastIndex(title, ".")], file.Name(), path); e != nil {
-					file.Close() /* ignore err, write err takes precedence */
+				title := filepath.Base(fd.Name())
+				if e := f(title[0:strings.LastIndex(title, ".")], fd.Name(), path); e != nil {
+					if err := fd.Close(); err != nil {
+						log.Printf("db.List close: %s", err)
+					}
 					return e
 				}
 				i++
-				return file.Close()
+				return fd.Close()
 			}()
 			if e != nil {
 				return page, e

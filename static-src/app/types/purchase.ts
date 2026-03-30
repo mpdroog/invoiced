@@ -4,7 +4,7 @@
 // source: struct.go
 
 /**
- * PurchaseInvoice represents an incoming invoice from a supplier
+ * PurchaseInvoice represents an incoming invoice from a supplier.
  */
 export interface PurchaseInvoice {
   ID: string; // Original invoice ID from supplier
@@ -24,12 +24,18 @@ export interface PurchaseInvoice {
   Status: string; // UNPAID, PAID
   Paydate: string;
 }
+/**
+ * Supplier contains information about the invoice supplier.
+ */
 export interface Supplier {
   Name: string;
   VAT: string;
   COC: string;
   Email: string;
 }
+/**
+ * PurchaseLine represents a single line item on a purchase invoice.
+ */
 export interface PurchaseLine {
   Description: string;
   Quantity: string;
@@ -37,6 +43,9 @@ export interface PurchaseLine {
   Total: string;
   TaxPercent: string;
 }
+/**
+ * ListReply contains the response for listing purchase invoices.
+ */
 export interface ListReply {
   Invoices: { [key: string]: (PurchaseInvoice | undefined)[]};
 }

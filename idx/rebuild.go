@@ -1,6 +1,7 @@
 package idx
 
 import (
+	"context"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,13 +19,14 @@ func Rebuild(dbPath string) error {
 	log.Printf("idx: rebuilding index from %s", dbPath)
 
 	// Clear existing data
-	if _, err := DB.Exec("DELETE FROM invoices"); err != nil {
+	ctx := context.Background()
+	if _, err := DB.ExecContext(ctx, "DELETE FROM invoices"); err != nil {
 		return err
 	}
-	if _, err := DB.Exec("DELETE FROM hours"); err != nil {
+	if _, err := DB.ExecContext(ctx, "DELETE FROM hours"); err != nil {
 		return err
 	}
-	if _, err := DB.Exec("DELETE FROM purchase_invoices"); err != nil {
+	if _, err := DB.ExecContext(ctx, "DELETE FROM purchase_invoices"); err != nil {
 		return err
 	}
 

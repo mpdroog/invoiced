@@ -22,30 +22,30 @@ func today() time.Time {
 	return t
 }
 
-// Convert hours to concept invoice
+// HourToInvoice converts hours to a concept invoice.
 func HourToInvoice(entity, year, project, name, hourStr, email, hourFile, from string, t *db.Txn) (string, error) {
 	prj, e := entities.GetProject(t, entity, project)
 	if e != nil {
 		return "", e
 	}
 	if prj == nil {
-		return "", fmt.Errorf("No such project %s", project)
+		return "", fmt.Errorf("no such project %s", project)
 	}
 	debtor, e := entities.GetDebtor(t, entity, prj.Debtor)
 	if e != nil {
 		return "", e
 	}
 	if debtor == nil {
-		return "", fmt.Errorf("No such debtor %s", prj.Debtor)
+		return "", fmt.Errorf("no such debtor %s", prj.Debtor)
 	}
 
 	company := middleware.CompanyByName(entity)
 	if company == nil {
-		return "", fmt.Errorf("No such company %s", entity)
+		return "", fmt.Errorf("no such company %s", entity)
 	}
 	user := middleware.UserByEmail(email)
 	if user == nil {
-		return "", fmt.Errorf("No such email %s", email)
+		return "", fmt.Errorf("no such email %s", email)
 	}
 
 	d, e := time.ParseDuration(fmt.Sprintf("%dh", 24*prj.DueDays))
@@ -67,7 +67,7 @@ func HourToInvoice(entity, year, project, name, hourStr, email, hourFile, from s
 
 	// random mail queue
 	mailQueue := ""
-	for key, _ := range config.C.Queues {
+	for key := range config.C.Queues {
 		mailQueue = key
 		break
 	}
@@ -97,7 +97,7 @@ func HourToInvoice(entity, year, project, name, hourStr, email, hourFile, from s
 			Duedate:   today.Add(d).Format("2006-01-02"),
 			HourFile:  hourFile,
 		},
-		Lines: []InvoiceLine{InvoiceLine{
+		Lines: []InvoiceLine{{
 			Description: name,
 			Quantity:    hourStr,
 			Price:       strconv.FormatFloat(prj.HourRate, 'f', 2, 64),

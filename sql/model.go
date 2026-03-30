@@ -1,3 +1,4 @@
+// Package sql provides database query utilities for the SQL backend.
 package sql
 
 import (
@@ -10,22 +11,28 @@ import (
 
 var db *sql.DB
 
+// Init initializes the SQL database connection.
 func Init(d *sql.DB) error {
 	db = d
 	return nil
 }
 
-func get(sql string, max int) ([]map[string]*string, error) {
+func get(sql string, limit int) ([]map[string]*string, error) {
 	var res []map[string]*string
 
 	rows, e := db.Query(sql)
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
+
 	cols, e := rows.Columns()
 	if e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 
 	i := 0
@@ -38,7 +45,7 @@ func get(sql string, max int) ([]map[string]*string, error) {
 		}
 
 		if e := rows.Scan(ptr...); e != nil {
-			log.Fatal(e)
+			return nil, e
 		}
 
 		m := make(map[string]*string, len(cols))
@@ -48,27 +55,31 @@ func get(sql string, max int) ([]map[string]*string, error) {
 
 		res = append(res, m)
 		i++
-		if max > 0 && i == max {
+		if limit > 0 && i == limit {
 			// limit results
 			break
 		}
 	}
 	if e := rows.Err(); e != nil {
-		log.Fatal(e)
+		return nil, e
 	}
 
-	return res, e
+	return res, nil
 }
 
+// GetRow executes a SQL query and returns a single row.
 func GetRow(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sql := r.URL.Query().Get("sql")
 	if sql == "" {
-		log.Fatal("Missing sql-arg")
+		http.Error(w, "missing sql-arg", http.StatusBadRequest)
+		return
 	}
 
 	res, e := get(sql, 1)
 	if e != nil {
-		log.Fatal(e)
+		log.Printf("sql.GetRow: %s", e)
+		http.Error(w, e.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	var rep map[string]*string
@@ -77,22 +88,26 @@ func GetRow(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	if e := writer.Encode(w, r, rep); e != nil {
-		log.Fatal(e)
+		log.Printf("sql.GetRow encode: %s", e)
 	}
 }
 
+// GetAll executes a SQL query and returns all rows.
 func GetAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	sql := r.URL.Query().Get("sql")
 	if sql == "" {
-		log.Fatal("Missing sql-arg")
+		http.Error(w, "missing sql-arg", http.StatusBadRequest)
+		return
 	}
 
 	res, e := get(sql, 0)
 	if e != nil {
-		log.Fatal(e)
+		log.Printf("sql.GetAll: %s", e)
+		http.Error(w, e.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	if e := writer.Encode(w, r, res); e != nil {
-		log.Fatal(e)
+		log.Printf("sql.GetAll encode: %s", e)
 	}
 }

@@ -26,11 +26,11 @@ A self-hosted invoicing and hour registration system for freelancers and small b
 ### Build
 
 ```bash
-# Frontend
-cd static-src && yarn install && npm run build
-
-# Backend
-go build
+cd static-src && yarn install      # Install frontend dependencies (first time)
+make frontend                      # Build frontend
+make build                         # Build backend
+make lint                          # Lint Go code (requires golangci-lint)
+make check                         # Run all checks (lint + test + build)
 ```
 
 ### Setup

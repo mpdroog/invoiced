@@ -1,14 +1,15 @@
+// Package main generates authentication credentials (IV, Salt, Hash) for entities.toml.
 package main
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"strings"
 	"syscall"
 
-	"crypto/rand"
-	"crypto/sha256"
-	"golang.org/x/crypto/ssh/terminal"
-	"io"
+	"golang.org/x/term"
 )
 
 // NewEncryptionKey generates a random 256-bit key for Encrypt() and
@@ -25,7 +26,7 @@ func NewEncryptionKey() *[32]byte {
 
 func creds() (string, error) {
 	fmt.Print("Enter Password: ")
-	bytePassword, e := terminal.ReadPassword(int(syscall.Stdin))
+	bytePassword, e := term.ReadPassword(syscall.Stdin)
 	if e != nil {
 		return "", e
 	}
@@ -41,7 +42,7 @@ func main() {
 	if e != nil {
 		panic(e)
 	}
-	//fmt.Printf("Password: %s\n", pass)
+	// fmt.Printf("Password: %s\n", pass)
 
 	h := sha256.New()
 	h.Write([]byte(salt))

@@ -1,18 +1,21 @@
 package camt053
 
-const PAYMENT_RECEIVED_RABO = "541"
+// PaymentReceivedRabo is the Rabobank transaction code for received payments.
+const PaymentReceivedRabo = "541"
 
+// GrpHdr represents the CAMT053 group header element.
 type GrpHdr struct {
-	MsgId   string `xml:"MsgId"`
+	MsgID   string `xml:"MsgId"`
 	CreDtTm string `xml:"CreDtTm"`
 }
 
+// Stmt represents a CAMT053 statement element.
 type Stmt struct {
-	Id           string `xml:"Id"`
+	ID           string `xml:"Id"`
 	ElctrncSeqNb int    `xml:"ElctrncSeqNb"`
 	CreDtTm      string `xml:"CreDtTm"`
 	Acct         struct {
-		Id struct {
+		ID struct {
 			IBAN string `xml:"IBAN"`
 		} `xml:"Id"`
 		Ccy string `xml:"Ccy"`
@@ -30,10 +33,10 @@ type Stmt struct {
 		} `xml:"Dt"`
 	} `xml:"Bal"`
 	TxsSummry struct {
-		TtlNtries struct {
+		TtlNtries struct { //nolint:revive // field names match XML schema
 			NbOfNtries    int     `xml:"NbOfNtries"`
 			Sum           float64 `xml:"Sum"`
-			TtlNetNtryAmt float64 `xml:"TtlNetNtryAmt"`
+			TtlNetNtryAmt float64 `xml:"TtlNetNtryAmt"` //nolint:revive // field name matches XML schema
 			CdtDbtInd     string  `xml:"CdtDbtInd"`
 		} `xml:"TtlNtries"`
 	} `xml:"TxsSummry"`
@@ -71,7 +74,7 @@ type Stmt struct {
 						} `xml:"PstlAdr"`
 					} `xml:"Cdtr"`
 					CdtrAcct struct {
-						Id struct {
+						ID struct {
 							IBAN string `xml:"IBAN"`
 						} `xml:"Id"`
 					} `xml:"CdtrAcct"`
@@ -85,14 +88,14 @@ type Stmt struct {
 						} `xml:"PstlAdr"`
 					} `xml:"Dbtr"`
 					DbtrAcct struct {
-						Id struct {
+						ID struct {
 							IBAN string `xml:"IBAN"`
 						} `xml:"Id"`
 					} `xml:"DbtrAcct"`
 				} `xml:"RltdPties"`
 				RltdAgts struct {
 					CdtrAgt struct {
-						FinInstnId struct {
+						FinInstnID struct {
 							BIC string `xml:"BIC"`
 						} `xml:"FinInstnId"`
 					} `xml:"CdtrAgt"`

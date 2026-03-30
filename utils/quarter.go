@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// TEMP
+// YearQuarter returns the quarter number (1-4) for a given date.
 func YearQuarter(now time.Time) int {
 	switch now.Month() {
 	case time.January:
@@ -36,8 +36,8 @@ func YearQuarter(now time.Time) int {
 	panic(fmt.Sprintf("Invalid month: %d", now.Month()))
 }
 
-// Create invoice with YYYY-QN-XXXX pattern
-// i.e. 2016-Q1-0001 (Invoice 1 in the first Quarter of 2016)
-func CreateInvoiceId(now time.Time, idx uint64) string {
+// CreateInvoiceID creates an invoice ID with YYYY-QN-XXXX pattern.
+// For example, 2016Q1-0001 is Invoice 1 in the first Quarter of 2016.
+func CreateInvoiceID(now time.Time, idx uint64) string {
 	return fmt.Sprintf("%dQ%d-%04d", now.Year(), YearQuarter(now), idx)
 }

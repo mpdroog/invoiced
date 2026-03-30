@@ -4,29 +4,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Run Commands
 
-### Backend (Go)
+**Always use `make` commands when available.** This ensures consistent builds and proper tooling.
+
+**Git commits: Do not add "Co-Authored-By" lines.**
+
+### Common Commands
 ```bash
-go build                           # Build the invoiced binary
-go run main.go                     # Run directly
+make build                         # Build the invoiced binary
+make frontend                      # Build frontend (runs tygo first)
+make test                          # Run all Go tests
+make lint                          # Run golangci-lint on all Go code
+make lint-fix                      # Auto-fix lint issues where possible
+make tygo                          # Generate TypeScript types from Go structs
+make check                         # Run lint + test + build (pre-commit check)
+make clean                         # Remove build artifacts
+make install-hooks                 # Install git pre-commit hooks
+```
+
+### Running the Server
+```bash
 ./invoiced -v -d ~/billingdb       # Run with verbose logging and custom db path
 ./invoiced -h localhost:9999       # Specify HTTP listen address (default)
 ./invoiced -c ./config.toml        # Specify config file path
 ```
 
-### Frontend (ReactJS/TypeScript/Vite)
+### Frontend Development
+**Note: Use yarn for package management (yarn.lock is committed).**
 ```bash
 cd static-src
-npm install                        # Install dependencies
-npm run build                      # Typecheck + lint + build to ../static/assets/
-npm run lint                       # Run ESLint only
-npm run lint:fix                   # Auto-fix ESLint errors
-```
-
-### Tests
-```bash
-go test ./...                      # Run all tests
-go test ./rules/...                # Run tests in specific package
-go test -v ./invoice/camt053/...   # Verbose test output
+yarn install                       # Install dependencies (first time only)
+yarn build                         # Typecheck + lint + build to ../static/assets/
+yarn lint                          # Run ESLint only
+yarn lint:fix                      # Auto-fix ESLint errors
 ```
 
 ### Contrib Utilities
@@ -88,7 +97,7 @@ RESTful API on `/api/v1/`:
 - Generate credentials: `contrib/gen` creates IV, Salt, Hash for entities.toml
 
 ### Invoice ID Format
-Generated via `utils.CreateInvoiceId()` combining current date and sequential counter per entity.
+Generated via `utils.CreateInvoiceID()` combining current date and sequential counter per entity.
 
 ### Frontend
 - Located in `static-src/`, built to `static/assets/`
@@ -96,3 +105,102 @@ Generated via `utils.CreateInvoiceId()` combining current date and sequential co
 - Axios for API calls, Recharts for metrics visualization
 - ESLint with TypeScript rules (no-floating-promises, no-misused-promises)
 - TypeScript strict settings: strictNullChecks, noUncheckedIndexedAccess
+
+## Linting
+
+The project uses golangci-lint v2 configured in `.golangci.yml`. **Always run `make lint` before committing Go code.**
+
+### Enabled Linters
+- **govet, staticcheck, errcheck** - Core Go analysis
+- **revive** - Style and best practices (replaces golint)
+- **gosec** - Security vulnerability detection
+- **errorlint** - Proper error wrapping with `%w` and `errors.Is()`
+- **goconst** - Repeated strings that should be constants
+- **noctx** - HTTP requests must include context
+- **bodyclose** - HTTP response bodies must be closed
+- **misspell** - Spelling errors in comments and strings
+
+### Common Lint Fixes
+
+**Error wrapping** (errorlint):
+```go
+// Bad
+return fmt.Errorf("failed: %s", err)
+// Good
+return fmt.Errorf("failed: %w", err)
+```
+
+**Error comparison** (errorlint):
+```go
+// Bad
+if err == io.EOF { ... }
+// Good
+if errors.Is(err, io.EOF) { ... }
+```
+
+**HTTP with context** (noctx):
+```go
+// Bad
+http.Get(url)
+// Good
+req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
+http.DefaultClient.Do(req)
+```
+
+**Doc comments** (revive):
+```go
+// Bad
+// helper function for X
+func DoSomething() {}
+// Good
+// DoSomething performs X operation.
+func DoSomething() {}
+```
+
+**Naming conventions** (revive var-naming):
+```go
+// Bad: ID not Id, URL not Url, HTTP not Http
+InvoiceId, ApiUrl, HttpClient
+// Good
+InvoiceID, APIURL, HTTPClient
+```
+
+**Type stuttering** - When a type name repeats the package name:
+```go
+// Bad
+package config
+type ConfigQueue struct {} // config.ConfigQueue stutters
+
+// Good - rename the type
+type Queue struct {} // config.Queue is clear
+
+// Or add nolint if renaming would break API
+type ConfigQueue struct {} //nolint:revive // backwards compatibility
+```
+
+**Unused parameters**:
+```go
+// Bad
+func handler(w http.ResponseWriter, r *http.Request) {
+    // r is never used
+}
+// Good
+func handler(w http.ResponseWriter, _ *http.Request) {
+    // underscore indicates intentionally unused
+}
+```
+
+### Suppressing Lint Warnings
+
+Use `//nolint` directives sparingly and with justification:
+```go
+func example() { //nolint:gosec // G404: math/rand OK for non-crypto use
+    rand.Intn(100)
+}
+```
+
+### Excluded Paths
+The following paths are excluded from linting (configured in `.golangci.yml`):
+- `embed/` - Embedded static files
+- `contrib/` - Utility tools
+- `static-src/` - Frontend code (has its own ESLint)

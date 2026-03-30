@@ -1,11 +1,20 @@
 package idx
 
 import (
+	"context"
 	"database/sql"
+	"log"
 
 	"github.com/mpdroog/invoiced/model"
 	"github.com/shopspring/decimal"
 )
+
+const zeroDecimal = "0.00"
+
+// ctx returns a background context for database operations
+func ctx() context.Context {
+	return context.Background()
+}
 
 // GetQuarterTaxSummary returns aggregated tax data for a specific quarter
 func GetQuarterTaxSummary(entity string, year int, quarter int) (*model.TaxSummary, []model.InvoiceAuditLine, error) {
@@ -26,7 +35,7 @@ func GetQuarterTaxSummary(entity string, year int, quarter int) (*model.TaxSumma
 	totalRevenue := decimal.Zero
 
 	// Query all invoices for this quarter (both paid and unpaid)
-	rows, err := DB.Query(`
+	rows, err := DB.QueryContext(ctx(), `
 		SELECT id, invoiceid, tax_category, total_ex, total_tax, total_inc, customer_vat
 		FROM invoices
 		WHERE entity = ? AND year = ? AND quarter = ?
@@ -37,7 +46,11 @@ func GetQuarterTaxSummary(entity string, year int, quarter int) (*model.TaxSumma
 	if err != nil {
 		return nil, nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	for rows.Next() {
 		var id, invoiceid, taxCat, totalEx, totalTax, totalInc string
@@ -115,7 +128,7 @@ func GetYearlyCustomerTotals(entity string, year int, paidOnly bool) ([]model.Cu
 		statusFilter = "status = 'PAID'"
 	}
 
-	rows, err := DB.Query(`
+	rows, err := DB.QueryContext(ctx(), `
 		SELECT customer_name, SUM(CAST(total_ex AS REAL)) as revenue, COUNT(*) as cnt
 		FROM invoices
 		WHERE entity = ? AND year = ? AND `+statusFilter+`
@@ -126,7 +139,11 @@ func GetYearlyCustomerTotals(entity string, year int, paidOnly bool) ([]model.Cu
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	var results []model.CustomerTotal
 	for rows.Next() {
@@ -148,7 +165,7 @@ func GetYearlyQuarterSummary(entity string, year int) ([]model.QuarterSummary, e
 		return nil, nil
 	}
 
-	rows, err := DB.Query(`
+	rows, err := DB.QueryContext(ctx(), `
 		SELECT
 			quarter,
 			COUNT(*) as cnt,
@@ -167,7 +184,11 @@ func GetYearlyQuarterSummary(entity string, year int) ([]model.QuarterSummary, e
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	var results []model.QuarterSummary
 	for rows.Next() {
@@ -196,7 +217,7 @@ func GetMonthlyMetrics(entity string, year int) (map[string]*model.MonthlyMetric
 	m := make(map[string]*model.MonthlyMetric)
 
 	// Get revenue per month from paid invoices (using issuedate)
-	rows, err := DB.Query(`
+	rows, err := DB.QueryContext(ctx(), `
 		SELECT substr(issuedate, 1, 7) as yearmonth,
 		       COALESCE(SUM(CAST(total_inc AS REAL)), 0) as total,
 		       COALESCE(SUM(CAST(total_ex AS REAL)), 0) as ex
@@ -209,7 +230,11 @@ func GetMonthlyMetrics(entity string, year int) (map[string]*model.MonthlyMetric
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	for rows.Next() {
 		var yearmonth string
@@ -220,7 +245,7 @@ func GetMonthlyMetrics(entity string, year int) (map[string]*model.MonthlyMetric
 		m[yearmonth] = &model.MonthlyMetric{
 			RevenueTotal: decimal.NewFromFloat(total).StringFixed(2),
 			RevenueEx:    decimal.NewFromFloat(ex).StringFixed(2),
-			Hours:        "0.00",
+			Hours:        zeroDecimal,
 		}
 	}
 	if err := rows.Err(); err != nil {
@@ -228,7 +253,7 @@ func GetMonthlyMetrics(entity string, year int) (map[string]*model.MonthlyMetric
 	}
 
 	// Get hours per month
-	rows2, err := DB.Query(`
+	rows2, err := DB.QueryContext(ctx(), `
 		SELECT substr(issuedate, 1, 7) as yearmonth,
 		       COALESCE(SUM(CAST(total_hours AS REAL)), 0) as hours
 		FROM hours
@@ -240,7 +265,11 @@ func GetMonthlyMetrics(entity string, year int) (map[string]*model.MonthlyMetric
 	if err != nil {
 		return nil, err
 	}
-	defer rows2.Close()
+	defer func() {
+		if err := rows2.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	for rows2.Next() {
 		var yearmonth string
@@ -250,8 +279,8 @@ func GetMonthlyMetrics(entity string, year int) (map[string]*model.MonthlyMetric
 		}
 		if _, ok := m[yearmonth]; !ok {
 			m[yearmonth] = &model.MonthlyMetric{
-				RevenueTotal: "0.00",
-				RevenueEx:    "0.00",
+				RevenueTotal: zeroDecimal,
+				RevenueEx:    zeroDecimal,
 			}
 		}
 		m[yearmonth].Hours = decimal.NewFromFloat(hours).StringFixed(2)
@@ -263,11 +292,11 @@ func GetMonthlyMetrics(entity string, year int) (map[string]*model.MonthlyMetric
 // GetYearlyTotal returns total revenue for an entity/year
 func GetYearlyTotal(entity string, year int) (string, error) {
 	if DB == nil {
-		return "0.00", nil
+		return zeroDecimal, nil
 	}
 
 	var total sql.NullFloat64
-	err := DB.QueryRow(`
+	err := DB.QueryRowContext(ctx(), `
 		SELECT SUM(CAST(total_ex AS REAL))
 		FROM invoices
 		WHERE entity = ? AND year = ? AND status IN ('PAID', 'UNPAID')`,
@@ -275,11 +304,11 @@ func GetYearlyTotal(entity string, year int) (string, error) {
 	).Scan(&total)
 
 	if err != nil {
-		return "0.00", err
+		return zeroDecimal, err
 	}
 
 	if !total.Valid {
-		return "0.00", nil
+		return zeroDecimal, nil
 	}
 
 	return decimal.NewFromFloat(total.Float64).StringFixed(2), nil
@@ -288,12 +317,12 @@ func GetYearlyTotal(entity string, year int) (string, error) {
 // GetUnpaidSummary returns count and total of unpaid invoices
 func GetUnpaidSummary(entity string, year int) (*model.UnpaidSummary, error) {
 	if DB == nil {
-		return &model.UnpaidSummary{Count: 0, TotalAmount: "0.00"}, nil
+		return &model.UnpaidSummary{Count: 0, TotalAmount: zeroDecimal}, nil
 	}
 
 	var count int
 	var total sql.NullFloat64
-	err := DB.QueryRow(`
+	err := DB.QueryRowContext(ctx(), `
 		SELECT COUNT(*), COALESCE(SUM(CAST(total_inc AS REAL)), 0)
 		FROM invoices
 		WHERE entity = ? AND year = ? AND status = 'UNPAID'`,
@@ -316,7 +345,7 @@ func GetOverdueInvoices(entity string, year int, today string) ([]model.OverdueI
 		return nil, nil
 	}
 
-	rows, err := DB.Query(`
+	rows, err := DB.QueryContext(ctx(), `
 		SELECT id, invoiceid, customer_name, duedate, total_inc, quarter,
 		       julianday(?) - julianday(duedate) as days_overdue
 		FROM invoices
@@ -328,7 +357,11 @@ func GetOverdueInvoices(entity string, year int, today string) ([]model.OverdueI
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	var results []model.OverdueInvoice
 	for rows.Next() {
@@ -347,12 +380,12 @@ func GetOverdueInvoices(entity string, year int, today string) ([]model.OverdueI
 // GetUnbilledHours returns count and total of concept hours (not yet billed)
 func GetUnbilledHours(entity string, year int) (*model.UnbilledHoursSummary, error) {
 	if DB == nil {
-		return &model.UnbilledHoursSummary{Count: 0, TotalHours: "0.00"}, nil
+		return &model.UnbilledHoursSummary{Count: 0, TotalHours: zeroDecimal}, nil
 	}
 
 	var count int
 	var total sql.NullFloat64
-	err := DB.QueryRow(`
+	err := DB.QueryRowContext(ctx(), `
 		SELECT COUNT(*), COALESCE(SUM(CAST(total_hours AS REAL)), 0)
 		FROM hours
 		WHERE entity = ? AND year = ? AND status = 'CONCEPT'`,
@@ -380,7 +413,7 @@ func GetYearComparison(entity string, currentYear int) (*model.YearComparison, e
 	var currentTotal, previousTotal sql.NullFloat64
 
 	// Current year revenue
-	err := DB.QueryRow(`
+	err := DB.QueryRowContext(ctx(), `
 		SELECT COALESCE(SUM(CAST(total_ex AS REAL)), 0)
 		FROM invoices
 		WHERE entity = ? AND year = ? AND status IN ('PAID', 'UNPAID')`,
@@ -391,7 +424,7 @@ func GetYearComparison(entity string, currentYear int) (*model.YearComparison, e
 	}
 
 	// Previous year revenue
-	err = DB.QueryRow(`
+	err = DB.QueryRowContext(ctx(), `
 		SELECT COALESCE(SUM(CAST(total_ex AS REAL)), 0)
 		FROM invoices
 		WHERE entity = ? AND year = ? AND status IN ('PAID', 'UNPAID')`,

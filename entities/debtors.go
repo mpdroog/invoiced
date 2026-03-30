@@ -1,15 +1,18 @@
+// Package entities manages company, user, and debtor data.
 package entities
 
 import (
-	"fmt"
-	"github.com/julienschmidt/httprouter"
-	"github.com/mpdroog/invoiced/db"
-	"github.com/mpdroog/invoiced/writer"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/httputil"
+	"github.com/mpdroog/invoiced/writer"
 )
 
+// Debtor represents a customer or billing entity.
 type Debtor struct {
 	Name         string
 	Street1      string
@@ -21,6 +24,7 @@ type Debtor struct {
 	BillingEmail []string
 }
 
+// Search searches for debtors by name.
 func Search(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := strings.ToLower(ps.ByName("entity"))
 	args := r.URL.Query()
@@ -28,11 +32,10 @@ func Search(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	var debtorList map[string]Debtor
 	e := db.View(func(t *db.Txn) error {
-		return t.Open(fmt.Sprintf("%s/debtors.toml", entity), &debtorList)
+		return t.Open(db.DebtorsPath(entity), &debtorList)
 	})
 	if e != nil {
-		log.Printf("entities.Search e=%s", e.Error())
-		http.Error(w, "Failed reading debtors", 500)
+		httputil.InternalError(w, "entities.Search", e)
 		return
 	}
 
@@ -40,18 +43,19 @@ func Search(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	for name, debtor := range debtorList {
 		name = strings.ToLower(name)
 		if strings.Contains(name, query) {
-			log.Printf("Contains %s/%s\n", query, name)
+			log.Printf("Contains %q/%q\n", query, name)
 			out = append(out, debtor)
 		}
 	}
 	if e := writer.Encode(w, r, out); e != nil {
-		log.Printf("entities.Search %s", e.Error())
+		httputil.LogErr("entities.Search", e)
 	}
 }
 
+// GetDebtor retrieves a debtor by name within a transaction.
 func GetDebtor(t *db.Txn, entity, debname string) (*Debtor, error) {
 	var debtorList map[string]Debtor
-	if e := t.Open(fmt.Sprintf("%s/debtors.toml", entity), &debtorList); e != nil {
+	if e := t.Open(db.DebtorsPath(entity), &debtorList); e != nil {
 		return nil, e
 	}
 

@@ -8,15 +8,19 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/mpdroog/invoiced/config"
+	"github.com/mpdroog/invoiced/httputil"
 	"github.com/mpdroog/invoiced/idx"
 	"github.com/mpdroog/invoiced/writer"
 	"github.com/shopspring/decimal"
 )
 
+const zeroDecimal = "0.00"
+
+// Sum contains aggregated tax data for a quarter.
 type Sum struct {
-	Ex        string // Sum revenue of NL invoices
-	Tax       string // Tax to pay
-	EUEx      string // Sum revenue of EU invoices
+	Ex        string            // Sum revenue of NL invoices
+	Tax       string            // Tax to pay
+	EUEx      string            // Sum revenue of EU invoices
 	EUCompany map[string]string // Tax per EU company for ICP
 
 	ExWorld   string // Sum revenue of world invoices
@@ -25,7 +29,7 @@ type Sum struct {
 
 func addValue(sum, add string, dec int) (string, error) {
 	if sum == "" {
-		sum = "0.00"
+		sum = zeroDecimal
 	}
 
 	s, e := decimal.NewFromString(sum)
@@ -40,6 +44,7 @@ func addValue(sum, add string, dec int) (string, error) {
 	return s.Add(a).StringFixed(int32(dec)), nil
 }
 
+// Tax returns aggregated tax data for a quarter.
 func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
@@ -63,7 +68,7 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	idxSum, audit, err := idx.GetQuarterTaxSummary(entity, yearInt, quarterInt)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Query failed: %s", err.Error()), 500)
+		httputil.InternalError(w, "taxes.Tax query", err)
 		return
 	}
 
@@ -89,29 +94,28 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var e error
 	sum.EUEx, e = addValue(sum.EUEx, "0", 0)
 	if e != nil {
-		http.Error(w, fmt.Sprintf("EUEx rounding failed: %s", e.Error()), 500)
+		httputil.InternalError(w, "taxes.Tax EUEx rounding", e)
 		return
 	}
 	sum.Ex, e = addValue(sum.Ex, "0", 0)
 	if e != nil {
-		http.Error(w, fmt.Sprintf("Ex rounding failed: %s", e.Error()), 500)
+		httputil.InternalError(w, "taxes.Tax Ex rounding", e)
 		return
 	}
 	sum.Tax, e = addValue(sum.Tax, "0", 0)
 	if e != nil {
-		http.Error(w, fmt.Sprintf("Tax rounding failed: %s", e.Error()), 500)
+		httputil.InternalError(w, "taxes.Tax Tax rounding", e)
 		return
 	}
 	for k, v := range sum.EUCompany {
 		sum.EUCompany[k], e = addValue(v, "0", 0)
 		if e != nil {
-			http.Error(w, fmt.Sprintf("EUCompany[%s] rounding failed: %s", k, e.Error()), 500)
+			httputil.InternalError(w, fmt.Sprintf("taxes.Tax EUCompany[%s] rounding", k), e)
 			return
 		}
 	}
 
 	if e := writer.Encode(w, r, sum); e != nil {
-		http.Error(w, fmt.Sprintf("Encode failed: %s", e.Error()), 500)
-		return
+		httputil.LogErr("taxes.Tax encode", e)
 	}
 }

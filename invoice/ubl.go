@@ -1,20 +1,21 @@
-// UBL XML Invoice
+// Package invoice UBL XML generation.
 // https://www.jortt.nl/online-boekhouden/ubl-factuur/
 package invoice
 
 import (
 	"bytes"
 	"text/template"
-	//"encoding/xml"
+	// "encoding/xml"
 	"github.com/mpdroog/invoiced/embed"
 )
 
+// UBL generates a UBL XML representation of an invoice.
 func UBL(u *Invoice) (*bytes.Buffer, error) {
 	raw := embed.MustAsset("embed/invoice.xml")
 	tpl := template.New("UBL")
-	//tpl.Funcs(map[string]interface{} {
+	// tpl.Funcs(map[string]interface{} {
 	//	"escape": xml.EscapeText,
-	//})
+	// })
 
 	tpl, e := tpl.Parse(string(raw))
 	if e != nil {

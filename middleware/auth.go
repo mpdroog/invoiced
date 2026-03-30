@@ -1,3 +1,4 @@
+// Package middleware provides HTTP authentication and session management.
 package middleware
 
 import (
@@ -22,12 +23,14 @@ const (
 	IVSize = 24
 )
 
+// Sess represents an authenticated user session.
 type Sess struct {
 	Email   string
 	Created int64
 	Version int
 }
 
+// Entities contains all company and user configuration.
 type Entities struct {
 	IV      string `json:"-"`
 	Version int
@@ -39,6 +42,7 @@ type Entities struct {
 	User    []User
 }
 
+// Entity represents a company configuration.
 type Entity struct {
 	Years       []string
 	YearRevenue map[string]string // Revenue per year (EUR)
@@ -50,6 +54,8 @@ type Entity struct {
 	BIC  string
 	Salt string `json:"-"`
 }
+
+// User represents a user with access to companies.
 type User struct {
 	Email    string
 	Hash     string `json:"-"`
@@ -61,6 +67,7 @@ type User struct {
 
 var entities Entities
 
+// Init loads the entities configuration.
 func Init() error {
 	return db.View(func(t *db.Txn) error {
 		e := t.Open("entities.toml", &entities)
@@ -111,7 +118,7 @@ func isSessionExpired(sess *Sess) bool {
 	return time.Now().Unix()-sess.Created > SessionMaxAge
 }
 
-// Authenticate user and return sess-cookie if valid
+// Login authenticates a user and returns a session cookie if valid.
 func Login(email, pass string) (string, error) {
 	for _, user := range entities.User {
 		if user.Email == email {
@@ -140,7 +147,7 @@ func Login(email, pass string) (string, error) {
 	return "", nil
 }
 
-// Resolve user companies by sess
+// Companies returns the companies a user has access to.
 func Companies(sessCipher string) (map[string]Entity, error) {
 	var sess Sess
 	if e := decryptSession(sessCipher, &sess); e != nil {
@@ -166,6 +173,7 @@ func Companies(sessCipher string) (map[string]Entity, error) {
 	return nil, nil
 }
 
+// UserByEmail finds a user by their email address.
 func UserByEmail(email string) *User {
 	for _, user := range entities.User {
 		if user.Email == email {
@@ -175,6 +183,7 @@ func UserByEmail(email string) *User {
 	return nil
 }
 
+// CompanyByName finds a company by name.
 func CompanyByName(name string) *Entity {
 	for cname, entity := range entities.Company {
 		if cname == name {
@@ -189,7 +198,7 @@ func GitCredentials() (string, string) {
 	return entities.GitUser, entities.GitToken
 }
 
-// Check if user is allowed to open this path
+// CompanyAllowed checks if a user has access to a company.
 func CompanyAllowed(company, email string) (bool, error) {
 	for _, user := range entities.User {
 		// Only check the user that matches the email

@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -15,7 +14,7 @@ func parseWildcards(paths []string) ([]string, error) {
 	for _, path := range paths {
 		/* security */
 		if !pathFilter(path) {
-			return nil, fmt.Errorf("Path hack attempt: %s", path)
+			return nil, fmt.Errorf("path hack attempt: %s", path)
 		}
 
 		/* all-parser */
@@ -24,7 +23,11 @@ func parseWildcards(paths []string) ([]string, error) {
 			continue
 		}
 
-		pre := path[:strings.Index(path, "{all}")]
+		idx := strings.Index(path, "{all}")
+		if idx == -1 {
+			continue
+		}
+		pre := path[:idx]
 		post := path[len(pre)+len("{all}"):]
 
 		// TODO: future implement?
@@ -32,7 +35,7 @@ func parseWildcards(paths []string) ([]string, error) {
 			return nil, fmt.Errorf("DevErr: Only supporting single {all} in URL")
 		}
 
-		founds, e := ioutil.ReadDir(pre)
+		founds, e := os.ReadDir(pre)
 		if e != nil {
 			return nil, e
 		}

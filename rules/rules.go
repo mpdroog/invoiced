@@ -4,11 +4,13 @@ package rules
 
 import (
 	"fmt"
-	"gopkg.in/validator.v2"
+	"log"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"gopkg.in/validator.v2"
 )
 
 var regex map[string]*regexp.Regexp
@@ -24,17 +26,23 @@ func init() {
 	regex["price"] = regexp.MustCompile(`^-?[0-9]+\.[0-9]+$`)
 	regex["bic"] = regexp.MustCompile(`[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}`)
 
-	validator.SetValidationFunc("slug", slug)
-	validator.SetValidationFunc("date", date)
-	validator.SetValidationFunc("time", time)
-	validator.SetValidationFunc("uint", uintFn)
-	validator.SetValidationFunc("iban", iban)
-	validator.SetValidationFunc("price", price)
-	validator.SetValidationFunc("qty", qty)
-	validator.SetValidationFunc("bic", bic)
+	mustSetValidator("slug", slug)
+	mustSetValidator("date", date)
+	mustSetValidator("time", time)
+	mustSetValidator("uint", uintFn)
+	mustSetValidator("iban", iban)
+	mustSetValidator("price", price)
+	mustSetValidator("qty", qty)
+	mustSetValidator("bic", bic)
 }
 
-func strCheck(rule string, v interface{}, param string) error {
+func mustSetValidator(name string, fn validator.ValidationFunc) {
+	if err := validator.SetValidationFunc(name, fn); err != nil {
+		log.Fatalf("rules: failed to set validator %s: %s", name, err)
+	}
+}
+
+func strCheck(rule string, v interface{}, _ string) error {
 	st := reflect.ValueOf(v)
 	if st.Kind() != reflect.String {
 		return fmt.Errorf("%s only validates strings", rule)
@@ -112,6 +120,8 @@ func qty(v interface{}, param string) error {
 func bic(v interface{}, param string) error {
 	return strCheck("bic", v, param)
 }
+
+// Init ensures the validation rules are registered.
 func Init() error {
 	// Do nothing, just get this file included..
 	return nil

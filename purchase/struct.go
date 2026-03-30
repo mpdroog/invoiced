@@ -1,7 +1,7 @@
 package purchase
 
-// PurchaseInvoice represents an incoming invoice from a supplier
-type PurchaseInvoice struct {
+// PurchaseInvoice represents an incoming invoice from a supplier.
+type PurchaseInvoice struct { //nolint:revive // maintaining public API
 	ID          string // Original invoice ID from supplier
 	Supplier    Supplier
 	Issuedate   string
@@ -20,6 +20,7 @@ type PurchaseInvoice struct {
 	Paydate     string
 }
 
+// Supplier contains information about the invoice supplier.
 type Supplier struct {
 	Name  string
 	VAT   string
@@ -27,7 +28,8 @@ type Supplier struct {
 	Email string
 }
 
-type PurchaseLine struct {
+// PurchaseLine represents a single line item on a purchase invoice.
+type PurchaseLine struct { //nolint:revive // maintaining public API
 	Description string
 	Quantity    string
 	Price       string
@@ -35,6 +37,7 @@ type PurchaseLine struct {
 	TaxPercent  string
 }
 
+// ListReply contains the response for listing purchase invoices.
 type ListReply struct {
 	Invoices map[string][]*PurchaseInvoice
 }

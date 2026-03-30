@@ -1,3 +1,4 @@
+// Package main is the entry point for the invoiced HTTP server.
 package main
 
 import (
@@ -13,9 +14,9 @@ import (
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/entities"
-	"github.com/mpdroog/invoiced/idx"
 	gitpkg "github.com/mpdroog/invoiced/git"
 	"github.com/mpdroog/invoiced/hour"
+	"github.com/mpdroog/invoiced/idx"
 	"github.com/mpdroog/invoiced/invoice"
 	"github.com/mpdroog/invoiced/metrics"
 	"github.com/mpdroog/invoiced/middleware"
@@ -25,13 +26,13 @@ import (
 	"github.com/mpdroog/invoiced/taxes"
 )
 
-func Index(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	url := r.URL
 	url.Path = "/static/index.html"
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
-func Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func Login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Auth login
 	if e := r.ParseForm(); e != nil {
 		log.Printf("Login: %s\n", e.Error())
@@ -98,7 +99,7 @@ func main() {
 		log.Fatal(e)
 	}
 
-	//db.AlwaysLowercase = true
+	// db.AlwaysLowercase = true
 	if e := db.Init(config.DbPath); e != nil {
 		panic(e)
 	}
@@ -171,8 +172,8 @@ func main() {
 	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/reset", invoice.Reset)
 	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/pdf", invoice.Pdf)
 	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/text", invoice.Text)
-	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/xml", invoice.Xml)
-	//router.GET("/api/v1/invoice/:id/credit", invoice.Credit)
+	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/xml", invoice.XML)
+	// router.GET("/api/v1/invoice/:id/credit", invoice.Credit)
 	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/paid", invoice.Paid)
 	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/email", invoice.Email)
 	router.POST("/api/v1/invoice-balance/:entity/:year", invoice.Balance)

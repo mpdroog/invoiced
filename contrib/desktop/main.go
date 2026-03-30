@@ -1,20 +1,20 @@
+// Package main provides a desktop wrapper with systray for the invoiced application.
 package main
 
 import (
+	"bufio"
+	"context"
 	"flag"
 	"fmt"
-	"github.com/getlantern/systray"
+	"os"
 	"os/exec"
-	//"github.com/getlantern/systray/icon"
+	"strings"
+	"time"
+
+	"github.com/getlantern/systray"
 	"github.com/lextoumbourou/idle"
 	"github.com/mitchellh/go-homedir"
 	"github.com/skratchdot/open-golang/open"
-	//"github.com/ctcpip/notifize"
-	//"sync"
-	"bufio"
-	"os"
-	"strings"
-	"time"
 )
 
 var (
@@ -23,8 +23,7 @@ var (
 	timerStart *time.Time
 	minute     time.Duration
 
-	mStart     *systray.MenuItem
-	curProject *map[string]string
+	mStart *systray.MenuItem
 )
 
 func main() {
@@ -59,7 +58,7 @@ func onReady() {
 		args = append(args, "-v")
 		fmt.Printf("exec=%s %s\n", name, args)
 	}
-	cmd := exec.Command(name, args...)
+	cmd := exec.CommandContext(context.Background(), name, args...)
 	stdout, e := cmd.StdoutPipe()
 	if e != nil {
 		panic(e)
@@ -106,7 +105,6 @@ func onReady() {
 					args[tok[0]] = tok[1]
 				}
 				fmt.Printf("args=%+v\n", args)
-				curProject = &args
 				systray.SetTitle(fmt.Sprintf("$%s$%s$%s", args["entity"], args["year"], args["hour"]))
 				mStart.Enable()
 			}
@@ -123,14 +121,14 @@ func onReady() {
 					fmt.Println("interval.sec")
 				}
 				if timerStart != nil {
-					n := time.Now().Sub(*timerStart)
+					n := time.Since(*timerStart)
 					systray.SetTitle(fmt.Sprintf("$%02d:%02d:%02d", int(n.Hours())%60, int(n.Minutes())%60, int(n.Seconds())%60))
 				}
 				d, e := idle.Get()
 				if e != nil {
 					panic(e)
 				}
-				if d > minute { //time.Duration("5m") {
+				if d > minute { // time.Duration("5m") {
 					fmt.Printf("1min idle\n")
 				}
 			case <-stopChan:
@@ -169,7 +167,7 @@ func onReady() {
 			}
 			if timerStart != nil {
 				// Stop the timer!
-				n := time.Now().Sub(*timerStart)
+				n := time.Since(*timerStart)
 				fmt.Printf("Duration=%s\n", n.String())
 				// TODO: Now use API to load..add..save the change
 

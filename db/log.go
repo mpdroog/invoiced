@@ -6,10 +6,12 @@ import (
 	"github.com/go-git/go-git/v6/plumbing/storer"
 )
 
+// CommitMessage wraps a Git commit for log iteration.
 type CommitMessage struct {
 	*object.Commit
 }
 
+// Logs iterates over Git commit history up to the given limit.
 func (t *Txn) Logs(limit int, fn func(c *CommitMessage) error) error {
 	ref, e := Repo.Head()
 	if e != nil {

@@ -2,6 +2,7 @@
 package git
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -21,6 +22,7 @@ import (
 	"github.com/mpdroog/invoiced/writer"
 )
 
+// CommitInfo contains details about a single Git commit.
 type CommitInfo struct {
 	Hash     string `json:"hash"`
 	FullHash string `json:"fullHash"`
@@ -29,18 +31,21 @@ type CommitInfo struct {
 	Date     string `json:"date"`
 }
 
+// StatusResponse contains unpushed commit information.
 type StatusResponse struct {
 	Ahead   int          `json:"ahead"`
 	Commits []CommitInfo `json:"commits"`
 	Remote  string       `json:"remote"`
 }
 
+// HistoryResponse contains paginated commit history.
 type HistoryResponse struct {
 	Commits []CommitInfo `json:"commits"`
 	HasMore bool         `json:"hasMore"`
 	Page    int          `json:"page"`
 }
 
+// PullPushResponse contains the result of a pull or push operation.
 type PullPushResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
@@ -67,27 +72,8 @@ func getAuth() transport.AuthMethod {
 	return auth
 }
 
-// getRemoteURL returns the first remote URL
-func getRemoteURL() string {
-	remotes, err := db.Repo.Remotes()
-	if err != nil || len(remotes) == 0 {
-		return ""
-	}
-	urls := remotes[0].Config().URLs
-	if len(urls) == 0 {
-		return ""
-	}
-	return urls[0]
-}
-
-// isHTTPRemote checks if the remote URL is HTTP/HTTPS
-func isHTTPRemote() bool {
-	url := getRemoteURL()
-	return strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")
-}
-
 // Status returns unpushed commits (commits ahead of origin/master)
-func Status(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func Status(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	resp := StatusResponse{
 		Ahead:   0,
 		Commits: []CommitInfo{},
@@ -164,12 +150,12 @@ func Status(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	if err := writer.Encode(w, r, resp); err != nil {
-		log.Printf("git.Status encode: %s", err.Error())
+		log.Printf("git.Status encode: %v", err)
 	}
 }
 
 // Push pushes commits to the remote origin
-func Push(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func Push(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Push to origin
 	err := db.Repo.Push(&git.PushOptions{
 		RemoteName: "origin",
@@ -178,7 +164,7 @@ func Push(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 
 	if err != nil {
-		if err == git.NoErrAlreadyUpToDate {
+		if errors.Is(err, git.NoErrAlreadyUpToDate) {
 			if err := writer.Encode(w, r, PullPushResponse{
 				Success: true,
 				Message: "Already up to date",
@@ -207,11 +193,13 @@ func Push(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 // History returns paginated commit history
-func History(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func History(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	pageStr := r.URL.Query().Get("page")
 	page := 0
 	if pageStr != "" {
-		fmt.Sscanf(pageStr, "%d", &page)
+		if _, err := fmt.Sscanf(pageStr, "%d", &page); err != nil {
+			log.Printf("git.History parse page: %s", err)
+		}
 	}
 	if page < 0 {
 		page = 0
@@ -284,7 +272,7 @@ func History(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 // DiscardAll resets the repository to origin/master (discards all local changes)
-func DiscardAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func DiscardAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Get remote tracking branch reference
 	remoteRef, err := db.Repo.Reference(plumbing.NewRemoteReferenceName("origin", "master"), true)
 	if err != nil {
@@ -409,7 +397,7 @@ func ResetTo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 }
 
 // Pull fetches and merges changes from the remote origin
-func Pull(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func Pull(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Get worktree
 	tree, err := db.Repo.Worktree()
 	if err != nil {
@@ -430,7 +418,7 @@ func Pull(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 
 	if err != nil {
-		if err == git.NoErrAlreadyUpToDate {
+		if errors.Is(err, git.NoErrAlreadyUpToDate) {
 			if err := writer.Encode(w, r, PullPushResponse{
 				Success: true,
 				Message: "Already up to date",

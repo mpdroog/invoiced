@@ -18,7 +18,7 @@ require (
 	github.com/shopspring/decimal v1.4.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/xuri/excelize/v2 v2.10.0
-	golang.org/x/crypto v0.48.0
+	golang.org/x/term v0.40.0
 	gopkg.in/gomail.v1 v1.0.0-20150320132819-11b919ab4933
 	gopkg.in/validator.v2 v2.0.1
 	gopkg.in/vmihailenco/msgpack.v2 v2.9.2
@@ -57,10 +57,10 @@ require (
 	github.com/tiendc/go-deepcopy v1.7.2 // indirect
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
+	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/net v0.50.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/term v0.40.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect

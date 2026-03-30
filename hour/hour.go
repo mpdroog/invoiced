@@ -1,19 +1,23 @@
+// Package hour provides API endpoints for hour registration management.
 package hour
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/julienschmidt/httprouter"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/httputil"
 	"github.com/mpdroog/invoiced/invoice"
 	"github.com/mpdroog/invoiced/utils"
 	"github.com/mpdroog/invoiced/writer"
 	"gopkg.in/validator.v2"
-	"log"
-	"net/http"
-	"time"
 )
 
+// Delete removes a concept hour registration.
 func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
@@ -29,14 +33,14 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Message: fmt.Sprintf("Delete concept hour %s", name),
 	}
 	e := db.Update(change, func(t *db.Txn) error {
-		return t.Remove(fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, name))
+		return t.Remove(db.ConceptHourPath(entity, year, name))
 	})
 	if e != nil {
-		log.Printf("hour.Delete %s", e.Error())
-		http.Error(w, "hour.Delete fail", http.StatusInternalServerError)
+		httputil.InternalError(w, "hour.Delete", e)
 	}
 }
 
+// Save creates or updates an hour registration.
 func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if r.Body == nil {
 		http.Error(w, "Please send a request body", 400)
@@ -44,12 +48,11 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	u := new(Hour)
 	if e := writer.Decode(r, u); e != nil {
-		log.Printf("hour.Save decode: %s", e.Error())
-		http.Error(w, "invoice.Save failed decoding input", 400)
+		httputil.BadRequest(w, "hour.Save decode", e)
 		return
 	}
 	if e := validator.Validate(u); e != nil {
-		http.Error(w, fmt.Sprintf("invoice.Save failed validate=%s", e), 400)
+		http.Error(w, fmt.Sprintf("hour.Save failed validate=%s", e), 400)
 		return
 	}
 
@@ -62,28 +65,26 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Message: fmt.Sprintf("Save concept hour %s", u.Name),
 	}
 
-	isNew := true
-	if u.Status != "NEW" {
-		isNew = false
-	}
+	isNew := u.Status == "NEW"
 
 	e := db.Update(change, func(t *db.Txn) error {
 		u.Status = "CONCEPT"
-		return t.Save(fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, u.Name), isNew, u)
+		return t.Save(db.ConceptHourPath(entity, year, u.Name), isNew, u)
 	})
 	if e != nil {
-		log.Printf("hour.Save %s", e.Error())
-		http.Error(w, "hour.Save fail", http.StatusInternalServerError)
+		httputil.InternalError(w, "hour.Save", e)
+		return
 	}
 
 	// CLI forward to wrapper app
 	fmt.Printf("cmd entity=%s year=%s hour=%s\n", entity, year, u.Name)
 
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("hour.Save %s", e.Error())
+		httputil.LogErr("hour.Save", e)
 	}
 }
 
+// Bill converts hour registrations into an invoice.
 func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
@@ -95,81 +96,80 @@ func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Message: fmt.Sprintf("Bill hours from %s", name),
 	}
 
-	invoiceId := ""
+	invoiceID := ""
 	u := new(Hour)
-	path := fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, name)
+	path := db.ConceptHourPath(entity, year, name)
 	bucketTo := fmt.Sprintf("Q%d", utils.YearQuarter(time.Now()))
-	pathTo := fmt.Sprintf("%s/%s/%s/hours/%s.toml", entity, year, bucketTo, name)
+	pathTo := db.HourPath(entity, year, bucketTo, name)
 
 	e := db.Update(change, func(t *db.Txn) error {
 		// Move from concept to finalized quarter
 		if e := t.Open(path, u); e != nil {
-			return e
+			return fmt.Errorf("open: %w", e)
 		}
 		u.Status = "FINAL"
 		if e := t.Save(pathTo, true, u); e != nil {
-			return e
+			return fmt.Errorf("save: %w", e)
 		}
 		if e := t.Remove(path); e != nil {
-			return e
+			return fmt.Errorf("remove: %w", e)
 		}
 		// Next create concept invoice
-		var e error
-		invoiceId, e = invoice.HourToInvoice(entity, year, u.Project, name, u.Total, change.Email, pathTo, r.Header.Get("X-User-Name"), t)
-		return e
+		var err error
+		invoiceID, err = invoice.HourToInvoice(entity, year, u.Project, name, u.Total, change.Email, pathTo, r.Header.Get("X-User-Name"), t)
+		if err != nil {
+			return fmt.Errorf("hour to invoice: %w", err)
+		}
+		return nil
 	})
 	if e != nil {
-		log.Printf("invoice.HourToInvoice: %s", e.Error())
-		http.Error(w, "Failed converting hours to invoice, error="+e.Error(), http.StatusInternalServerError)
+		httputil.InternalError(w, "hour.Bill", e)
 		return
 	}
 
-	w.Header().Set("X-Redirect-Invoice", invoiceId)
+	w.Header().Set("X-Redirect-Invoice", invoiceID)
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("hour.Bill %s", e.Error())
+		httputil.LogErr("hour.Bill", e)
 	}
 }
 
+// Load retrieves a single hour registration by ID.
 func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
-	log.Printf("hour.Load with id=%s", name)
-
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 	bucket := ps.ByName("bucket")
+	if config.Verbose {
+		log.Printf("hour.Load with id=%s", name)
+	}
 
 	u := new(Hour)
 	e := db.View(func(t *db.Txn) error {
-		return t.Open(fmt.Sprintf("%s/%s/%s/hours/%s.toml", entity, year, bucket, name), u)
+		return t.Open(db.HourPath(entity, year, bucket, name), u)
 	})
 	if e != nil {
-		log.Printf("hour.Load %s", e.Error())
-		http.Error(w, fmt.Sprintf("hour.Load failed loading file from disk"), 400)
+		httputil.BadRequest(w, "hour.Load", e)
 		return
 	}
 
 	// CLI forward to wrapper app
 	fmt.Printf("cmd entity=%s year=%s hour=%s\n", entity, year, u.Name)
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("hour.Load %s", e.Error())
+		httputil.LogErr("hour.Load", e)
 	}
 }
 
+// List returns all hour registrations for a year.
 func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
-	dirs := []string{
-		fmt.Sprintf("%s/%s/{all}/hours", entity, year),
-	}
+	dirs := db.HourListPaths(entity, year)
 
-	var (
-		e error
-	)
 	mem := new(Hour)
 	list := make(map[string][]string)
 
-	e = db.View(func(t *db.Txn) error {
-		_, e := t.List(dirs, db.Pagination{From: 0, Count: 30}, mem, func(filename, file, fpath string) error {
+	e := db.View(func(t *db.Txn) error {
+		_, e := t.List(dirs, db.Pagination{From: 0, Count: 30}, mem, func(filename, _, fpath string) error {
 			k := utils.BucketDir(fpath)
 			list[k] = append(list[k], filename)
 			return nil
@@ -177,14 +177,13 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return e
 	})
 	if e != nil {
-		log.Printf("hour.List %s", e.Error())
-		http.Error(w, fmt.Sprintf("hour.List failed scanning disk"), 400)
+		httputil.BadRequest(w, "hour.List", e)
 		return
 	}
 	if config.Verbose {
 		log.Printf("hour.List count=%d", len(list))
 	}
 	if e := writer.Encode(w, r, list); e != nil {
-		log.Printf("hour.List %s", e.Error())
+		httputil.LogErr("hour.List", e)
 	}
 }

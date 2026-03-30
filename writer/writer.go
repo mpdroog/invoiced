@@ -1,13 +1,20 @@
-// package writer abstracts the used encoding lib to
+// Package writer abstracts the used encoding lib to
 // send data back to the client.
 package writer
 
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/vmihailenco/msgpack.v2"
+	"log"
 	"net/http"
 	"strings"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
+)
+
+const (
+	contentTypeJSON    = "application/json"
+	contentTypeMsgpack = "application/x-msgpack"
 )
 
 func getType(ctypes string, accepts []string) string {
@@ -22,25 +29,36 @@ func getType(ctypes string, accepts []string) string {
 	return ctypes
 }
 
+// Decode reads and decodes the request body based on Content-Type.
 func Decode(r *http.Request, d interface{}) error {
 	ctype := r.Header.Get("Content-Type")
 	if idx := strings.Index(ctype, ";"); idx > -1 {
 		ctype = ctype[:idx]
 	}
 
-	if ctype == "application/json" {
-		defer r.Body.Close()
+	switch ctype {
+	case contentTypeJSON:
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				log.Printf("close: %s", err)
+			}
+		}()
 		return json.NewDecoder(r.Body).Decode(d)
-	} else if ctype == "application/x-msgpack" {
-		defer r.Body.Close()
+	case contentTypeMsgpack:
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				log.Printf("close: %s", err)
+			}
+		}()
 		return msgpack.NewDecoder(r.Body).Decode(d)
-	} else {
-		return fmt.Errorf("Invalid Content-Type=%s", ctype)
+	default:
+		return fmt.Errorf("invalid Content-Type=%s", ctype)
 	}
 }
 
+// Encode writes the response body based on Accept header.
 func Encode(w http.ResponseWriter, r *http.Request, d interface{}) error {
-	accept := getType(r.Header.Get("Accept"), []string{"application/json", "application/x-msgpack"})
+	accept := getType(r.Header.Get("Accept"), []string{contentTypeJSON, contentTypeMsgpack})
 	if override := r.URL.Query().Get("accept"); override != "" {
 		// Browser override
 		accept = override
@@ -48,26 +66,26 @@ func Encode(w http.ResponseWriter, r *http.Request, d interface{}) error {
 	if accept == "" {
 		// Default to json with error
 		d = fmt.Sprintf("Invalid ?accept=%s", accept)
-		accept = "application/json"
+		accept = contentTypeJSON
 	}
 
 	var (
 		b []byte
 		e error
 	)
-	if accept == "application/json" {
-		str, e := json.Marshal(&d)
+	switch accept {
+	case contentTypeJSON:
+		b, e = json.Marshal(&d)
 		if e != nil {
 			return e
 		}
-		b = []byte(str)
-	} else if accept == "application/x-msgpack" {
+	case contentTypeMsgpack:
 		b, e = msgpack.Marshal(&d)
 		if e != nil {
 			return e
 		}
-	} else {
-		return fmt.Errorf("Invalid accept=%s", accept)
+	default:
+		return fmt.Errorf("invalid accept=%s", accept)
 	}
 
 	w.Header().Set("Content-Type", accept)

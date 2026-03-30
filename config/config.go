@@ -1,24 +1,29 @@
+// Package config handles application configuration loading and global settings.
 package config
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/BurntSushi/toml"
 )
 
+// Global configuration variables.
 var (
-	Verbose    bool
-	DbPath     string
-	HTTPListen string
-	CurDir     string
+	Verbose    bool   // Verbose enables debug logging
+	DbPath     string // DbPath is the path to the database directory
+	HTTPListen string // HTTPListen is the HTTP server listen address
+	CurDir     string // CurDir is the current working directory
 
-	Hostname string
-	C        Config
+	Hostname string // Hostname is the system hostname
+	C        Config // C is the loaded configuration
 )
 
-type ConfigQueue struct {
+// Queue defines SMTP queue settings for sending emails.
+type Queue struct {
 	User      string
 	Pass      string
 	Host      string
@@ -29,22 +34,30 @@ type ConfigQueue struct {
 	Subject   string
 	BCC       []string
 }
+
+// Config is the main configuration structure.
 type Config struct {
-	Queues map[string]ConfigQueue
+	Queues map[string]Queue
 }
 
+// Ignore returns true if the given filename should be ignored.
 func Ignore(str string) bool {
 	return strings.ToLower(str) == ".ds_store"
 }
 
+// Open loads the configuration from the given TOML file.
 func Open(f string) error {
-	r, e := os.Open(f)
+	r, e := os.Open(filepath.Clean(f))
 	if e != nil {
 		return e
 	}
-	defer r.Close()
-	if _, e := toml.DecodeReader(r, &C); e != nil {
-		return fmt.Errorf("TOML: %s", e)
+	defer func() {
+		if err := r.Close(); err != nil {
+			log.Printf("config.Open close: %s", err)
+		}
+	}()
+	if _, e := toml.NewDecoder(r).Decode(&C); e != nil {
+		return fmt.Errorf("TOML: %w", e)
 	}
 
 	if Verbose {

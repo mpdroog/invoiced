@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path"
 	"strings"
@@ -15,18 +16,20 @@ import (
 	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
+// Commit contains metadata for a Git commit operation.
 type Commit struct {
 	Name    string
 	Email   string
 	Message string
 }
 
+// Save writes a struct as TOML to the given file path.
 func (t *Txn) Save(file string, isNew bool, in interface{}) error {
 	if !t.Write {
 		panic("DevErr: Save-func only allowed in Update")
 	}
 	if !pathFilter(file) {
-		return fmt.Errorf("Path hack attempt: %s", file)
+		return fmt.Errorf("path hack attempt: %s", file)
 	}
 	if AlwaysLowercase {
 		file = strings.ToLower(file)
@@ -47,7 +50,7 @@ func (t *Txn) Save(file string, isNew bool, in interface{}) error {
 	)
 	if isNew {
 		if _, e := tree.Filesystem.Stat(file); !os.IsNotExist(e) {
-			return fmt.Errorf("File already exists %s", file)
+			return fmt.Errorf("file already exists %s", file)
 		}
 		f, e = tree.Filesystem.OpenFile(file, os.O_RDWR|os.O_CREATE, 0755)
 	} else {
@@ -59,17 +62,23 @@ func (t *Txn) Save(file string, isNew bool, in interface{}) error {
 
 	buf := bufio.NewWriter(f)
 	if e := toml.NewEncoder(buf).Encode(in); e != nil {
-		f.Close() /* ignore err, write err takes precedence */
+		if err := f.Close(); err != nil {
+			log.Printf("db.Save close: %s", err)
+		}
 		return e
 	}
 	if e := buf.Flush(); e != nil {
-		f.Close() /* ignore err, write err takes precedence */
+		if err := f.Close(); err != nil {
+			log.Printf("db.Save close: %s", err)
+		}
 		return e
 	}
 
 	// commit on git
 	if _, e := tree.Add(file); e != nil {
-		f.Close() /* ignore err, write err takes precedence */
+		if err := f.Close(); err != nil {
+			log.Printf("db.Save close: %s", err)
+		}
 		return e
 	}
 
@@ -79,12 +88,13 @@ func (t *Txn) Save(file string, isNew bool, in interface{}) error {
 	return f.Close()
 }
 
+// SaveRaw writes raw bytes from a reader to the given file path.
 func (t *Txn) SaveRaw(file string, r io.Reader) error {
 	if !t.Write {
 		panic("DevErr: SaveRaw-func only allowed in Update")
 	}
 	if !pathFilter(file) {
-		return fmt.Errorf("Path hack attempt: %s", file)
+		return fmt.Errorf("path hack attempt: %s", file)
 	}
 	if AlwaysLowercase {
 		file = strings.ToLower(file)
@@ -106,13 +116,17 @@ func (t *Txn) SaveRaw(file string, r io.Reader) error {
 	}
 
 	if _, e := io.Copy(f, r); e != nil {
-		f.Close()
+		if err := f.Close(); err != nil {
+			log.Printf("db.SaveRaw close: %s", err)
+		}
 		return e
 	}
 
 	// commit on git
 	if _, e := tree.Add(file); e != nil {
-		f.Close()
+		if err := f.Close(); err != nil {
+			log.Printf("db.SaveRaw close: %s", err)
+		}
 		return e
 	}
 
@@ -122,12 +136,13 @@ func (t *Txn) SaveRaw(file string, r io.Reader) error {
 	return f.Close()
 }
 
+// Remove deletes a file from the repository.
 func (t *Txn) Remove(path string) error {
 	if !t.Write {
 		panic("DevErr: Remove-func only allowed in Update")
 	}
 	if !pathFilter(path) {
-		return fmt.Errorf("Path hack attempt: %s", path)
+		return fmt.Errorf("path hack attempt: %s", path)
 	}
 	if AlwaysLowercase {
 		path = strings.ToLower(path)
@@ -148,15 +163,16 @@ func (t *Txn) Remove(path string) error {
 	return nil
 }
 
+// Move renames a file from one path to another.
 func (t *Txn) Move(from, to string) error {
 	if !t.Write {
 		panic("DevErr: Move-func only allowed in Update")
 	}
 	if !pathFilter(from) {
-		return fmt.Errorf("Path hack attempt: %s", from)
+		return fmt.Errorf("path hack attempt: %s", from)
 	}
 	if !pathFilter(to) {
-		return fmt.Errorf("Path hack attempt: %s", to)
+		return fmt.Errorf("path hack attempt: %s", to)
 	}
 	if AlwaysLowercase {
 		from = strings.ToLower(from)
@@ -201,6 +217,7 @@ func revert() error {
 	return tree.Reset(&git.ResetOptions{Mode: git.HardReset})
 }
 
+// Update executes a write transaction with automatic commit.
 func Update(change Commit, fn Fn) error {
 	lock.Lock()
 	defer lock.Unlock()

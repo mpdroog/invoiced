@@ -7,8 +7,8 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/BurntSushi/toml"
-	"github.com/mpdroog/invoiced/config"
 	git "github.com/go-git/go-git/v6"
+	"github.com/mpdroog/invoiced/config"
 	"io"
 	"log"
 	"os"
@@ -17,24 +17,31 @@ import (
 	"sync"
 )
 
+// Package-level variables for database state.
 var (
-	Repo            *git.Repository
-	Path            string
-	AlwaysLowercase bool // Force disk I/O in lowercase for better OSX compatibility
+	// Repo is the Git repository for version control.
+	Repo *git.Repository
+	// Path is the root path to the database directory.
+	Path string
+	// AlwaysLowercase forces disk I/O in lowercase for better OSX compatibility.
+	AlwaysLowercase bool
 
 	pathRegex *regexp.Regexp
 	lock      *sync.RWMutex
 
-	// OnCommit is called after successful commits with touched/moved paths
-	// Used by idx package to sync SQLite index
+	// OnCommit is called after successful commits with touched/moved paths.
+	// Used by idx package to sync SQLite index.
 	OnCommit func(touchedPaths []string, movedPaths []struct{ From, To string })
 )
 
+// Txn represents a database transaction.
 type Txn struct {
-	Write        bool     // Don't toggle this bool but use the Update instead of View-func
-	TouchedPaths []string // Paths modified during this transaction (for index sync)
+	Write        bool                        // Don't toggle this bool but use the Update instead of View-func
+	TouchedPaths []string                    // Paths modified during this transaction (for index sync)
 	MovedPaths   []struct{ From, To string } // Paths moved during this transaction
 }
+
+// Fn is a function type for database transaction callbacks.
 type Fn func(*Txn) error
 
 // pathFilter prevents path traversal and other path-based attacks
@@ -48,6 +55,7 @@ func pathFilter(path string) bool {
 	return pathRegex.Match([]byte(path))
 }
 
+// Init initializes the database at the given path, creating a Git repo if needed.
 func Init(path string) error {
 	lock = new(sync.RWMutex)
 	lock.RLock()
@@ -60,7 +68,7 @@ func Init(path string) error {
 	pathRegex = regexp.MustCompile(`^[A-Za-z0-9\._\-\/{}]+$`)
 
 	if !pathFilter(Path) {
-		return fmt.Errorf("Path hack attempt: %s", path)
+		return fmt.Errorf("path hack attempt: %s", path)
 	}
 
 	if _, e := os.Stat(Path + ".git"); os.IsNotExist(e) {
@@ -74,7 +82,6 @@ func Init(path string) error {
 		Repo = repo
 
 		// TODO: create basic file structure?
-
 	} else {
 		if config.Verbose {
 			log.Printf("Load git-repo")
@@ -116,9 +123,10 @@ func Remotes() ([]string, error) {
 	return out, nil
 }*/
 
+// OpenRaw opens a file and returns a raw reader.
 func (t *Txn) OpenRaw(path string) (io.ReadCloser, error) {
 	if !pathFilter(path) {
-		return nil, fmt.Errorf("Path hack attempt: %s", path)
+		return nil, fmt.Errorf("path hack attempt: %s", path)
 	}
 	if AlwaysLowercase {
 		path = strings.ToLower(path)
@@ -131,9 +139,10 @@ func (t *Txn) OpenRaw(path string) (io.ReadCloser, error) {
 	return tree.Filesystem.Open(path)
 }
 
+// Open opens a TOML file and decodes it into the provided struct.
 func (t *Txn) Open(path string, out interface{}) error {
 	if !pathFilter(path) {
-		return fmt.Errorf("Path hack attempt: %s", path)
+		return fmt.Errorf("path hack attempt: %s", path)
 	}
 	if AlwaysLowercase {
 		path = strings.ToLower(path)
@@ -149,13 +158,14 @@ func (t *Txn) Open(path string, out interface{}) error {
 	}
 
 	buf := bufio.NewReader(file)
-	if _, e := toml.DecodeReader(buf, out); e != nil {
-		file.Close() /* ignore err, write err takes precedence */
+	if _, e := toml.NewDecoder(buf).Decode(out); e != nil {
+		_ = file.Close()
 		return e
 	}
 	return file.Close()
 }
 
+// OpenFirst tries to open the first existing file from the list of paths.
 func (t *Txn) OpenFirst(paths []string, out interface{}) error {
 	for _, path := range paths {
 		e := t.Open(path, out)
@@ -169,9 +179,10 @@ func (t *Txn) OpenFirst(paths []string, out interface{}) error {
 		return nil
 	}
 
-	return fmt.Errorf("File not in any given path %+v", paths)
+	return fmt.Errorf("file not in any given path %+v", paths)
 }
 
+// View executes a read-only transaction.
 func View(fn Fn) error {
 	lock.RLock()
 	defer lock.RUnlock()

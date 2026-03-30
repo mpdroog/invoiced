@@ -5,42 +5,44 @@ import (
 	"github.com/jung-kurt/gofpdf"
 )
 
-/**
-  company: "RootDev",
-  entity: {
-    name: "M.P. Droog",
-    street1: "Dorpsstraat 236a",
-    street2: "Obdam, 1713HP, NL"
-  },
-  customer: {
-    name: "XSNews B.V.",
-    street1: "New Yorkstraat 9-13",
-    street2: "1175 RD Lijnden"
-  },
-  meta: {
-    invoiceid: "",
-    issuedate: "issuedate",
-    ponumber: "P/O",
-    duedate: "due"
-  },
-  lines: [{
-    description: "description",
-    quantity: 1,
-    price: "12.00",
-    total: "12.00"
-  }],
-  notes: "",
-  total: {
-    ex: "200",
-    tax: "1000",
-    total: "1200"
-  },
-  bank: {
-    vat: "VAT",
-    coc: "COC",
-    iban: "IBEN"
+/*
+*
+
+	company: "RootDev",
+	entity: {
+	  name: "M.P. Droog",
+	  street1: "Dorpsstraat 236a",
+	  street2: "Obdam, 1713HP, NL"
+	},
+	customer: {
+	  name: "XSNews B.V.",
+	  street1: "New Yorkstraat 9-13",
+	  street2: "1175 RD Lijnden"
+	},
+	meta: {
+	  invoiceid: "",
+	  issuedate: "issuedate",
+	  ponumber: "P/O",
+	  duedate: "due"
+	},
+	lines: [{
+	  description: "description",
+	  quantity: 1,
+	  price: "12.00",
+	  total: "12.00"
+	}],
+	notes: "",
+	total: {
+	  ex: "200",
+	  tax: "1000",
+	  total: "1200"
+	},
+	bank: {
+	  vat: "VAT",
+	  coc: "COC",
+	  iban: "IBEN"
 */
-func pdf(base string, c *Invoice) (*gofpdf.Fpdf, error) {
+func pdf(base string, c *Invoice) *gofpdf.Fpdf {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.SetFooterFunc(func() {
 		pdf.SetY(-15)
@@ -51,13 +53,11 @@ func pdf(base string, c *Invoice) (*gofpdf.Fpdf, error) {
 	})
 	pdf.AddPage()
 
-	var lastY float64 = 15
-
 	// Company name
 	{
 		pdf.SetXY(20, 15)
-		//pdf.SetFont("Helvetica", "B", 18)
-		//pdf.Cell(10, 30, c.Company)
+		// pdf.SetFont("Helvetica", "B", 18)
+		// pdf.Cell(10, 30, c.Company)
 		pdf.Image(base+"/logo.png", 10, 6, 30, 0, false, "", 0, "")
 	}
 
@@ -96,7 +96,7 @@ func pdf(base string, c *Invoice) (*gofpdf.Fpdf, error) {
 		if len(c.Customer.Vat) > 0 {
 			pdf.SetXY(40, last)
 			pdf.Cell(10, 30, c.Customer.Vat)
-			last = last + 5
+			last += 5
 		}
 		if len(c.Customer.Coc) > 0 {
 			pdf.SetXY(40, last)
@@ -106,7 +106,6 @@ func pdf(base string, c *Invoice) (*gofpdf.Fpdf, error) {
 
 	// Meta
 	{
-		lastY = 50
 		pdf.SetFont("Helvetica", "", 10)
 
 		pdf.SetXY(120, 50)
@@ -159,7 +158,7 @@ func pdf(base string, c *Invoice) (*gofpdf.Fpdf, error) {
 
 	// Lines
 	{
-		lastY = 85
+		lastY := 85.0
 		for _, line := range c.Lines {
 			pdf.SetXY(20, lastY)
 			pdf.SetFont("Helvetica", "", 10)
@@ -256,5 +255,5 @@ func pdf(base string, c *Invoice) (*gofpdf.Fpdf, error) {
 	}
 
 	pdf.AliasNbPages("{nb}") // replace {nb}
-	return pdf, nil
+	return pdf
 }

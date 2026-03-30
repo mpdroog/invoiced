@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+# Pre-commit hook for invoiced
+# Install with: make install-hooks
+#
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Check if golangci-lint is installed
+GOLANGCI_LINT=~/go/bin/golangci-lint
+if [ ! -x "$GOLANGCI_LINT" ]; then
+    echo "Error: golangci-lint is not installed at $GOLANGCI_LINT"
+    echo "Install it with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
+    exit 1
+fi
+
+# Get list of staged Go files
+STAGED_GO_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.go$' || true)
+
+if [ -z "$STAGED_GO_FILES" ]; then
+    echo "No Go files staged, skipping lint"
+    exit 0
+fi
+
+# Run gofmt check
+echo "Checking gofmt..."
+UNFORMATTED=$(gofmt -l $STAGED_GO_FILES)
+if [ -n "$UNFORMATTED" ]; then
+    echo "Error: The following files are not gofmt'd:"
+    echo "$UNFORMATTED"
+    echo ""
+    echo "Run 'gofmt -w <file>' to fix"
+    exit 1
+fi
+
+# Run golangci-lint on staged files
+echo "Running golangci-lint..."
+$GOLANGCI_LINT run --new-from-rev=HEAD~1 ./...
+
+# Run tests
+echo "Running tests..."
+go test ./...
+
+echo "All pre-commit checks passed!"

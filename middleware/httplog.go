@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// HTTPLog is middleware that logs HTTP requests with timing.
 func HTTPLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		meta := ""
@@ -15,13 +16,13 @@ func HTTPLog(next http.Handler) http.Handler {
 		}
 		begin := time.Now()
 		next.ServeHTTP(w, r)
-		duration := time.Now().Sub(begin).String()
+		duration := time.Since(begin).String()
 		log.Printf("HTTP[%s] %s %s duration=%s %s\n", r.RemoteAddr, r.Method, r.URL.String(), duration, meta)
 	})
 }
 
 // clearSessionCookie sends an expired cookie to clear the session
-func clearSessionCookie(w http.ResponseWriter, r *http.Request) {
+func clearSessionCookie(w http.ResponseWriter, _ *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "sess",
 		Value:    "",
@@ -78,6 +79,7 @@ func validateReferer(r *http.Request) bool {
 	return true
 }
 
+// HTTPAuth is middleware that validates session authentication.
 func HTTPAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := &Sess{}
@@ -85,7 +87,9 @@ func HTTPAuth(next http.Handler) http.Handler {
 		if e != nil && e.Error() != "http: named cookie not present" {
 			log.Printf("HTTPAuth %s", e.Error())
 			w.WriteHeader(500)
-			w.Write([]byte("Failed reading cookie"))
+			if _, err := w.Write([]byte("Failed reading cookie")); err != nil {
+				log.Printf("HTTPAuth write: %s", err)
+			}
 			return
 		}
 
@@ -109,19 +113,25 @@ func HTTPAuth(next http.Handler) http.Handler {
 			if !validateReferer(r) {
 				log.Printf("HTTPAuth CSRF check failed for %s %s", r.Method, r.URL.Path)
 				w.WriteHeader(403)
-				w.Write([]byte("CSRF validation failed"))
+				if _, err := w.Write([]byte("CSRF validation failed")); err != nil {
+					log.Printf("HTTPAuth write: %s", err)
+				}
 				return
 			}
 
 			if !sessionValid || sess.Email == "" {
 				w.WriteHeader(401)
-				w.Write([]byte("Auth missing"))
+				if _, err := w.Write([]byte("Auth missing")); err != nil {
+					log.Printf("HTTPAuth write: %s", err)
+				}
 				return
 			}
 			user := UserByEmail(sess.Email)
 			if user == nil {
 				w.WriteHeader(401)
-				w.Write([]byte("No such user"))
+				if _, err := w.Write([]byte("No such user")); err != nil {
+					log.Printf("HTTPAuth write: %s", err)
+				}
 				return
 			}
 
@@ -131,12 +141,16 @@ func HTTPAuth(next http.Handler) http.Handler {
 				ok, err := CompanyAllowed(segments[4], sess.Email)
 				if err != nil {
 					w.WriteHeader(500)
-					w.Write([]byte("Permission check fail"))
+					if _, err := w.Write([]byte("Permission check fail")); err != nil {
+						log.Printf("HTTPAuth write: %s", err)
+					}
 					return
 				}
 				if !ok {
 					w.WriteHeader(403)
-					w.Write([]byte("Permission denied: You cannot view company " + segments[4]))
+					if _, err := w.Write([]byte("Permission denied: You cannot view company " + segments[4])); err != nil {
+						log.Printf("HTTPAuth write: %s", err)
+					}
 					return
 				}
 			}
@@ -150,13 +164,16 @@ func HTTPAuth(next http.Handler) http.Handler {
 	})
 }
 
+// LocalOnly is middleware that restricts access to localhost.
 func LocalOnly(next http.Handler) http.Handler {
 	localIPv4 := "127.0.0.1"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// TODO: localIPv6 = "::1" ?
 		if !strings.HasPrefix(r.RemoteAddr, localIPv4) {
 			w.WriteHeader(http.StatusForbidden)
-			w.Write([]byte("Security exception"))
+			if _, err := w.Write([]byte("Security exception")); err != nil {
+				log.Printf("LocalOnly write: %s", err)
+			}
 			return
 		}
 

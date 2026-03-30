@@ -27,9 +27,9 @@ func TestYearQuarter(t *testing.T) {
 	}
 }
 
-func TestCreateInvoiceId(t *testing.T) {
+func TestCreateInvoiceID(t *testing.T) {
 	expect := "2016Q1-0100"
-	res := CreateInvoiceId(time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC), 100)
+	res := CreateInvoiceID(time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC), 100)
 	if expect != res {
 		t.Errorf("Invoicepattern mismatch: %s expected, received=%s", expect, res)
 	}

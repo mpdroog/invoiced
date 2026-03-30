@@ -1,9 +1,13 @@
 package idx
 
 import (
+	"context"
+	"log"
+	"strconv"
 	"strings"
 )
 
+// SearchResult represents a single search result item.
 type SearchResult struct {
 	Type     string `json:"type"`     // "invoice", "hour", "purchase"
 	ID       string `json:"id"`       // conceptid/filename
@@ -29,7 +33,7 @@ func Search(entity string, query string, limit int) ([]SearchResult, error) {
 	var results []SearchResult
 
 	// Search invoices
-	rows, err := DB.Query(`
+	rows, err := DB.QueryContext(context.Background(), `
 		SELECT id, entity, year, quarter, status, customer_name, invoiceid, total_inc
 		FROM invoices
 		WHERE entity = ? AND (
@@ -45,7 +49,11 @@ func Search(entity string, query string, limit int) ([]SearchResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	for rows.Next() {
 		var r SearchResult
@@ -64,13 +72,13 @@ func Search(entity string, query string, limit int) ([]SearchResult, error) {
 		// Determine bucket for URL
 		switch status {
 		case "CONCEPT":
-			r.Bucket = "concepts"
+			r.Bucket = bucketConcept
 		case "PAID":
-			r.Bucket = "Q" + string('0'+byte(r.Quarter))
+			r.Bucket = "Q" + strconv.Itoa(r.Quarter)
 		case "UNPAID":
-			r.Bucket = "Q" + string('0'+byte(r.Quarter))
+			r.Bucket = "Q" + strconv.Itoa(r.Quarter)
 		default:
-			r.Bucket = "concepts"
+			r.Bucket = bucketConcept
 		}
 
 		results = append(results, r)
@@ -81,7 +89,7 @@ func Search(entity string, query string, limit int) ([]SearchResult, error) {
 	}
 
 	// Search hours
-	rows2, err := DB.Query(`
+	rows2, err := DB.QueryContext(context.Background(), `
 		SELECT id, entity, year, quarter, status, project, name, total_hours
 		FROM hours
 		WHERE entity = ? AND (
@@ -96,7 +104,11 @@ func Search(entity string, query string, limit int) ([]SearchResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows2.Close()
+	defer func() {
+		if err := rows2.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	for rows2.Next() {
 		var r SearchResult
@@ -112,9 +124,9 @@ func Search(entity string, query string, limit int) ([]SearchResult, error) {
 		r.Subtitle = totalHours + " hours"
 
 		if status == "CONCEPT" || r.Quarter == 0 {
-			r.Bucket = "concepts"
+			r.Bucket = bucketConcept
 		} else {
-			r.Bucket = "Q" + string('0'+byte(r.Quarter))
+			r.Bucket = "Q" + strconv.Itoa(r.Quarter)
 		}
 
 		results = append(results, r)
@@ -125,7 +137,7 @@ func Search(entity string, query string, limit int) ([]SearchResult, error) {
 	}
 
 	// Search purchase invoices
-	rows3, err := DB.Query(`
+	rows3, err := DB.QueryContext(context.Background(), `
 		SELECT id, entity, year, quarter, status, supplier_name, invoiceid, total_inc
 		FROM purchase_invoices
 		WHERE entity = ? AND (
@@ -140,7 +152,11 @@ func Search(entity string, query string, limit int) ([]SearchResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows3.Close()
+	defer func() {
+		if err := rows3.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
 
 	for rows3.Next() {
 		var r SearchResult
@@ -152,11 +168,7 @@ func Search(entity string, query string, limit int) ([]SearchResult, error) {
 		r.Title = invoiceID + " - " + supplierName
 		r.Subtitle = "€ " + totalInc
 
-		if status == "PAID" {
-			r.Bucket = "Q" + string('0'+byte(r.Quarter))
-		} else {
-			r.Bucket = "Q" + string('0'+byte(r.Quarter))
-		}
+		r.Bucket = "Q" + strconv.Itoa(r.Quarter)
 
 		results = append(results, r)
 	}

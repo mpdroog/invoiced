@@ -4,15 +4,17 @@
 package idx
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"os"
 	"path/filepath"
 
-	_ "modernc.org/sqlite"
 	"github.com/mpdroog/invoiced/config"
+	_ "modernc.org/sqlite" // SQLite driver
 )
 
+// DB is the SQLite database connection for the search index.
 var DB *sql.DB
 
 // Open initializes the SQLite index at dbPath/index.db
@@ -26,7 +28,7 @@ func Open(dbPath string) error {
 	DB = db
 
 	// Enable foreign keys and optimize for read-heavy workload
-	if _, err := DB.Exec(`PRAGMA foreign_keys = ON`); err != nil {
+	if _, err := DB.ExecContext(context.Background(), `PRAGMA foreign_keys = ON`); err != nil {
 		return err
 	}
 
@@ -44,7 +46,7 @@ func Close() error {
 // IsEmpty returns true if the invoices table has no rows
 func IsEmpty() bool {
 	var count int
-	err := DB.QueryRow("SELECT COUNT(*) FROM invoices").Scan(&count)
+	err := DB.QueryRowContext(context.Background(), "SELECT COUNT(*) FROM invoices").Scan(&count)
 	if err != nil {
 		// Table might not exist yet
 		return true
@@ -143,7 +145,7 @@ func createTables() error {
 	CREATE INDEX IF NOT EXISTS idx_purchases_supplier ON purchase_invoices(entity, supplier_name);
 	`
 
-	_, err := DB.Exec(schema)
+	_, err := DB.ExecContext(context.Background(), schema)
 	if err != nil {
 		return err
 	}
@@ -161,7 +163,11 @@ func DeleteIndex(dbPath string) error {
 		return err
 	}
 	// Also remove WAL files
-	os.Remove(indexPath + "-wal")
-	os.Remove(indexPath + "-shm")
+	if err := os.Remove(indexPath + "-wal"); err != nil && !os.IsNotExist(err) {
+		log.Printf("idx.DeleteIndex wal: %s", err)
+	}
+	if err := os.Remove(indexPath + "-shm"); err != nil && !os.IsNotExist(err) {
+		log.Printf("idx.DeleteIndex shm: %s", err)
+	}
 	return nil
 }

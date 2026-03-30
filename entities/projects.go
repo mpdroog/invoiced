@@ -1,15 +1,17 @@
 package entities
 
 import (
-	"fmt"
-	"github.com/julienschmidt/httprouter"
-	"github.com/mpdroog/invoiced/db"
-	"github.com/mpdroog/invoiced/writer"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/mpdroog/invoiced/db"
+	"github.com/mpdroog/invoiced/httputil"
+	"github.com/mpdroog/invoiced/writer"
 )
 
+// Project represents a billing project configuration.
 type Project struct {
 	Name         string
 	Debtor       string
@@ -21,6 +23,7 @@ type Project struct {
 	Street1      string
 }
 
+// ProjectSearch searches for projects by name.
 func ProjectSearch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := strings.ToLower(ps.ByName("entity"))
 	args := r.URL.Query()
@@ -28,11 +31,10 @@ func ProjectSearch(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 
 	var projectList map[string]Project
 	e := db.View(func(t *db.Txn) error {
-		return t.Open(fmt.Sprintf("%s/projects.toml", entity), &projectList)
+		return t.Open(db.ProjectsPath(entity), &projectList)
 	})
 	if e != nil {
-		log.Printf("entities.ProjectSearch e=%s", e.Error())
-		http.Error(w, "Failed reading debtors", 500)
+		httputil.InternalError(w, "entities.ProjectSearch", e)
 		return
 	}
 
@@ -41,18 +43,19 @@ func ProjectSearch(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		name = strings.ToLower(name)
 		if strings.Contains(name, query) {
 			project.Name = name // trick for autocomplete :x
-			log.Printf("Contains %s/%s\n", query, name)
+			log.Printf("Contains %q/%q\n", query, name)
 			out = append(out, project)
 		}
 	}
 	if e := writer.Encode(w, r, out); e != nil {
-		log.Printf("entities.ProjectSearch %s", e.Error())
+		httputil.LogErr("entities.ProjectSearch", e)
 	}
 }
 
+// GetProject retrieves a project by name within a transaction.
 func GetProject(t *db.Txn, entity, prj string) (*Project, error) {
 	var projectList map[string]Project
-	if e := t.Open(fmt.Sprintf("%s/projects.toml", entity), &projectList); e != nil {
+	if e := t.Open(db.ProjectsPath(entity), &projectList); e != nil {
 		return nil, e
 	}
 

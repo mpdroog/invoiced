@@ -1,3 +1,4 @@
+// Package model defines shared data structures for invoices, hours, and taxes.
 package model
 
 // TaxSummary contains aggregated tax data for a quarter
