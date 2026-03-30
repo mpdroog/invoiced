@@ -45,7 +45,7 @@ func Summary(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year, e := strconv.Atoi(ps.ByName("year"))
 	if e != nil {
-		log.Printf(e.Error())
+		log.Printf("taxes.Summary year: %s", e.Error())
 		http.Error(w, fmt.Sprintf("taxes.Summary failed reading year-arg"), 400)
 		return
 	}
@@ -301,12 +301,12 @@ func Summary(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		w.Header().Set("Content-Type", "application/vnd.ms-excel")
 		w.Header().Set("Content-Disposition", "attachment; filename="+fname)
 		if _, e := f.WriteTo(w); e != nil {
-			log.Printf("summary.excel.WriteTo " + e.Error())
+			log.Printf("summary.excel.WriteTo %s", e.Error())
 		}
 		return
 	}
 
 	if e := writer.Encode(w, r, sum); e != nil {
-		log.Printf("summary.Summary " + e.Error())
+		log.Printf("summary.Summary %s", e.Error())
 	}
 }

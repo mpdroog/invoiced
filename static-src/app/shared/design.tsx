@@ -1,6 +1,8 @@
 import * as React from "react";
 import Axios from "axios";
 import "./search.css";
+import { ActionButton } from "./ActionButton";
+import { ModalBackdrop, openModal, closeModal } from "./Modal";
 
 interface SearchResult {
     type: string;
@@ -121,83 +123,85 @@ class Menu extends React.Component<MenuProps, MenuState> {
         const {company, year} = this.props;
         const {ahead, searchQuery, searchResults, showResults, searching} = this.state;
 
-        return (<div id="header">
-            <div id="logo" className="light-version">
-                <a href="/" id="js-entities"><img src={"/api/v1/entities/" + company + "/logo"} className="m-b" alt="logo"/></a>
-            </div>
-            <nav role="navigation">
-                <div className="nav-spacer">&nbsp;</div>
-
-                <div id="search-container" className="navbar-form-custom search-container">
-                    <div className="form-group">
-                        <input
-                            type="text"
-                            placeholder="Search invoices, hours..."
-                            className="form-control"
-                            id="js-search"
-                            value={searchQuery}
-                            onChange={this.handleSearchChange.bind(this)}
-                            onFocus={() => this.setState({showResults: true})}
-                        />
+        return (
+            <nav className="navbar navbar-default navbar-fixed-top">
+                <div className="container">
+                    <div className="navbar-header">
+                        <a href="/" className="navbar-brand" id="js-entities">
+                            <img src={"/api/v1/entities/" + company + "/logo"} alt="logo" style={{height: "20px"}}/>
+                        </a>
                     </div>
-                    {showResults && searchQuery.length >= 2 && (
-                        <div className="search-dropdown">
-                            {searching ? (
-                                <div className="search-loading">
-                                    <i className="fas fa-spinner fa-spin"></i> Searching...
-                                </div>
-                            ) : searchResults.length > 0 ? (
-                                searchResults.map((r, i) => (
-                                    <div
-                                        key={i}
-                                        className="search-result-item"
-                                        onClick={() => this.handleResultClick(r)}
-                                    >
-                                        <i className={'fas ' + this.getResultIcon(r.type) + ' search-result-icon'}></i>
-                                        <strong>{r.title}</strong>
-                                        <span className="search-result-subtitle">{r.subtitle}</span>
-                                        <div className="search-result-meta">
-                                            {r.type} &middot; {r.year} Q{r.quarter}
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="search-no-results">
-                                    No results found
-                                </div>
-                            )}
+
+                    <div id="search-container" className="navbar-form navbar-left search-container">
+                        <div className="form-group">
+                            <input
+                                type="text"
+                                placeholder="Search invoices, hours..."
+                                className="form-control"
+                                id="js-search"
+                                value={searchQuery}
+                                onChange={this.handleSearchChange.bind(this)}
+                                onFocus={() => this.setState({showResults: true})}
+                            />
                         </div>
-                    )}
-                </div>
-                <div className="navbar-right">
-                    <ul className="nav navbar-nav no-borders">
+                        {showResults && searchQuery.length >= 2 && (
+                            <div className="search-dropdown">
+                                {searching ? (
+                                    <div className="search-loading">
+                                        <i className="fas fa-spinner fa-spin"></i> Searching...
+                                    </div>
+                                ) : searchResults.length > 0 ? (
+                                    searchResults.map((r, i) => (
+                                        <div
+                                            key={i}
+                                            className="search-result-item"
+                                            onClick={() => this.handleResultClick(r)}
+                                        >
+                                            <i className={'fas ' + this.getResultIcon(r.type) + ' search-result-icon'}></i>
+                                            <strong>{r.title}</strong>
+                                            <span className="search-result-subtitle">{r.subtitle}</span>
+                                            <div className="search-result-meta">
+                                                {r.type} &middot; {r.year} Q{r.quarter}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="search-no-results">
+                                        No results found
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    <ul className="nav navbar-nav navbar-right">
                         <li>
-                            <a href={"#"+company+"/"+year} id="js-dashboard">
+                            <a href={"#"+company+"/"+year} id="js-dashboard" title="Dashboard">
                                 <i className="fas fa-gauge"></i>
                             </a>
                         </li>
                         <li>
-                            <a href={"#"+company+"/"+year+"/hours"} id="js-hours">
+                            <a href={"#"+company+"/"+year+"/hours"} id="js-hours" title="Hours">
                                 <i className="far fa-clock"></i>
                             </a>
                         </li>
                         <li>
-                            <a href={"#"+company+"/"+year+"/invoices"} id="js-invoices">
+                            <a href={"#"+company+"/"+year+"/invoices"} id="js-invoices" title="Invoices">
                                 <i className="fas fa-money-bill"></i>
                             </a>
                         </li>
                         <li>
-                            <a href={"#"+company+"/"+year+"/purchases"} id="js-purchases" title="Purchase Invoices">
+                            <a href={"#"+company+"/"+year+"/purchases"} id="js-purchases" title="Purchases">
                                 <i className="fas fa-shopping-cart"></i>
                             </a>
                         </li>
                         <li>
-                            <a href={"#"+company+"/"+year+"/taxes"} id="js-taxes">
+                            <a href={"#"+company+"/"+year+"/taxes"} id="js-taxes" title="Taxes">
                                 <i className="fas fa-building-columns"></i>
                             </a>
                         </li>
                         <li>
-                            <a href={"#"+company+"/"+year+"/git"} id="js-git">
+                            <a href={"#"+company+"/"+year+"/git"} id="js-git" title="Git">
                                 <i className="fas fa-cloud-arrow-up"></i>
                                 {ahead > 0 && <span className="label label-danger">{ahead}</span>}
                             </a>
@@ -205,7 +209,6 @@ class Menu extends React.Component<MenuProps, MenuState> {
                     </ul>
                 </div>
             </nav>
-          </div>
         );
     }
 }
@@ -250,6 +253,111 @@ export function calendar({ year }: { year: string }): React.JSX.Element {
     </div>);
 }
 
+interface LoginModalState {
+    visible: boolean;
+    email: string;
+    password: string;
+    error: string;
+}
+
+class LoginModal extends React.Component<Record<string, never>, LoginModalState> {
+    private boundShow: () => void;
+
+    constructor(props: Record<string, never>) {
+        super(props);
+        this.state = {
+            visible: false,
+            email: '',
+            password: '',
+            error: ''
+        };
+        this.boundShow = (): void => {
+            openModal();
+            this.setState({visible: true, error: '', password: ''});
+        };
+    }
+
+    componentDidMount(): void {
+        window.addEventListener('show-login-modal', this.boundShow);
+    }
+
+    componentWillUnmount(): void {
+        window.removeEventListener('show-login-modal', this.boundShow);
+    }
+
+    private async handleLogin(): Promise<void> {
+        this.setState({error: ''});
+
+        const params = new URLSearchParams();
+        params.append('email', this.state.email);
+        params.append('pass', this.state.password);
+
+        const res = await Axios.post('/', params, {
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            validateStatus: (status) => status < 500
+        });
+
+        if (res.status === 200) {
+            closeModal();
+            window.dispatchEvent(new Event('login-modal-closed'));
+            window.location.reload();
+        } else {
+            this.setState({error: 'Invalid credentials'});
+        }
+    }
+
+    render(): React.JSX.Element | null {
+        if (!this.state.visible) return null;
+
+        return (
+            <div className="modal in" style={{display: 'block'}} role="dialog">
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h4 className="modal-title">
+                                    <i className="fas fa-lock"></i> Session Expired
+                                </h4>
+                            </div>
+                            <div className="modal-body">
+                                <p>Your session has expired. Please log in again to continue.</p>
+                                {this.state.error && (
+                                    <div className="alert alert-danger">{this.state.error}</div>
+                                )}
+                                <div className="form-group">
+                                    <input
+                                        type="email"
+                                        className="form-control"
+                                        placeholder="Email"
+                                        value={this.state.email}
+                                        onChange={e => this.setState({email: e.target.value})}
+                                        autoFocus
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <input
+                                        type="password"
+                                        className="form-control"
+                                        placeholder="Password"
+                                        value={this.state.password}
+                                        onChange={e => this.setState({password: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <ActionButton
+                                    className="btn btn-success"
+                                    onClick={() => this.handleLogin()}
+                                >
+                                    Login
+                                </ActionButton>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        );
+    }
+}
+
 interface DesignProps {
     entity: string;
     year: string;
@@ -263,7 +371,11 @@ export class Design extends React.Component<DesignProps> {
   render(): React.JSX.Element {
     return <div>
         <Menu company={this.props.entity} year={this.props.year}/>
-        {this.props.children}
+        <div className="container-fluid">
+            {this.props.children}
+        </div>
+        <LoginModal />
+        <ModalBackdrop />
     </div>;
   }
 }

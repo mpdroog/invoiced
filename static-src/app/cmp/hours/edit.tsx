@@ -295,9 +295,9 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     });
 
 		return <form>
-      <div className="normalheader">
-		    <div className="hpanel hblue">
-          <div className="panel-heading hbuilt">
+      <div>
+		    <div className="panel panel-primary">
+          <div className="panel-heading">
             Project Hour Calc
           </div>
           <div className="panel-body">
@@ -324,10 +324,10 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     </div>
     <Import hide={this.state.import} onHide={this.toggleImport.bind(this)} importFn={this.importLine.bind(this)} />
 
-    <div className="normalheader">
-      <div className="hpanel hblue">
-        <div className="panel-heading hbuilt">
-          <div className="panel-tools">
+    <div>
+      <div className="panel panel-primary">
+        <div className="panel-heading">
+          <div className="pull-right">
             <div className="btn-group nm7">
               <button type="button" className="btn btn-default btn-hover-warning" disabled={this.undoStack.length === 0 || !isEditable} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i>&nbsp;Undo</button>
               <button type="button" className="btn btn-default btn-hover-warning" disabled={this.redoStack.length === 0 || !isEditable} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i>&nbsp;Redo</button>

@@ -31,7 +31,7 @@ func Logo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return nil
 	})
 	if e != nil {
-		log.Printf("Logo e=" + e.Error())
+		log.Printf("Logo e=%s", e.Error())
 		http.Error(w, "Failed reading logo", 500)
 		return
 	}

@@ -1,22 +1,31 @@
 package invoice
 
 import (
-	"github.com/julienschmidt/httprouter"
-	"github.com/jung-kurt/gofpdf"
-	"net/http"
-	//"encoding/base64"
 	"bytes"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/jung-kurt/gofpdf"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/writer"
 	"gopkg.in/gomail.v1"
 	"gopkg.in/validator.v2"
-	"io"
-	"log"
-	"os"
-	"strings"
 )
+
+// sanitizeEmailHeader removes CRLF sequences to prevent email header injection
+func sanitizeEmailHeader(s string) string {
+	// Remove carriage returns and line feeds to prevent header injection
+	s = strings.ReplaceAll(s, "\r\n", " ")
+	s = strings.ReplaceAll(s, "\r", " ")
+	s = strings.ReplaceAll(s, "\n", " ")
+	return strings.TrimSpace(s)
+}
 
 type Job struct {
 	To      []string
@@ -37,7 +46,7 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	m := new(InvoiceMail)
 	if e := writer.Decode(r, m); e != nil {
-		log.Printf("invoice.Email " + e.Error())
+		log.Printf("invoice.Email %s", e.Error())
 		http.Error(w, "invoice.Email failed to decode input", 400)
 		return
 	}
@@ -77,9 +86,16 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return e
 		}
 
+		// Sanitize email headers to prevent CRLF injection
+		sanitizedTo := make([]string, 0)
+		for _, addr := range strings.Split(m.To, ",") {
+			sanitizedTo = append(sanitizedTo, sanitizeEmailHeader(strings.TrimSpace(addr)))
+		}
+		sanitizedSubject := sanitizeEmailHeader(m.Subject)
+
 		job := &Job{
-			To:      strings.Split(m.To, ","),
-			Subject: m.Subject,
+			To:      sanitizedTo,
+			Subject: sanitizedSubject,
 			Text:    m.Body,
 			Files: []string{
 				paths[1], // TODO: assumption
@@ -88,6 +104,10 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 		hourbuf := new(bytes.Buffer)
 		if len(u.Meta.HourFile) > 0 {
+			// Validate HourFile path to prevent path traversal attacks
+			if err := validateHourFilePath(u.Meta.HourFile, entity); err != nil {
+				return err
+			}
 			f, e := t.OpenRaw(u.Meta.HourFile)
 			if e != nil {
 				return e
@@ -159,7 +179,7 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return mailer.Send(msg)
 	})
 	if e != nil {
-		log.Printf("invoice.Email " + e.Error())
+		log.Printf("invoice.Email %s", e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Email failed loading file from disk"), 400)
 		return
 	}

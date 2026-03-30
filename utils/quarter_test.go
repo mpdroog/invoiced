@@ -21,7 +21,7 @@ func TestYearQuarter(t *testing.T) {
 		time.Date(2016, 12, 1, 0, 0, 0, 0, time.UTC): 4,
 	}
 	for now, expect := range tests {
-		if yearQuarter(now) != expect {
+		if YearQuarter(now) != expect {
 			t.Errorf("Date %s expected %d", now.String(), expect)
 		}
 	}
@@ -29,7 +29,7 @@ func TestYearQuarter(t *testing.T) {
 
 func TestCreateInvoiceId(t *testing.T) {
 	expect := "2016Q1-0100"
-	res := createInvoiceId(time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC), 100)
+	res := CreateInvoiceId(time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC), 100)
 	if expect != res {
 		t.Errorf("Invoicepattern mismatch: %s expected, received=%s", expect, res)
 	}

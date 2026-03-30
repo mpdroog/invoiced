@@ -64,74 +64,31 @@
     --chart-color-previous: #3498db;
 }
 
-.hpanel.stats .panel-body {
+/* Stats panels */
+.panel.stats .panel-body {
     text-align: center;
     padding: 20px;
 }
 
-.hpanel.stats .stats-title {
+.panel.stats .stats-title {
     font-size: 12px;
     color: #888;
     text-transform: uppercase;
     margin-bottom: 5px;
 }
 
-.hpanel.stats h1 {
+.panel.stats h1 {
     font-size: 32px;
     margin: 10px 0;
     font-weight: 300;
 }
 
-.hpanel.stats .stats-info {
+.panel.stats .stats-info {
     font-size: 12px;
     color: #666;
 }
 
-.hpanel.hred {
-    border-left: 3px solid #d9534f;
-}
-
-.hpanel.hred .panel-heading {
-    background-color: #d9534f;
-    color: #fff;
-    padding: 10px 15px;
-}
-
-.hpanel .panel-heading {
-    background-color: #f5f5f5;
-    padding: 10px 15px;
-    border-bottom: 1px solid #e5e5e5;
-    font-weight: 600;
-}
-
-.hpanel .panel-heading i {
-    margin-right: 8px;
-}
-
-.m-r-sm {
-    margin-right: 10px;
-}
-
-.text-success {
-    color: #5cb85c;
-}
-
-.text-danger {
-    color: #d9534f;
-}
-
-.text-warning {
-    color: #f0ad4e;
-}
-
-.text-muted {
-    color: #999;
-}
-
-.p-lg {
-    padding: 30px;
-}
-
+/* Chart legend */
 .chart-legend {
     font-size: 12px;
     font-weight: normal;

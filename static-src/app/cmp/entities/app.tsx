@@ -94,22 +94,24 @@ export default class Entities extends React.Component<Record<string, never>, IEn
 			items = items.concat(accountingYears);
 		}
 
-		return <div>
-			<div className="normalheader col-md-6">
-			    <div className="hpanel">
-			        <div className="panel-body">
-			            <h2 className="font-light m-b-xs">
-			                <i className="fas fa-building"></i>
-			                &nbsp;Your Companies
-			            </h2>
-			            <table className="table">
-			            	<thead>
-			            		<tr><th>Company</th><th>Revenue</th></tr>
-			            	</thead>
-			            	<tbody>{items}</tbody>
-			            </table>
-			        </div>
-			    </div>
+		return <div className="container">
+			<div className="row">
+				<div className="col-md-6 col-md-offset-3">
+				    <div className="panel panel-default">
+				        <div className="panel-body">
+				            <h2 className="font-light m-b-xs">
+				                <i className="fas fa-building"></i>
+				                &nbsp;Your Companies
+				            </h2>
+				            <table className="table">
+				            	<thead>
+				            		<tr><th>Company</th><th>Revenue</th></tr>
+				            	</thead>
+				            	<tbody>{items}</tbody>
+				            </table>
+				        </div>
+				    </div>
+				</div>
 			</div>
 		</div>;
 	}

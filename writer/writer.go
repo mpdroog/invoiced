@@ -67,7 +67,7 @@ func Encode(w http.ResponseWriter, r *http.Request, d interface{}) error {
 			return e
 		}
 	} else {
-		return fmt.Errorf("Invalid accept=" + accept)
+		return fmt.Errorf("Invalid accept=%s", accept)
 	}
 
 	w.Header().Set("Content-Type", accept)

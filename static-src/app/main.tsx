@@ -1,14 +1,34 @@
 import * as React from "react";
 import { createRoot, Root } from "react-dom/client";
-import Axios from "axios";
+import Axios, { AxiosError } from "axios";
 import {Design} from "./shared/design";
 
+let isLoginModalOpen = false;
+
+// Show login modal - dispatches event that Design component listens for
+function showLoginModal(): void {
+      if (isLoginModalOpen) return;
+      isLoginModalOpen = true;
+      window.dispatchEvent(new Event('show-login-modal'));
+}
+
+// Called by LoginModal when closed
+window.addEventListener('login-modal-closed', () => {
+      isLoginModalOpen = false;
+});
+
 // Refresh git status badge after successful write operations
+// Show login modal on 401 Unauthorized
 Axios.interceptors.response.use(function (response) {
       if (response.config.method === 'post' || response.config.method === 'delete') {
             window.dispatchEvent(new Event('git-refresh'));
       }
       return response;
+}, function (error: AxiosError) {
+      if (error.response?.status === 401) {
+            showLoginModal();
+      }
+      return Promise.reject(error);
 });
 
 // Static imports for all page components

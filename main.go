@@ -57,14 +57,15 @@ func Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	// TODO: Somewhere general to share with logout?
+	// Set secure session cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "sess",
 		Value:    sess,
-		Expires:  time.Now().Add(time.Hour * 24 * 365),
+		Path:     "/",
+		Expires:  time.Now().Add(time.Hour * 8), // 8 hours to match SessionMaxAge
 		HttpOnly: true,
-		Domain:   r.URL.Host,
-		//Secure: config.HTTPSOnly,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
 	})
 
 	url := r.URL

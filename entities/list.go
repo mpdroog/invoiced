@@ -50,7 +50,7 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 			return nil
 		})
 		if e != nil {
-			log.Printf(e.Error())
+			log.Printf("entities.List %s", e.Error())
 			http.Error(w, "entities.List failed scanning disk", 400)
 			return
 		}
@@ -76,7 +76,7 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	if e := writer.Encode(w, r, res); e != nil {
-		log.Printf("entities.List " + e.Error())
+		log.Printf("entities.List %s", e.Error())
 	}
 }
 
@@ -87,7 +87,7 @@ func Details(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		Entity: middleware.CompanyByName(ps.ByName("entity")),
 	}
 	if e := writer.Encode(w, r, res); e != nil {
-		log.Printf("entities.Details " + e.Error())
+		log.Printf("entities.Details %s", e.Error())
 	}
 }
 

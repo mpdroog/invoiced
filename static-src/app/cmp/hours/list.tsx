@@ -92,10 +92,10 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
       res.push(<tr key="empty"><td colSpan={5}>No hours yet :)</td></tr>);
     }
 
-    return <div className="normalheader">
-        <div className="hpanel hblue">
-          <div className="panel-heading hbuilt">
-            <div className="panel-tools">
+    return <div>
+        <div className="panel panel-primary">
+          <div className="panel-heading">
+            <div className="pull-right">
               <div className="btn-group nm7">
                 <a href={"#"+that.props.entity+"/"+that.props.year+"/hours/add"} id="js-new" className="btn btn-default btn-hover-primary showhide"><i className="fas fa-plus"></i> New</a>
               </div>

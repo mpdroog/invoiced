@@ -1,4 +1,5 @@
 import * as React from "react";
+import { openModal, closeModal } from "../../shared/Modal";
 
 type MonthKey = 'jan' | 'feb' | 'mar' | 'apr' | 'may' | 'jun' | 'jul' | 'aug' | 'sep' | 'oct' | 'nov' | 'dec' |
 	'january' | 'februari' | 'march' | 'april' | 'june' | 'juni' | 'july' | 'augustus' | 'september' | 'sept' | 'october' | 'okt' | 'november' | 'december';
@@ -179,6 +180,19 @@ export default class HourImport extends React.Component<IImportProps, IImportSta
     };
   }
 
+  componentDidMount(): void {
+    if (this.props.hide) openModal();
+  }
+
+  componentDidUpdate(prevProps: IImportProps): void {
+    if (!prevProps.hide && this.props.hide) openModal();
+    if (prevProps.hide && !this.props.hide) closeModal();
+  }
+
+  componentWillUnmount(): void {
+    if (this.props.hide) closeModal();
+  }
+
   private update(e: React.ChangeEvent<HTMLTextAreaElement>): void {
     if (e.target.id === "import") {
       this.setState({text: e.target.value, errors: []});
@@ -199,40 +213,39 @@ export default class HourImport extends React.Component<IImportProps, IImportSta
 
 	render(): React.JSX.Element {
 		const s: React.CSSProperties = {display: "block"};
-		const t: React.CSSProperties = {width:"100%", height: "200px"};
 		if (! this.props.hide) {
 			return <div/>;
 		}
 
-  	return <div className="modal" style={s} tabIndex={-1} role="dialog">
-      <div className="modal-dialog">
-        <div className="modal-content">
-          <div className="modal-header">
-            <button onClick={this.props.onHide} className="close" type="button" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true"> &times;</span>
-            </button>
-            <h4 className="modal-title">
-              <i className="fas fa-arrow-up"></i>
-              &nbsp;Import
-            </h4>
-          </div>
-          <div className="modal-body">
-            <p className="text-muted"><small>Format: Start with a date (e.g. "27Mar"), then time ranges (e.g. "07:30 - 07:51"), then description text.</small></p>
-		    <textarea id="import" style={t} onChange={this.update.bind(this)} placeholder={"27Mar\n07:30 - 12:00\nDescription of work done"}></textarea>
-            {this.state.errors.length > 0 && (
-              <div className="alert alert-danger" style={{marginTop: "10px"}}>
-                <strong>Errors:</strong>
-                <ul style={{marginBottom: 0, paddingLeft: "20px"}}>
-                  {this.state.errors.map((err, i) => <li key={i}>{err}</li>)}
-                </ul>
-              </div>
-            )}
-          </div>
-          <div className="modal-footer">
-            <a onClick={this.save.bind(this)} className="btn btn-primary" style={{float:"right"}}> Parse</a>
+  	return <div className="modal in" style={s} tabIndex={-1} role="dialog">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <button onClick={this.props.onHide} className="close" type="button" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true"> &times;</span>
+              </button>
+              <h4 className="modal-title">
+                <i className="fas fa-arrow-up"></i>
+                &nbsp;Import
+              </h4>
+            </div>
+            <div className="modal-body">
+              <p className="text-muted"><small>Format: Start with a date (e.g. "27Mar"), then time ranges (e.g. "07:30 - 07:51"), then description text.</small></p>
+              <textarea id="import" className="form-control import-textarea" onChange={this.update.bind(this)} placeholder={"27Mar\n07:30 - 12:00\nDescription of work done"}></textarea>
+              {this.state.errors.length > 0 && (
+                <div className="alert alert-danger m-t-sm">
+                  <strong>Errors:</strong>
+                  <ul className="error-list">
+                    {this.state.errors.map((err, i) => <li key={i}>{err}</li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <a onClick={this.save.bind(this)} className="btn btn-primary pull-right"> Parse</a>
+            </div>
           </div>
         </div>
-      </div>
-    </div>;
+      </div>;
 	}
 }

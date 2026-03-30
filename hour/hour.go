@@ -32,7 +32,7 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return t.Remove(fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, name))
 	})
 	if e != nil {
-		log.Printf(e.Error())
+		log.Printf("hour.Delete %s", e.Error())
 		http.Error(w, "hour.Delete fail", http.StatusInternalServerError)
 	}
 }
@@ -44,7 +44,7 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	u := new(Hour)
 	if e := writer.Decode(r, u); e != nil {
-		log.Printf(e.Error())
+		log.Printf("hour.Save decode: %s", e.Error())
 		http.Error(w, "invoice.Save failed decoding input", 400)
 		return
 	}
@@ -72,15 +72,15 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return t.Save(fmt.Sprintf("%s/%s/concepts/hours/%s.toml", entity, year, u.Name), isNew, u)
 	})
 	if e != nil {
-		log.Printf(e.Error())
-		http.Error(w, "hour.Delete fail", http.StatusInternalServerError)
+		log.Printf("hour.Save %s", e.Error())
+		http.Error(w, "hour.Save fail", http.StatusInternalServerError)
 	}
 
 	// CLI forward to wrapper app
 	fmt.Printf("cmd entity=%s year=%s hour=%s\n", entity, year, u.Name)
 
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("hour.Save " + e.Error())
+		log.Printf("hour.Save %s", e.Error())
 	}
 }
 
@@ -119,14 +119,14 @@ func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return e
 	})
 	if e != nil {
-		log.Printf("invoice.HourToInvoice: " + e.Error())
+		log.Printf("invoice.HourToInvoice: %s", e.Error())
 		http.Error(w, "Failed converting hours to invoice, error="+e.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("X-Redirect-Invoice", invoiceId)
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("hour.Bill " + e.Error())
+		log.Printf("hour.Bill %s", e.Error())
 	}
 }
 
@@ -143,7 +143,7 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return t.Open(fmt.Sprintf("%s/%s/%s/hours/%s.toml", entity, year, bucket, name), u)
 	})
 	if e != nil {
-		log.Printf(e.Error())
+		log.Printf("hour.Load %s", e.Error())
 		http.Error(w, fmt.Sprintf("hour.Load failed loading file from disk"), 400)
 		return
 	}
@@ -151,7 +151,7 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// CLI forward to wrapper app
 	fmt.Printf("cmd entity=%s year=%s hour=%s\n", entity, year, u.Name)
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("entities.Load " + e.Error())
+		log.Printf("hour.Load %s", e.Error())
 	}
 }
 
@@ -177,7 +177,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return e
 	})
 	if e != nil {
-		log.Printf(e.Error())
+		log.Printf("hour.List %s", e.Error())
 		http.Error(w, fmt.Sprintf("hour.List failed scanning disk"), 400)
 		return
 	}
@@ -185,6 +185,6 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("hour.List count=%d", len(list))
 	}
 	if e := writer.Encode(w, r, list); e != nil {
-		log.Printf("hour.List " + e.Error())
+		log.Printf("hour.List %s", e.Error())
 	}
 }

@@ -31,7 +31,7 @@ func Search(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return t.Open(fmt.Sprintf("%s/debtors.toml", entity), &debtorList)
 	})
 	if e != nil {
-		log.Printf("entities.Search e=" + e.Error())
+		log.Printf("entities.Search e=%s", e.Error())
 		http.Error(w, "Failed reading debtors", 500)
 		return
 	}
@@ -45,7 +45,7 @@ func Search(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 	}
 	if e := writer.Encode(w, r, out); e != nil {
-		log.Printf("entities.Search " + e.Error())
+		log.Printf("entities.Search %s", e.Error())
 	}
 }
 

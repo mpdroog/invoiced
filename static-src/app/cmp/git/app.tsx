@@ -205,8 +205,8 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
     let historyPanel = null;
     if (this.state.history) {
       const hist = this.state.history;
-      historyPanel = <div className="hpanel hgreen m-t-md">
-        <div className="panel-heading hbuilt">
+      historyPanel = <div className="panel panel-success m-t-md">
+        <div className="panel-heading">
           <i className="fas fa-history"></i> Previous Commits
         </div>
         <div className="panel-body">
@@ -251,11 +251,11 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
       </div>;
     }
 
-    return <div className="normalheader">
-      <div className="hpanel hblue">
-        <div className="panel-heading hbuilt">
+    return <div>
+      <div className="panel panel-primary">
+        <div className="panel-heading">
           <i className="fab fa-git"></i> Git Status
-          <div className="panel-tools">
+          <div className="pull-right">
             <ActionButton className="btn btn-default btn-xs" onClick={this.loadStatus.bind(this)}>
               <i className="fas fa-rotate"></i> Refresh
             </ActionButton>

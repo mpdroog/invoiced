@@ -37,9 +37,12 @@ type Txn struct {
 }
 type Fn func(*Txn) error
 
-// Simple path hack prevention
+// pathFilter prevents path traversal and other path-based attacks
 func pathFilter(path string) bool {
 	if strings.Contains(path, "..") {
+		return false
+	}
+	if strings.HasPrefix(path, "/") {
 		return false
 	}
 	return pathRegex.Match([]byte(path))

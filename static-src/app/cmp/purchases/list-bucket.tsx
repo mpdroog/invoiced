@@ -1,6 +1,7 @@
 import * as React from "react";
 import Axios from "axios";
 import {ActionButton, ActionLink} from "../../shared/ActionButton";
+import { openModal, closeModal } from "../../shared/Modal";
 
 interface IPurchaseInvoice {
   ID: string
@@ -120,7 +121,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     if (this.state.sortField === field) {
       icon = this.state.sortAsc ? " ▲" : " ▼";
     }
-    return <th style={{cursor: "pointer"}} onClick={() => this.toggleSort(field)}>{field}{icon}</th>;
+    return <th className="sortable" onClick={() => this.toggleSort(field)}>{field}{icon}</th>;
   }
 
   private openUpload(e: React.MouseEvent<HTMLAnchorElement>): void {
@@ -222,10 +223,10 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
       modal = <AddLineModal invoice={inv} onClose={() => this.closeModal()} {...this.props} />;
     }
 
-    return <div className="normalheader">
-      <div className="hpanel hblue">
-        <div className="panel-heading hbuilt">
-          <div className="panel-tools">
+    return <div>
+      <div className="panel panel-primary">
+        <div className="panel-heading">
+          <div className="pull-right">
             <div className="btn-group nm7">
               {headerButtons}
             </div>
@@ -277,6 +278,7 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
   }
 
   componentDidMount(): void {
+    openModal();
     // Fetch concept invoices to add lines to
     Axios.get('/api/v1/invoices/'+this.props.entity+'/'+this.props.year, {params: {from: 0, count: 0}})
     .then(res => {
@@ -293,6 +295,10 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
     .catch(err => {
       console.error("Failed to load concepts", err);
     });
+  }
+
+  componentWillUnmount(): void {
+    closeModal();
   }
 
   private async addLine(): Promise<void> {

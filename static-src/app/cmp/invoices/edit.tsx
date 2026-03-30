@@ -346,10 +346,10 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     const entity = inv.Entity || { Name: "", Street1: "", Street2: "" };
     const customer = inv.Customer || { Name: "", Street1: "", Street2: "", Vat: "", Coc: "", Tax: "NL21" };
 
-		return <form><div className="normalheader">
-		    <div className="hpanel hblue">
-          <div className="panel-heading hbuilt">
-            <div className="panel-tools">
+		return <form><div>
+		    <div className="panel panel-primary">
+          <div className="panel-heading">
+            <div className="pull-right">
               <div className="btn-group nm7">
                 <button type="button" className="btn btn-default btn-hover-warning" disabled={this.undoStack.length === 0 || meta.Status === "FINAL"} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i> Undo</button>
                 <button type="button" className="btn btn-default btn-hover-warning" disabled={this.redoStack.length === 0 || meta.Status === "FINAL"} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i> Redo</button>

@@ -27,7 +27,7 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var buf bytes.Buffer
 	file, header, e := r.FormFile("file")
 	if e != nil {
-		log.Printf(e.Error())
+		log.Printf("invoice.Balance FormFile: %s", e.Error())
 		http.Error(w, "Failed reading file", 500)
 		return
 	}
@@ -40,14 +40,14 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	if _, e := io.Copy(&buf, file); e != nil {
-		log.Printf(e.Error())
+		log.Printf("invoice.Balance io.Copy: %s", e.Error())
 		http.Error(w, "Failed loading file into memory", 500)
 		return
 	}
 
 	p, e := camt053.FilterPaymentsReceived(&buf)
 	if e != nil {
-		log.Printf(e.Error())
+		log.Printf("invoice.Balance FilterPaymentsReceived: %s", e.Error())
 		http.Error(w, "Failed parsing file", 500)
 		return
 	}
@@ -87,13 +87,13 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return nil
 	})
 	if e != nil {
-		log.Printf(e.Error())
+		log.Printf("invoice.Balance commit: %s", e.Error())
 		http.Error(w, "Commit failed", 500)
 		return
 	}
 
 	if e := writer.Encode(w, r, res); e != nil {
-		log.Printf(e.Error())
+		log.Printf("invoice.Balance encode: %s", e.Error())
 	}
 }
 
@@ -102,8 +102,8 @@ func balanceSetPaid(t *db.Txn, entity, year, name, payDate, amount string) (bool
 	b := strings.Index(name, "Q")
 	e := strings.Index(name, "-")
 	bucket := name[b+1 : e]
-	from := fmt.Sprintf("%s/%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)
-	to := fmt.Sprintf("%s/%s/sales-invoices-paid/%s.toml", entity, year, bucket, name)
+	from := fmt.Sprintf("%s/%s/Q%s/sales-invoices-unpaid/%s.toml", entity, year, bucket, name)
+	to := fmt.Sprintf("%s/%s/Q%s/sales-invoices-paid/%s.toml", entity, year, bucket, name)
 
 	u := new(Invoice)
 	if e := t.Open(from, u); e != nil {

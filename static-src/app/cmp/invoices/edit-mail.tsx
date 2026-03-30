@@ -2,6 +2,7 @@ import * as React from "react";
 import Axios from "axios";
 import {IInvoiceMail, IInvoiceMeta} from "./edit-struct";
 import {ActionLink} from "../../shared/ActionButton";
+import { openModal, closeModal } from "../../shared/Modal";
 
 interface InvoiceMailParent {
   props: {
@@ -25,6 +26,19 @@ interface InvoiceMailProps {
 export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string, never>> {
   constructor(props: InvoiceMailProps) {
     super(props);
+  }
+
+  componentDidMount(): void {
+    if (this.props.hide) openModal();
+  }
+
+  componentDidUpdate(prevProps: InvoiceMailProps): void {
+    if (!prevProps.hide && this.props.hide) openModal();
+    if (prevProps.hide && !this.props.hide) closeModal();
+  }
+
+  componentWillUnmount(): void {
+    if (this.props.hide) closeModal();
   }
 
   async send(): Promise<void> {
@@ -61,7 +75,6 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
       return <div/>;
     }
     const s: React.CSSProperties = {display: "block"};
-    const a: React.CSSProperties = {float: "left", width: "350px", textAlign: "left"};
     let hourFile: React.JSX.Element = <div/>;
     if (parentMeta.HourFile.length > 0) {
       hourFile = <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/text"} target="_blank" rel="noreferrer"><i className="far fa-file" />&nbsp;hours.txt</a></p>;
@@ -99,12 +112,12 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
             <textarea onChange={this.update.bind(this)} id="Body" className="form-control h140">{parentMail.Body}</textarea>
           </div>
           <div className="modal-footer">
-            <div style={a}>
+            <div className="email-attachments">
               <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/pdf"} target="_blank" rel="noreferrer"><i className="far fa-file-pdf" />&nbsp;{parentMeta.Invoiceid}.pdf</a></p>
               <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/xml"} target="_blank" rel="noreferrer"><i className="fas fa-building-columns" />&nbsp;{parentMeta.Invoiceid}.xml</a></p>
               {hourFile}
             </div>
-            <ActionLink onClick={this.send.bind(this)} className="btn btn-primary" style={{float:"right"}}> Send</ActionLink>
+            <ActionLink onClick={this.send.bind(this)} className="btn btn-primary pull-right"> Send</ActionLink>
           </div>
         </div>
       </div>

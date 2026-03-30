@@ -56,7 +56,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 		const year = this.props.year;
 
 		if (loading || !data) {
-			return <div className="normalheader text-center p-lg">
+			return <div className=" text-center p-lg">
 				<i className="fas fa-spinner fa-spin fa-2x"></i>
 				<p>Loading dashboard...</p>
 			</div>;
@@ -92,11 +92,11 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 
 		const growthPositive =  parseFloat(data.yearComparison.GrowthAmount) >= 0;
 
-		return <div className="normalheader">
+		return <div className="">
 			{/* Quick Stats Row */}
 			<div className="row">
 				<div className="col-md-3">
-					<div className="hpanel stats">
+					<div className="panel panel-default stats">
 						<div className="panel-body">
 							<div className="stats-title">
 								<span className="fas fa-money-bill"></span> Unpaid Invoices
@@ -109,7 +109,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 					</div>
 				</div>
 				<div className="col-md-3">
-					<div className="hpanel stats">
+					<div className="panel panel-default stats">
 						<div className="panel-body">
 							<div className="stats-title">
 								<span className="far fa-clock"></span> Unbilled Hours
@@ -122,7 +122,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 					</div>
 				</div>
 				<div className="col-md-3">
-					<div className="hpanel stats">
+					<div className="panel panel-default stats">
 						<div className="panel-body">
 							<div className="stats-title">
 								<span className="fas fa-chart-line"></span> Year Revenue
@@ -139,7 +139,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 					</div>
 				</div>
 				<div className="col-md-3">
-					<div className="hpanel stats">
+					<div className="panel panel-default stats">
 						<div className="panel-body">
 							<div className="stats-title">
 								<span className="fas fa-triangle-exclamation"></span> Overdue
@@ -157,7 +157,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 			{data.overdue.length > 0 && (
 				<div className="row">
 					<div className="col-md-12">
-						<div className="hpanel hred">
+						<div className="panel panel-danger">
 							<div className="panel-heading">
 								<i className="fas fa-triangle-exclamation"></i> Overdue Invoices
 							</div>
@@ -209,7 +209,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 			<div className="row">
 				{/* Quarterly Breakdown */}
 				<div className="col-md-6">
-					<div className="hpanel">
+					<div className="panel panel-default">
 						<div className="panel-heading">
 							<i className="fas fa-calendar"></i> Quarterly Breakdown
 						</div>
@@ -247,7 +247,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 
 				{/* Top Clients */}
 				<div className="col-md-6">
-					<div className="hpanel">
+					<div className="panel panel-default">
 						<div className="panel-heading">
 							<i className="fas fa-users"></i> Top Clients
 						</div>
@@ -281,7 +281,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 			{/* Charts Row */}
 			<div className="row">
 				<div className="col-md-6">
-					<div className="hpanel">
+					<div className="panel panel-default">
 						<div className="panel-heading">
 							<i className="fas fa-chart-area"></i> Revenue Trend
 							<span className="chart-legend pull-right">
@@ -305,7 +305,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 				</div>
 
 				<div className="col-md-6">
-					<div className="hpanel">
+					<div className="panel panel-default">
 						<div className="panel-heading">
 							<i className="fas fa-chart-area"></i> Hours Trend
 							<span className="chart-legend pull-right">
@@ -332,7 +332,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 			{/* Recent Activity */}
 			<div className="row">
 				<div className="col-md-12">
-					<div className="hpanel">
+					<div className="panel panel-default">
 						<div className="panel-heading">
 							<i className="fas fa-history"></i> Recent Activity
 						</div>
@@ -340,28 +340,24 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 							{commits.length === 0 ? (
 								<p className="text-muted">No recent commits</p>
 							) : (
-								<div className="v-timeline vertical-container animate-panel" data-child="vertical-timeline-block" data-delay="1">
+								<ul className="media-list">
 									{commits.slice(0, 5).map((commit) => (
-										<div key={commit.hash} className="vertical-timeline-block">
-											<div className="vertical-timeline-icon navy-bg">
-												<i className="fas fa-calendar"></i>
+										<li key={commit.hash} className="media">
+											<div className="media-left">
+												<span className="label label-primary">
+													<i className="fas fa-code-commit"></i>
+												</span>
 											</div>
-											<div className="vertical-timeline-content">
-												<div className="p-sm">
-													<span className="vertical-date pull-right">
-														{Moment(commit.date).format('YYYY-MM-DD')} <br/>
-														<small>{Moment(commit.date).format('HH:mm:ss')}</small>
-													</span>
-													<h2>{commit.message}</h2>
-													<p>{Moment(commit.date).fromNow()}</p>
-												</div>
-												<div className="panel-footer">
-													{commit.author}
-												</div>
+											<div className="media-body">
+												<strong>{commit.message}</strong>
+												<br/>
+												<small className="text-muted">
+													{commit.author} &middot; {Moment(commit.date).fromNow()} &middot; {Moment(commit.date).format('YYYY-MM-DD HH:mm')}
+												</small>
 											</div>
-										</div>
+										</li>
 									))}
-								</div>
+								</ul>
 							)}
 						</div>
 					</div>

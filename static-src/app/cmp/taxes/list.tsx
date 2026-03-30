@@ -54,8 +54,8 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
       }
 
       sum = <div className="m-t-lg">
-        <div className="hpanel hgreen">
-          <div className="panel-heading hbuilt">
+        <div className="panel panel-success">
+          <div className="panel-heading">
             <i className="fas fa-file-invoice"></i> Aangifte omzetbelasting
           </div>
           <div className="panel-body">
@@ -79,8 +79,8 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
           </div>
         </div>
 
-        {icp.length > 0 && <div className="hpanel horange m-t-md">
-          <div className="panel-heading hbuilt">
+        {icp.length > 0 && <div className="panel panel-warning m-t-md">
+          <div className="panel-heading">
             <i className="fas fa-globe-europe"></i> Aangifte Intracommunautaire prestaties (ICP)
           </div>
           <div className="panel-body">
@@ -97,11 +97,11 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
       </div>;
     }
 
-    return <div className="normalheader">
-      <div className="hpanel hblue">
-        <div className="panel-heading hbuilt">
+    return <div>
+      <div className="panel panel-primary">
+        <div className="panel-heading">
           <i className="fas fa-calculator"></i> Dutch TAX Summary Generator
-          <div className="panel-tools">
+          <div className="pull-right">
             <div className="btn-group nm7">
               <a className="btn btn-default btn-hover-success" href={'/api/v1/summary/'+this.props.entity+'/'+this.props.year+'?excel=1'}>
                 <i className="fas fa-file-excel"></i> XLSX Accountant
@@ -128,8 +128,8 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
               </div>
             </div>
             <div className="col-md-4">
-              <div className="hpanel">
-                <div className="panel-heading hbuilt">
+              <div className="panel panel-default">
+                <div className="panel-heading">
                   <i className="fas fa-calendar"></i> Quarter Reference
                 </div>
                 <div className="panel-body">

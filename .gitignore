@@ -21,3 +21,4 @@ contrib/hack/hack
 contrib/reindex/search.db
 contrib/gen/gen
 config.toml
+acct

@@ -70,7 +70,7 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		))
 	})
 	if e != nil {
-		log.Printf("invoice.Delete e=" + e.Error())
+		log.Printf("invoice.Delete e=%s", e.Error())
 		http.Error(w, e.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -78,7 +78,7 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// TODO: something cleaner?
 	w.Header().Set("Content-Type", "application/json")
 	if _, e := w.Write([]byte("{'ok': true}")); e != nil {
-		log.Printf("invoice.Delete " + e.Error())
+		log.Printf("invoice.Delete %s", e.Error())
 		http.Error(w, "invoice.Delete fail", http.StatusInternalServerError)
 		return
 	}
@@ -176,14 +176,14 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return nil
 	})
 	if e != nil {
-		log.Printf("invoice.Finalize " + e.Error())
+		log.Printf("invoice.Finalize %s", e.Error())
 		http.Error(w, "invoice.Finalize fail", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("X-Bucket-Change", bucketTo)
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("invoice.Finalize " + e.Error())
+		log.Printf("invoice.Finalize %s", e.Error())
 	}
 }
 
@@ -221,14 +221,14 @@ func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return nil
 	})
 	if e != nil {
-		log.Printf("invoice.Reset " + e.Error())
+		log.Printf("invoice.Reset %s", e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Reset failed loading file from disk"), 400)
 		return
 	}
 
 	w.Header().Set("X-Bucket-Change", bucketTo)
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("invoice.Reset " + e.Error())
+		log.Printf("invoice.Reset %s", e.Error())
 	}
 }
 
@@ -265,13 +265,13 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return nil
 	})
 	if e != nil {
-		log.Printf("invoice.Paid " + e.Error())
+		log.Printf("invoice.Paid %s", e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Paid failed loading file from disk"), 400)
 		return
 	}
 
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("invoice.Paid " + e.Error())
+		log.Printf("invoice.Paid %s", e.Error())
 	}
 }
 
@@ -285,7 +285,7 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	u := new(Invoice)
 	if e := writer.Decode(r, u); e != nil {
-		log.Printf("invoice.Save " + e.Error())
+		log.Printf("invoice.Save %s", e.Error())
 		http.Error(w, "invoice.Save failed to decode input", 400)
 		return
 	}
@@ -297,7 +297,7 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			Fields: e.(validator.ErrorMap),
 		}
 		if e := writer.Encode(w, r, input); e != nil {
-			log.Printf("invoice.Save writer.Encode=" + e.Error())
+			log.Printf("invoice.Save writer.Encode=%s", e.Error())
 		}
 		return
 	}
@@ -324,14 +324,14 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return t.Save(fmt.Sprintf("%s/%s/concepts/sales-invoices/%s.toml", entity, year, u.Meta.Conceptid), isNew, u)
 	})
 	if e != nil {
-		log.Printf("invoice.Save " + e.Error())
+		log.Printf("invoice.Save %s", e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Save failed writing to disk"), 400)
 		return
 	}
 
 	w.Header().Set("X-Bucket-Change", "concepts")
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("invoice.Save " + e.Error())
+		log.Printf("invoice.Save %s", e.Error())
 	}
 }
 
@@ -357,13 +357,13 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return t.OpenFirst(paths, u)
 	})
 	if e != nil {
-		log.Printf("invoice.Load " + e.Error())
+		log.Printf("invoice.Load %s", e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Load failed loading file from disk"), 400)
 		return
 	}
 
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("invoice.Load " + e.Error())
+		log.Printf("invoice.Load %s", e.Error())
 	}
 }
 
@@ -380,13 +380,13 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	from, e := strconv.Atoi(args.Get("from"))
 	if e != nil {
-		log.Printf(e.Error())
+		log.Printf("invoice.List from: %s", e.Error())
 		http.Error(w, "invoice.List fail", http.StatusInternalServerError)
 		return
 	}
 	count, e := strconv.Atoi(args.Get("count"))
 	if e != nil {
-		log.Printf(e.Error())
+		log.Printf("invoice.List count: %s", e.Error())
 		http.Error(w, "invoice.List fail", http.StatusInternalServerError)
 		return
 	}
@@ -411,7 +411,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return e
 	})
 	if e != nil {
-		log.Printf("invoice.List " + e.Error())
+		log.Printf("invoice.List %s", e.Error())
 		http.Error(w, fmt.Sprintf("invoice.List failed scanning disk"), 400)
 		return
 	}
@@ -425,8 +425,20 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("invoice.List count=%d", len(list))
 	}
 	if e := writer.Encode(w, r, res); e != nil {
-		log.Printf("invoice.List " + e.Error())
+		log.Printf("invoice.List %s", e.Error())
 	}
+}
+
+// validateHourFilePath validates that an HourFile path belongs to the expected entity.
+// Path security checks (traversal, absolute paths) are handled by db.pathFilter.
+func validateHourFilePath(path, entity string) error {
+	if path == "" {
+		return nil
+	}
+	if !strings.HasPrefix(path, entity+"/") {
+		return fmt.Errorf("invalid hourfile path: must belong to entity %s", entity)
+	}
+	return nil
 }
 
 func Text(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -455,6 +467,11 @@ func Text(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return nil
 		}
 
+		// Validate HourFile path to prevent path traversal attacks
+		if err := validateHourFilePath(path, entity); err != nil {
+			return err
+		}
+
 		f, e := t.OpenRaw(path)
 		if e != nil {
 			return e
@@ -467,7 +484,7 @@ func Text(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return nil
 	})
 	if e != nil {
-		log.Printf("invoice.Text " + e.Error())
+		log.Printf("invoice.Text %s", e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Text failed loading hourfile"), 400)
 		return
 	}
@@ -498,7 +515,7 @@ func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return e
 	})
 	if e != nil {
-		log.Printf("invoice.Pdf " + e.Error())
+		log.Printf("invoice.Pdf %s", e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Pdf failed loading file from disk"), 400)
 		return
 	}
@@ -506,7 +523,7 @@ func Pdf(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.pdf"`, u.Meta.Invoiceid))
 	w.Header().Set("Content-Type", "application/pdf")
 	if e := f.Output(w); e != nil {
-		log.Printf(e.Error())
+		log.Printf("invoice.Pdf output: %s", e.Error())
 		http.Error(w, "invoice.Pdf fail", http.StatusInternalServerError)
 		return
 	}
@@ -537,7 +554,7 @@ func Xml(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return e
 	})
 	if e != nil {
-		log.Printf("invoice.Xml " + e.Error())
+		log.Printf("invoice.Xml %s", e.Error())
 		http.Error(w, fmt.Sprintf("invoice.Xml failed loading file from disk"), 400)
 		return
 	}
@@ -545,7 +562,7 @@ func Xml(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`inline; filename="%s.pdf"`, u.Meta.Invoiceid))
 	w.Header().Set("Content-Type", "application/xml")
 	if _, e := w.Write(ubl.Bytes()); e != nil {
-		log.Printf(e.Error())
+		log.Printf("invoice.Xml write: %s", e.Error())
 		http.Error(w, "invoice.Xml fail", http.StatusInternalServerError)
 		return
 	}

@@ -3,6 +3,14 @@
 //////////
 // source: auth.go
 
+/**
+ * SessionMaxAge is the maximum age of a session in seconds (8 hours)
+ */
+export const SessionMaxAge = 8 * 60 * 60;
+/**
+ * IVSize is the size of random bytes to generate (24 bytes = 32 base64 chars)
+ */
+export const IVSize = 24;
 export interface Sess {
   Email: string;
   Created: number /* int64 */;

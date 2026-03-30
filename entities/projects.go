@@ -31,7 +31,7 @@ func ProjectSearch(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		return t.Open(fmt.Sprintf("%s/projects.toml", entity), &projectList)
 	})
 	if e != nil {
-		log.Printf("entities.ProjectSearch e=" + e.Error())
+		log.Printf("entities.ProjectSearch e=%s", e.Error())
 		http.Error(w, "Failed reading debtors", 500)
 		return
 	}
@@ -46,7 +46,7 @@ func ProjectSearch(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		}
 	}
 	if e := writer.Encode(w, r, out); e != nil {
-		log.Printf("entities.ProjectSearch " + e.Error())
+		log.Printf("entities.ProjectSearch %s", e.Error())
 	}
 }
 

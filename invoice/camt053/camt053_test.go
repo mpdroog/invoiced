@@ -33,7 +33,7 @@ func TestRead(t *testing.T) {
 			t.Fatalf("Invalid ElctrncSeqNb")
 		}
 		if stmt.Acct.Id.IBAN != "NL59RABO3181240869" && stmt.Acct.Id.IBAN != "NL17RABO0310029597" {
-			t.Fatalf("Invalid IBAN=" + stmt.Acct.Id.IBAN)
+			t.Fatalf("Invalid IBAN=%s", stmt.Acct.Id.IBAN)
 		}
 		return nil
 	}); e != nil {
@@ -53,7 +53,7 @@ func TestFilterPaymentsReceived(t *testing.T) {
 	}
 
 	if len(p) != 3 {
-		t.Errorf("Payments received != 3", len(p))
+		t.Errorf("Payments received != 3, got %d", len(p))
 	}
 	if p[0].IBAN != "NL62ABNA0408441224" {
 		t.Errorf("Payment(%s) invalid IBAN=%s", p[0].Id, p[0].IBAN)

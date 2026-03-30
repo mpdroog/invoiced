@@ -83,7 +83,7 @@ func uintFn(v interface{}, param string) error {
 	if st.Kind() == reflect.Float64 {
 		n := st.Float()
 		if n <= 0 {
-			return fmt.Errorf("uint negative not allowed. Given=" + st.String())
+			return fmt.Errorf("uint negative not allowed. Given=%s", st.String())
 		}
 		return nil
 	}
@@ -103,7 +103,7 @@ func qty(v interface{}, param string) error {
 	if st.Kind() == reflect.Float64 {
 		n := st.Float()
 		if n <= 0 {
-			return fmt.Errorf("qty negative not allowed. Given=" + st.String())
+			return fmt.Errorf("qty negative not allowed. Given=%s", st.String())
 		}
 		return nil
 	}

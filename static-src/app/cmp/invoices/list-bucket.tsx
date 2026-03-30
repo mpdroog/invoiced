@@ -169,7 +169,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     if (this.state.sortField === field) {
       icon = this.state.sortAsc ? " ▲" : " ▼";
     }
-    return <th style={{cursor: "pointer"}} onClick={() => this.toggleSort(field)}>{field}{icon}</th>;
+    return <th className="sortable" onClick={() => this.toggleSort(field)}>{field}{icon}</th>;
   }
 
 	render(): React.JSX.Element {
@@ -232,10 +232,10 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       </form>
     </div>;
 
-		return <div className="normalheader">
-		    <div className="hpanel hblue">
-          <div className="panel-heading hbuilt">
-            <div className="panel-tools">
+		return <div>
+		    <div className="panel panel-primary">
+          <div className="panel-heading">
+            <div className="pull-right">
               <div className="btn-group nm7">
                 {headerButtons}
               </div>

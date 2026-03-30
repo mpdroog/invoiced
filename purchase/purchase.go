@@ -28,13 +28,13 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	from, e := strconv.Atoi(args.Get("from"))
 	if e != nil {
-		log.Printf(e.Error())
+		log.Printf("purchase.List from: %s", e.Error())
 		http.Error(w, "purchase.List fail", http.StatusInternalServerError)
 		return
 	}
 	count, e := strconv.Atoi(args.Get("count"))
 	if e != nil {
-		log.Printf(e.Error())
+		log.Printf("purchase.List count: %s", e.Error())
 		http.Error(w, "purchase.List fail", http.StatusInternalServerError)
 		return
 	}
@@ -51,7 +51,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return e
 	})
 	if e != nil {
-		log.Printf("purchase.List " + e.Error())
+		log.Printf("purchase.List %s", e.Error())
 		http.Error(w, fmt.Sprintf("purchase.List failed scanning disk"), 400)
 		return
 	}
@@ -64,7 +64,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		log.Printf("purchase.List count=%d", len(list))
 	}
 	if e := writer.Encode(w, r, res); e != nil {
-		log.Printf("purchase.List " + e.Error())
+		log.Printf("purchase.List %s", e.Error())
 	}
 }
 
@@ -85,13 +85,13 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return t.OpenFirst(paths, u)
 	})
 	if e != nil {
-		log.Printf("purchase.Load " + e.Error())
+		log.Printf("purchase.Load %s", e.Error())
 		http.Error(w, fmt.Sprintf("purchase.Load failed loading file from disk"), 400)
 		return
 	}
 
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("purchase.Load " + e.Error())
+		log.Printf("purchase.Load %s", e.Error())
 	}
 }
 
@@ -165,13 +165,13 @@ func Upload(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 
 	if e != nil {
-		log.Printf("purchase.Upload " + e.Error())
+		log.Printf("purchase.Upload %s", e.Error())
 		http.Error(w, "Failed to save purchase invoice", 500)
 		return
 	}
 
 	if e := writer.Encode(w, r, inv); e != nil {
-		log.Printf("purchase.Upload " + e.Error())
+		log.Printf("purchase.Upload %s", e.Error())
 	}
 }
 
@@ -218,13 +218,13 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 
 	if e != nil {
-		log.Printf("purchase.Paid " + e.Error())
+		log.Printf("purchase.Paid %s", e.Error())
 		http.Error(w, "Failed to mark as paid", 400)
 		return
 	}
 
 	if e := writer.Encode(w, r, u); e != nil {
-		log.Printf("purchase.Paid " + e.Error())
+		log.Printf("purchase.Paid %s", e.Error())
 	}
 }
 
@@ -267,7 +267,7 @@ func PDF(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 
 	if e != nil {
-		log.Printf("purchase.PDF " + e.Error())
+		log.Printf("purchase.PDF %s", e.Error())
 		http.Error(w, "PDF not found", 404)
 	}
 }
@@ -309,7 +309,7 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 
 	if e != nil {
-		log.Printf("purchase.Delete " + e.Error())
+		log.Printf("purchase.Delete %s", e.Error())
 		http.Error(w, e.Error(), http.StatusInternalServerError)
 		return
 	}

@@ -25,7 +25,7 @@ func TestSlug(t *testing.T) {
 	}
 	for _, str := range invalid {
 		if e := slug(str, ""); e == nil {
-			t.Errorf("str should fail but didn't, input=" + str)
+			t.Errorf("str should fail but didn't, input=%s", str)
 		}
 	}
 }
