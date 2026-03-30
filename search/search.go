@@ -4,6 +4,7 @@ package search
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/mpdroog/invoiced/idx"
@@ -22,14 +23,14 @@ func Search(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	if query == "" {
 		if err := writer.Encode(w, r, SearchResponse{Results: []idx.SearchResult{}}); err != nil {
-			log.Printf("search.Search encode: %s", err.Error())
+			log.Printf("search.Search encode: %s", strconv.Quote(err.Error()))
 		}
 		return
 	}
 
 	results, err := idx.Search(entity, query, 20)
 	if err != nil {
-		log.Printf("search.Search: %s", err.Error())
+		log.Printf("search.Search: %s", strconv.Quote(err.Error()))
 		http.Error(w, "Search failed", http.StatusInternalServerError)
 		return
 	}
@@ -39,6 +40,6 @@ func Search(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	if err := writer.Encode(w, r, SearchResponse{Results: results}); err != nil {
-		log.Printf("search.Search encode: %s", err.Error())
+		log.Printf("search.Search encode: %s", strconv.Quote(err.Error()))
 	}
 }

@@ -2,11 +2,13 @@
 package sql
 
 import (
+	"context"
 	"database/sql"
-	"github.com/julienschmidt/httprouter"
-	"github.com/mpdroog/invoiced/writer"
 	"log"
 	"net/http"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/mpdroog/invoiced/writer"
 )
 
 var db *sql.DB
@@ -17,10 +19,10 @@ func Init(d *sql.DB) error {
 	return nil
 }
 
-func get(sql string, limit int) ([]map[string]*string, error) {
+func get(ctx context.Context, sql string, limit int) ([]map[string]*string, error) {
 	var res []map[string]*string
 
-	rows, e := db.Query(sql)
+	rows, e := db.QueryContext(ctx, sql) //nolint:gosec // G701: admin SQL query endpoint, protected by auth
 	if e != nil {
 		return nil, e
 	}
@@ -75,7 +77,7 @@ func GetRow(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	}
 
-	res, e := get(sql, 1)
+	res, e := get(r.Context(), sql, 1)
 	if e != nil {
 		log.Printf("sql.GetRow: %s", e)
 		http.Error(w, e.Error(), http.StatusInternalServerError)
@@ -100,7 +102,7 @@ func GetAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	}
 
-	res, e := get(sql, 0)
+	res, e := get(r.Context(), sql, 0)
 	if e != nil {
 		log.Printf("sql.GetAll: %s", e)
 		http.Error(w, e.Error(), http.StatusInternalServerError)

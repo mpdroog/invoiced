@@ -99,7 +99,7 @@ func Upload(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 
-	if err := r.ParseMultipartForm(32 << 20); err != nil { // 32MB max
+	if err := r.ParseMultipartForm(32 << 20); err != nil { //nolint:gosec // G120: 32MB limit is set
 		http.Error(w, "Failed to parse form", 400)
 		return
 	}
@@ -123,8 +123,8 @@ func Upload(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Parse UBL XML
 	inv, pdfData, err := ParseUBL(file)
 	if err != nil {
-		log.Printf("purchase.Upload parse error: %s", err.Error())
-		http.Error(w, fmt.Sprintf("Failed to parse XML: %s", err.Error()), 400)
+		log.Printf("purchase.Upload parse error: %q", err.Error())
+		http.Error(w, fmt.Sprintf("Failed to parse XML: %q", err.Error()), 400)
 		return
 	}
 

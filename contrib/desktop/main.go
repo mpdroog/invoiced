@@ -58,7 +58,7 @@ func onReady() {
 		args = append(args, "-v")
 		fmt.Printf("exec=%s %s\n", name, args)
 	}
-	cmd := exec.CommandContext(context.Background(), name, args...)
+	cmd := exec.CommandContext(context.Background(), name, args...) //nolint:gosec // G204: name is the invoiced binary path, not user input
 	stdout, e := cmd.StdoutPipe()
 	if e != nil {
 		panic(e)

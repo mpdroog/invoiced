@@ -89,6 +89,6 @@ func Encode(w http.ResponseWriter, r *http.Request, d interface{}) error {
 	}
 
 	w.Header().Set("Content-Type", accept)
-	_, e = w.Write(b)
+	_, e = w.Write(b) //nolint:gosec // G705: encoded JSON/msgpack with proper Content-Type
 	return e
 }

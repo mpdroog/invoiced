@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-git/go-git/v6"
@@ -66,7 +67,7 @@ func getAuth() transport.AuthMethod {
 	// Try SSH agent for git@ remotes
 	auth, err := ssh.NewSSHAgentAuth("git")
 	if err != nil {
-		log.Printf("git.getAuth ssh agent: %s", err.Error())
+		log.Printf("git.getAuth ssh agent: %s", strconv.Quote(err.Error()))
 		return nil
 	}
 	return auth
@@ -83,7 +84,7 @@ func Status(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Get remote URL
 	remotes, err := db.Repo.Remotes()
 	if err != nil {
-		log.Printf("git.Status remotes: %s", err.Error())
+		log.Printf("git.Status remotes: %s", strconv.Quote(err.Error()))
 		http.Error(w, "Failed to get remotes", http.StatusInternalServerError)
 		return
 	}
@@ -97,7 +98,7 @@ func Status(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Get HEAD reference
 	head, err := db.Repo.Head()
 	if err != nil {
-		log.Printf("git.Status head: %s", err.Error())
+		log.Printf("git.Status head: %s", strconv.Quote(err.Error()))
 		http.Error(w, "Failed to get HEAD", http.StatusInternalServerError)
 		return
 	}
@@ -107,7 +108,7 @@ func Status(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	if err != nil {
 		// No remote tracking branch - all commits are unpushed
 		// This happens when remote hasn't been fetched yet
-		log.Printf("git.Status remote ref: %s (treating all as unpushed)", err.Error())
+		log.Printf("git.Status remote ref: %s (treating all as unpushed)", strconv.Quote(err.Error()))
 	}
 
 	// Get commit log
@@ -116,7 +117,7 @@ func Status(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		Order: git.LogOrderCommitterTime,
 	})
 	if err != nil {
-		log.Printf("git.Status log: %s", err.Error())
+		log.Printf("git.Status log: %s", strconv.Quote(err.Error()))
 		http.Error(w, "Failed to get log", http.StatusInternalServerError)
 		return
 	}
@@ -169,17 +170,17 @@ func Push(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 				Success: true,
 				Message: "Already up to date",
 			}); err != nil {
-				log.Printf("git.Push encode: %s", err.Error())
+				log.Printf("git.Push encode: %s", strconv.Quote(err.Error()))
 			}
 			return
 		}
 
-		log.Printf("git.Push: %s", err.Error())
+		log.Printf("git.Push: %s", strconv.Quote(err.Error()))
 		if err := writer.Encode(w, r, PullPushResponse{
 			Success: false,
-			Message: fmt.Sprintf("Push failed: %s", err.Error()),
+			Message: fmt.Sprintf("Push failed: %s", strconv.Quote(err.Error())),
 		}); err != nil {
-			log.Printf("git.Push encode: %s", err.Error())
+			log.Printf("git.Push encode: %s", strconv.Quote(err.Error()))
 		}
 		return
 	}
@@ -188,7 +189,7 @@ func Push(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		Success: true,
 		Message: "Pushed successfully",
 	}); err != nil {
-		log.Printf("git.Push encode: %s", err.Error())
+		log.Printf("git.Push encode: %s", strconv.Quote(err.Error()))
 	}
 }
 
@@ -217,7 +218,7 @@ func History(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Get HEAD reference
 	head, err := db.Repo.Head()
 	if err != nil {
-		log.Printf("git.History head: %s", err.Error())
+		log.Printf("git.History head: %s", strconv.Quote(err.Error()))
 		http.Error(w, "Failed to get HEAD", http.StatusInternalServerError)
 		return
 	}
@@ -228,7 +229,7 @@ func History(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		Order: git.LogOrderCommitterTime,
 	})
 	if err != nil {
-		log.Printf("git.History log: %s", err.Error())
+		log.Printf("git.History log: %s", strconv.Quote(err.Error()))
 		http.Error(w, "Failed to get log", http.StatusInternalServerError)
 		return
 	}
@@ -267,7 +268,7 @@ func History(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	if err := writer.Encode(w, r, resp); err != nil {
-		log.Printf("git.History encode: %s", err.Error())
+		log.Printf("git.History encode: %s", strconv.Quote(err.Error()))
 	}
 }
 
@@ -276,12 +277,12 @@ func DiscardAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Get remote tracking branch reference
 	remoteRef, err := db.Repo.Reference(plumbing.NewRemoteReferenceName("origin", "master"), true)
 	if err != nil {
-		log.Printf("git.DiscardAll remote ref: %s", err.Error())
+		log.Printf("git.DiscardAll remote ref: %s", strconv.Quote(err.Error()))
 		if err := writer.Encode(w, r, PullPushResponse{
 			Success: false,
-			Message: fmt.Sprintf("Failed to find origin/master: %s", err.Error()),
+			Message: fmt.Sprintf("Failed to find origin/master: %s", strconv.Quote(err.Error())),
 		}); err != nil {
-			log.Printf("git.DiscardAll encode: %s", err.Error())
+			log.Printf("git.DiscardAll encode: %s", strconv.Quote(err.Error()))
 		}
 		return
 	}
@@ -289,12 +290,12 @@ func DiscardAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Get worktree
 	tree, err := db.Repo.Worktree()
 	if err != nil {
-		log.Printf("git.DiscardAll worktree: %s", err.Error())
+		log.Printf("git.DiscardAll worktree: %s", strconv.Quote(err.Error()))
 		if err := writer.Encode(w, r, PullPushResponse{
 			Success: false,
-			Message: fmt.Sprintf("Failed: %s", err.Error()),
+			Message: fmt.Sprintf("Failed: %s", strconv.Quote(err.Error())),
 		}); err != nil {
-			log.Printf("git.DiscardAll encode: %s", err.Error())
+			log.Printf("git.DiscardAll encode: %s", strconv.Quote(err.Error()))
 		}
 		return
 	}
@@ -306,26 +307,26 @@ func DiscardAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	})
 
 	if err != nil {
-		log.Printf("git.DiscardAll reset: %s", err.Error())
+		log.Printf("git.DiscardAll reset: %s", strconv.Quote(err.Error()))
 		if err := writer.Encode(w, r, PullPushResponse{
 			Success: false,
-			Message: fmt.Sprintf("Reset failed: %s", err.Error()),
+			Message: fmt.Sprintf("Reset failed: %s", strconv.Quote(err.Error())),
 		}); err != nil {
-			log.Printf("git.DiscardAll encode: %s", err.Error())
+			log.Printf("git.DiscardAll encode: %s", strconv.Quote(err.Error()))
 		}
 		return
 	}
 
 	// Rebuild search index after reset
 	if err := idx.Rebuild(appconfig.DbPath); err != nil {
-		log.Printf("git.DiscardAll rebuild index: %s", err.Error())
+		log.Printf("git.DiscardAll rebuild index: %s", strconv.Quote(err.Error()))
 	}
 
 	if err := writer.Encode(w, r, PullPushResponse{
 		Success: true,
 		Message: "Discarded all local changes",
 	}); err != nil {
-		log.Printf("git.DiscardAll encode: %s", err.Error())
+		log.Printf("git.DiscardAll encode: %s", strconv.Quote(err.Error()))
 	}
 }
 
@@ -343,12 +344,12 @@ func ResetTo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Verify commit exists
 	_, err := db.Repo.CommitObject(commitHash)
 	if err != nil {
-		log.Printf("git.ResetTo commit not found: %s", err.Error())
+		log.Printf("git.ResetTo commit not found: %s", strconv.Quote(err.Error()))
 		if err := writer.Encode(w, r, PullPushResponse{
 			Success: false,
 			Message: fmt.Sprintf("Commit not found: %s", hash),
 		}); err != nil {
-			log.Printf("git.ResetTo encode: %s", err.Error())
+			log.Printf("git.ResetTo encode: %s", strconv.Quote(err.Error()))
 		}
 		return
 	}
@@ -356,12 +357,12 @@ func ResetTo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Get worktree
 	tree, err := db.Repo.Worktree()
 	if err != nil {
-		log.Printf("git.ResetTo worktree: %s", err.Error())
+		log.Printf("git.ResetTo worktree: %s", strconv.Quote(err.Error()))
 		if err := writer.Encode(w, r, PullPushResponse{
 			Success: false,
-			Message: fmt.Sprintf("Failed: %s", err.Error()),
+			Message: fmt.Sprintf("Failed: %s", strconv.Quote(err.Error())),
 		}); err != nil {
-			log.Printf("git.ResetTo encode: %s", err.Error())
+			log.Printf("git.ResetTo encode: %s", strconv.Quote(err.Error()))
 		}
 		return
 	}
@@ -373,26 +374,26 @@ func ResetTo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	})
 
 	if err != nil {
-		log.Printf("git.ResetTo reset: %s", err.Error())
+		log.Printf("git.ResetTo reset: %s", strconv.Quote(err.Error()))
 		if err := writer.Encode(w, r, PullPushResponse{
 			Success: false,
-			Message: fmt.Sprintf("Reset failed: %s", err.Error()),
+			Message: fmt.Sprintf("Reset failed: %s", strconv.Quote(err.Error())),
 		}); err != nil {
-			log.Printf("git.ResetTo encode: %s", err.Error())
+			log.Printf("git.ResetTo encode: %s", strconv.Quote(err.Error()))
 		}
 		return
 	}
 
 	// Rebuild search index after reset
 	if err := idx.Rebuild(appconfig.DbPath); err != nil {
-		log.Printf("git.ResetTo rebuild index: %s", err.Error())
+		log.Printf("git.ResetTo rebuild index: %s", strconv.Quote(err.Error()))
 	}
 
 	if err := writer.Encode(w, r, PullPushResponse{
 		Success: true,
 		Message: fmt.Sprintf("Reset to commit %s", hash[:7]),
 	}); err != nil {
-		log.Printf("git.ResetTo encode: %s", err.Error())
+		log.Printf("git.ResetTo encode: %s", strconv.Quote(err.Error()))
 	}
 }
 
@@ -401,12 +402,12 @@ func Pull(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Get worktree
 	tree, err := db.Repo.Worktree()
 	if err != nil {
-		log.Printf("git.Pull worktree: %s", err.Error())
+		log.Printf("git.Pull worktree: %s", strconv.Quote(err.Error()))
 		if err := writer.Encode(w, r, PullPushResponse{
 			Success: false,
-			Message: fmt.Sprintf("Pull failed: %s", err.Error()),
+			Message: fmt.Sprintf("Pull failed: %s", strconv.Quote(err.Error())),
 		}); err != nil {
-			log.Printf("git.Pull encode: %s", err.Error())
+			log.Printf("git.Pull encode: %s", strconv.Quote(err.Error()))
 		}
 		return
 	}
@@ -423,30 +424,30 @@ func Pull(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 				Success: true,
 				Message: "Already up to date",
 			}); err != nil {
-				log.Printf("git.Pull encode: %s", err.Error())
+				log.Printf("git.Pull encode: %s", strconv.Quote(err.Error()))
 			}
 			return
 		}
 
-		log.Printf("git.Pull: %s", err.Error())
+		log.Printf("git.Pull: %s", strconv.Quote(err.Error()))
 		if err := writer.Encode(w, r, PullPushResponse{
 			Success: false,
-			Message: fmt.Sprintf("Pull failed: %s", err.Error()),
+			Message: fmt.Sprintf("Pull failed: %s", strconv.Quote(err.Error())),
 		}); err != nil {
-			log.Printf("git.Pull encode: %s", err.Error())
+			log.Printf("git.Pull encode: %s", strconv.Quote(err.Error()))
 		}
 		return
 	}
 
 	// Rebuild search index after pull
 	if err := idx.Rebuild(appconfig.DbPath); err != nil {
-		log.Printf("git.Pull rebuild index: %s", err.Error())
+		log.Printf("git.Pull rebuild index: %s", strconv.Quote(err.Error()))
 	}
 
 	if err := writer.Encode(w, r, PullPushResponse{
 		Success: true,
 		Message: "Pulled successfully",
 	}); err != nil {
-		log.Printf("git.Pull encode: %s", err.Error())
+		log.Printf("git.Pull encode: %s", strconv.Quote(err.Error()))
 	}
 }

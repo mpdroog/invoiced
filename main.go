@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -33,9 +34,10 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// Auth login
+	// Auth login - limit body size to prevent memory exhaustion
+	r.Body = http.MaxBytesReader(w, r.Body, 1024) // 1KB max for login form
 	if e := r.ParseForm(); e != nil {
-		log.Printf("Login: %s\n", e.Error())
+		log.Printf("Login: %s\n", strconv.Quote(e.Error()))
 		http.Error(w, "Parse form-failed", 400)
 		return
 	}
@@ -49,7 +51,7 @@ func Login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	sess, e := middleware.Login(email, pass)
 	if e != nil {
-		log.Printf("Login: %s\n", e.Error())
+		log.Printf("Login: %s\n", strconv.Quote(e.Error()))
 		http.Error(w, "Login: Auth failed", 400)
 		return
 	}
@@ -212,12 +214,20 @@ func main() {
 			router = middleware.LocalOnly(router)
 		}
 		router = middleware.HTTPAuth(router)
+
+		server := &http.Server{
+			Addr:         config.HTTPListen,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 60 * time.Second,
+			IdleTimeout:  120 * time.Second,
+		}
 		if config.Verbose {
 			log.Printf("Listening on %s\n", config.HTTPListen)
-			e = http.ListenAndServe(config.HTTPListen, middleware.HTTPLog(router))
+			server.Handler = middleware.HTTPLog(router)
 		} else {
-			e = http.ListenAndServe(config.HTTPListen, router)
+			server.Handler = router
 		}
+		e = server.ListenAndServe()
 		wg.Done()
 		if e != nil {
 			log.Fatal(e)

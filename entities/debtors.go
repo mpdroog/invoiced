@@ -2,7 +2,6 @@
 package entities
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -43,7 +42,6 @@ func Search(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	for name, debtor := range debtorList {
 		name = strings.ToLower(name)
 		if strings.Contains(name, query) {
-			log.Printf("Contains %q/%q\n", query, name)
 			out = append(out, debtor)
 		}
 	}

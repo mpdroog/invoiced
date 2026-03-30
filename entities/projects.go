@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -43,7 +42,6 @@ func ProjectSearch(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		name = strings.ToLower(name)
 		if strings.Contains(name, query) {
 			project.Name = name // trick for autocomplete :x
-			log.Printf("Contains %q/%q\n", query, name)
 			out = append(out, project)
 		}
 	}

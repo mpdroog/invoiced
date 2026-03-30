@@ -41,7 +41,7 @@ func addValue(sum, add string, dec int) (string, error) {
 	if e != nil {
 		return sum, e
 	}
-	return s.Add(a).StringFixed(int32(dec)), nil
+	return s.Add(a).StringFixed(int32(dec)), nil //nolint:gosec // G115: dec is 0-4, no overflow risk
 }
 
 // Tax returns aggregated tax data for a quarter.

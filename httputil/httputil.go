@@ -5,19 +5,25 @@ package httputil
 import (
 	"log"
 	"net/http"
+	"strconv"
 )
 
 // Error logs an error and sends an HTTP error response.
 // Use this for handler errors to ensure consistent logging format.
 func Error(w http.ResponseWriter, context string, err error, code int) {
-	log.Printf("%s: %s", context, err.Error())
+	log.Printf("%s: %s", context, strconv.Quote(err.Error()))
 	http.Error(w, context+" failed", code)
 }
 
 // LogErr logs an error with a consistent format.
 // Use this when you need to log but not send an HTTP response.
 func LogErr(context string, err error) {
-	log.Printf("%s: %s", context, err.Error())
+	log.Printf("%s: %s", context, strconv.Quote(err.Error()))
+}
+
+// SafeLog sanitizes a string for safe logging (prevents log injection).
+func SafeLog(s string) string {
+	return strconv.Quote(s)
 }
 
 // BadRequest logs and sends a 400 Bad Request response.

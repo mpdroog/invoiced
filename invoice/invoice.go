@@ -42,7 +42,7 @@ type InputError struct {
 func randStringBytesRmndr(n int) string {
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
+		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))] //nolint:gosec // G404: used for temp filenames, not crypto
 	}
 	return string(b)
 }
