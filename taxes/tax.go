@@ -51,18 +51,18 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	quarter := ps.ByName("quarter")
 
 	if idx.DB == nil {
-		http.Error(w, "Index not initialized", 500)
+		http.Error(w, "Index not initialized", http.StatusInternalServerError)
 		return
 	}
 
 	yearInt, err := strconv.Atoi(year)
 	if err != nil {
-		http.Error(w, "Invalid year", 400)
+		http.Error(w, "Invalid year", http.StatusBadRequest)
 		return
 	}
 	quarterInt, err := strconv.Atoi(quarter[1:]) // "Q1" -> 1
 	if err != nil {
-		http.Error(w, "Invalid quarter", 400)
+		http.Error(w, "Invalid quarter", http.StatusBadRequest)
 		return
 	}
 

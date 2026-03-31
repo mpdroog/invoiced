@@ -23,7 +23,7 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	year := ps.ByName("year")
 	name := ps.ByName("id")
 	if name == "" {
-		http.Error(w, "Please supply a name to delete", 400)
+		http.Error(w, "Please supply a name to delete", http.StatusBadRequest)
 		return
 	}
 
@@ -43,7 +43,7 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 // Save creates or updates an hour registration.
 func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if r.Body == nil {
-		http.Error(w, "Please send a request body", 400)
+		http.Error(w, "Please send a request body", http.StatusBadRequest)
 		return
 	}
 	u := new(Hour)
@@ -52,7 +52,7 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 	if e := validator.Validate(u); e != nil {
-		http.Error(w, fmt.Sprintf("hour.Save failed validate=%s", e), 400)
+		http.Error(w, fmt.Sprintf("hour.Save failed validate=%s", e), http.StatusBadRequest)
 		return
 	}
 

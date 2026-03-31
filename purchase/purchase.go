@@ -100,13 +100,13 @@ func Upload(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	year := ps.ByName("year")
 
 	if err := r.ParseMultipartForm(32 << 20); err != nil { //nolint:gosec // G120: 32MB limit is set
-		http.Error(w, "Failed to parse form", 400)
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
 		return
 	}
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, "Missing file", 400)
+		http.Error(w, "Missing file", http.StatusBadRequest)
 		return
 	}
 	defer func() {
@@ -116,7 +116,7 @@ func Upload(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}()
 
 	if !strings.HasSuffix(strings.ToLower(header.Filename), ".xml") {
-		http.Error(w, "Only XML files accepted", 400)
+		http.Error(w, "Only XML files accepted", http.StatusBadRequest)
 		return
 	}
 
@@ -124,7 +124,7 @@ func Upload(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	inv, pdfData, err := ParseUBL(file)
 	if err != nil {
 		log.Printf("purchase.Upload parse error: %q", err.Error())
-		http.Error(w, fmt.Sprintf("Failed to parse XML: %q", err.Error()), 400)
+		http.Error(w, fmt.Sprintf("Failed to parse XML: %q", err.Error()), http.StatusBadRequest)
 		return
 	}
 
@@ -133,7 +133,7 @@ func Upload(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// Determine quarter from issue date
 	issueDate, err := time.Parse("2006-01-02", inv.Issuedate)
 	if err != nil {
-		http.Error(w, "Invalid issue date in XML", 400)
+		http.Error(w, "Invalid issue date in XML", http.StatusBadRequest)
 		return
 	}
 	quarter := fmt.Sprintf("Q%d", utils.YearQuarter(issueDate))
@@ -288,7 +288,7 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	year := ps.ByName("year")
 
 	if name == "" {
-		http.Error(w, "Please supply an id to delete", 400)
+		http.Error(w, "Please supply an id to delete", http.StatusBadRequest)
 		return
 	}
 

@@ -13,7 +13,7 @@ import (
 func HTTPLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		meta := ""
-		if r.Method != "GET" {
+		if r.Method != http.MethodGet {
 			meta = r.Header.Get("Content-Type")
 		}
 		begin := time.Now()
@@ -88,7 +88,7 @@ func HTTPAuth(next http.Handler) http.Handler {
 		cookie, e := r.Cookie("sess")
 		if e != nil && e.Error() != "http: named cookie not present" {
 			log.Printf("HTTPAuth %s", strconv.Quote(e.Error()))
-			w.WriteHeader(500)
+			w.WriteHeader(http.StatusInternalServerError)
 			if _, err := w.Write([]byte("Failed reading cookie")); err != nil {
 				log.Printf("HTTPAuth write: %s", err)
 			}
@@ -113,7 +113,7 @@ func HTTPAuth(next http.Handler) http.Handler {
 			// Validate Referer/Origin for state-changing requests (CSRF protection)
 			if !validateReferer(r) {
 				log.Printf("HTTPAuth CSRF check failed for %s %s", strconv.Quote(r.Method), strconv.Quote(r.URL.Path))
-				w.WriteHeader(403)
+				w.WriteHeader(http.StatusForbidden)
 				if _, err := w.Write([]byte("CSRF validation failed")); err != nil {
 					log.Printf("HTTPAuth write: %s", err)
 				}
@@ -121,7 +121,7 @@ func HTTPAuth(next http.Handler) http.Handler {
 			}
 
 			if !sessionValid || sess.Email == "" {
-				w.WriteHeader(401)
+				w.WriteHeader(http.StatusUnauthorized)
 				if _, err := w.Write([]byte("Auth missing")); err != nil {
 					log.Printf("HTTPAuth write: %s", err)
 				}
@@ -129,7 +129,7 @@ func HTTPAuth(next http.Handler) http.Handler {
 			}
 			user := UserByEmail(sess.Email)
 			if user == nil {
-				w.WriteHeader(401)
+				w.WriteHeader(http.StatusUnauthorized)
 				if _, err := w.Write([]byte("No such user")); err != nil {
 					log.Printf("HTTPAuth write: %s", err)
 				}
@@ -141,14 +141,14 @@ func HTTPAuth(next http.Handler) http.Handler {
 			if len(segments) >= 5 {
 				ok, err := CompanyAllowed(segments[4], sess.Email)
 				if err != nil {
-					w.WriteHeader(500)
+					w.WriteHeader(http.StatusInternalServerError)
 					if _, err := w.Write([]byte("Permission check fail")); err != nil {
 						log.Printf("HTTPAuth write: %s", err)
 					}
 					return
 				}
 				if !ok {
-					w.WriteHeader(403)
+					w.WriteHeader(http.StatusForbidden)
 					if _, err := w.Write([]byte("Permission denied: You cannot view company " + html.EscapeString(segments[4]))); err != nil {
 						log.Printf("HTTPAuth write: %s", err)
 					}

@@ -51,7 +51,7 @@ func randStringBytesRmndr(n int) string {
 func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	if name == "" {
-		http.Error(w, "Please supply a name to delete", 400)
+		http.Error(w, "Please supply a name to delete", http.StatusBadRequest)
 		return
 	}
 	entity := ps.ByName("entity")
@@ -96,7 +96,7 @@ func vatCountry(nr string) string {
 func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 	if name == "" {
-		http.Error(w, "Please supply a name to finalize", 400)
+		http.Error(w, "Please supply a name to finalize", http.StatusBadRequest)
 		return
 	}
 	entity := ps.ByName("entity")
@@ -275,7 +275,7 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	year := ps.ByName("year")
 
 	if r.Body == nil {
-		http.Error(w, "Please send a request body", 400)
+		http.Error(w, "Please send a request body", http.StatusBadRequest)
 		return
 	}
 	u := new(Invoice)
@@ -443,7 +443,7 @@ func Text(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 		}
 		path := u.Meta.HourFile
 		if path == "" {
-			http.Error(w, "Invoice has no hourfile", 404)
+			http.Error(w, "Invoice has no hourfile", http.StatusNotFound)
 			return nil
 		}
 
@@ -549,7 +549,7 @@ func XML(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 		bucket = "invoices"
 	}
 	if !strings.HasPrefix(bucket, "invoices") {
-		http.Error(w, "invoice.Load invalid bucket-name", 400)
+		http.Error(w, "invoice.Load invalid bucket-name", http.StatusBadRequest)
 		return
 	}
 

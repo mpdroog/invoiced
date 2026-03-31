@@ -99,7 +99,7 @@ export class Autocomplete extends React.Component<AutocompleteProps, Autocomplet
 
     console.log("lookup", this.props.url, txt);
 
-    Axios.get(this.props.url, {params: {"query": txt}})
+    Axios.get<AutocompleteSuggestion[]>(this.props.url, {params: {"query": txt}})
     .then(res => {
 		console.log("lookup::suggest", res.data);
 		this.setState({suggestions: res.data});

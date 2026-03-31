@@ -28,6 +28,18 @@ linters:
     - predeclared
     - whitespace
     - nakedret
+    # Strict - bug catchers
+    - rowserrcheck       # Unchecked SQL rows.Err (catches real bugs)
+    - sqlclosecheck      # Unclosed SQL rows/statements
+    - copyloopvar        # Loop variable capture bugs
+    - durationcheck      # time.Duration multiplication issues
+    - makezero           # Slice with non-zero initial length
+    - fatcontext         # Context misuse in loops
+    - reassign           # Package variable reassignment
+    # Strict - style
+    - usestdlibvars      # Use http.StatusOK instead of 200
+    - dupword            # Duplicate words in comments
+    - intrange           # Use range over integers (Go 1.22+)
 
 formatters:
   enable:

@@ -83,6 +83,9 @@ func Search(entity string, query string, limit int) ([]SearchResult, error) {
 
 		results = append(results, r)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	if len(results) >= limit {
 		return results, nil
@@ -131,6 +134,9 @@ func Search(entity string, query string, limit int) ([]SearchResult, error) {
 
 		results = append(results, r)
 	}
+	if err := rows2.Err(); err != nil {
+		return nil, err
+	}
 
 	if len(results) >= limit {
 		return results, nil
@@ -171,6 +177,9 @@ func Search(entity string, query string, limit int) ([]SearchResult, error) {
 		r.Bucket = "Q" + strconv.Itoa(r.Quarter)
 
 		results = append(results, r)
+	}
+	if err := rows3.Err(); err != nil {
+		return nil, err
 	}
 
 	return results, nil

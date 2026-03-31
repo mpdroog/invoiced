@@ -44,7 +44,7 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	year := ps.ByName("year")
 
 	if r.Body == nil {
-		http.Error(w, "Please send a request body", 400)
+		http.Error(w, "Please send a request body", http.StatusBadRequest)
 		return
 	}
 	m := new(InvoiceMail)
@@ -53,7 +53,7 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 	if e := validator.Validate(m); e != nil {
-		http.Error(w, fmt.Sprintf("invoice.Email failed validate=%s", e), 400)
+		http.Error(w, fmt.Sprintf("invoice.Email failed validate=%s", e), http.StatusBadRequest)
 		return
 	}
 	if config.Verbose {

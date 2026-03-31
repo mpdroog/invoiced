@@ -51,8 +51,8 @@ func get(ctx context.Context, sql string, limit int) ([]map[string]*string, erro
 		}
 
 		m := make(map[string]*string, len(cols))
-		for i := 0; i < len(cols); i++ {
-			m[cols[i]] = ctx[i]
+		for i, col := range cols {
+			m[col] = ctx[i]
 		}
 
 		res = append(res, m)

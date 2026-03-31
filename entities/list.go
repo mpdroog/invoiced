@@ -95,7 +95,7 @@ func Open(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 	if len(entity) == 0 || len(year) == 0 {
-		http.Error(w, "Missing entity/year argument(s)", 400)
+		http.Error(w, "Missing entity/year argument(s)", http.StatusBadRequest)
 		return
 	}
 
@@ -120,5 +120,5 @@ func Open(w http.ResponseWriter, _ *http.Request, ps httprouter.Params) {
 		panic(e)
 	}
 
-	http.Error(w, "Created directories.", 200)
+	http.Error(w, "Created directories.", http.StatusOK)
 }

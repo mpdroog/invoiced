@@ -17,3 +17,9 @@ packages:
     output_path: "static-src/app/types/middleware.ts"
     include_files:
       - "auth.go"
+
+  # Git types (for git status/history)
+  - path: "github.com/mpdroog/invoiced/git"
+    output_path: "static-src/app/types/git.ts"
+    include_files:
+      - "git.go"

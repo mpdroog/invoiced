@@ -1,6 +1,6 @@
 import * as React from "react";
 import {DOM} from "../../lib/dom";
-import {IInvoiceLine, IInvoiceState} from "./edit-struct";
+import type {IInvoiceLine, IInvoiceState} from "./edit-struct";
 
 interface InvoiceLineEditProps {
   parent: {
@@ -24,7 +24,7 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
       return;
     }
     parent.pushUndo();
-    const lines = [...(parent.state.Lines || [])];
+    const lines = [...(parent.state.Lines ?? [])];
     console.log("Add invoice line");
     lines.push({
       Description: "",
@@ -61,8 +61,8 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
   	const that = this;
   	const parent = this.props.parent;
   	const inv = parent.state;
-  	const invLines = inv.Lines || [];
-  	const invTotal = inv.Total || { Ex: "0.00", Tax: "0.00", Total: "0.00" };
+  	const invLines = inv.Lines ?? [];
+  	const invTotal = inv.Total ?? { Ex: "0.00", Tax: "0.00", Total: "0.00" };
   	const invStatus = inv.Meta?.Status;
   	const lines: React.JSX.Element[] = [];
 	invLines.forEach(function(line: IInvoiceLine, idx: number) {

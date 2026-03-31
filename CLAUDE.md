@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Always use `make` commands when available.** This ensures consistent builds and proper tooling.
 
+**IMPORTANT: Never run `golangci-lint` directly. Always use `make lint` or `make lint-fix`.**
+
 **Git commits: Do not add "Co-Authored-By" lines.**
 
 ### Common Commands

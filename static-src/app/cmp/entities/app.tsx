@@ -54,7 +54,7 @@ export default class Entities extends React.Component<Record<string, never>, IEn
 			let prevRevenue: number = 0;
 
 			// Sort years ascending for proper comparison
-			const sortedYears = (entity.Years || []).slice().sort((a, b) => parseInt(a) - parseInt(b));
+			const sortedYears = (entity.Years ?? []).slice().sort((a, b) => parseInt(a) - parseInt(b));
 
 			for (const yearStr of sortedYears) {
 		    const year: number = parseInt(yearStr);
@@ -121,7 +121,7 @@ export default class Entities extends React.Component<Record<string, never>, IEn
   }
 
   private ajax(): void {
-    Axios.get('/api/v1/entities', {})
+    Axios.get<Record<string, IEntityYear>>('/api/v1/entities', {})
     .then(res => {
       	this.setState({entities: res.data});
     })

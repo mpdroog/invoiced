@@ -1,6 +1,6 @@
 import * as React from "react";
 import Axios from "axios";
-import {IInvoiceState} from "./edit-struct";
+import type {IInvoiceState} from "./edit-struct";
 import {DOM} from "../../lib/dom";
 import {ActionLink} from "../../shared/ActionButton";
 
@@ -49,10 +49,13 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
 
   private getSortValue(inv: IInvoiceState, field: string): string | number {
     switch (field) {
-      case "Invoice": return inv.Meta?.Invoiceid || inv.Meta?.Conceptid || "";
-      case "Customer": return inv.Customer?.Name || "";
-      case "Amount": return parseFloat(inv.Total?.Total ?? "0") || 0;
-      case "Duedate": return inv.Meta?.Duedate || "";
+      case "Invoice": return inv.Meta?.Invoiceid ?? inv.Meta?.Conceptid ?? "";
+      case "Customer": return inv.Customer?.Name ?? "";
+      case "Amount": {
+        const val = parseFloat(inv.Total?.Total ?? "0");
+        return Number.isNaN(val) ? 0 : val;
+      }
+      case "Duedate": return inv.Meta?.Duedate ?? "";
       default: return "";
     }
   }
@@ -100,12 +103,12 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
   private conceptLine(key: string, inv: IInvoiceState, bucket: string, isPending: boolean): React.JSX.Element {
     const today = new Date().toISOString().split('T')[0] ?? "";
     let expiryClass = "";
-    if (isPending && inv.Meta?.Duedate && inv.Meta.Duedate <= today) {
+    if (isPending && inv.Meta?.Duedate != null && inv.Meta.Duedate !== '' && inv.Meta.Duedate <= today) {
       expiryClass = 'bg-danger';
     }
-    const meta = inv.Meta || { Status: "NEW", Invoiceid: "", Conceptid: "", Duedate: "", Ponumber: "", HourFile: "" };
-    const customer = inv.Customer || { Name: "", Street1: "", Street2: "", Vat: "", Coc: "", Tax: "NL21" };
-    const total = inv.Total || { Ex: "0.00", Tax: "0.00", Total: "0.00" };
+    const meta = inv.Meta ?? { Status: "NEW", Invoiceid: "", Conceptid: "", Duedate: "", Ponumber: "", HourFile: "" };
+    const customer = inv.Customer ?? { Name: "", Street1: "", Street2: "", Vat: "", Coc: "", Tax: "NL21" };
+    const total = inv.Total ?? { Ex: "0.00", Tax: "0.00", Total: "0.00" };
     const isDeleteDisabled = meta.Status === 'FINAL' || meta.Invoiceid.length > 0;
     const isPaidDisabled = bucket === 'concepts';
     return <tr key={key}>

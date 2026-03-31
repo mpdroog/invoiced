@@ -20,18 +20,18 @@ func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year, err := strconv.Atoi(ps.ByName("year"))
 	if err != nil {
-		http.Error(w, fmt.Sprintf("metrics.Dashboard: invalid year: %s", err.Error()), 400)
+		http.Error(w, fmt.Sprintf("metrics.Dashboard: invalid year: %s", err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	if idx.DB == nil {
-		http.Error(w, "Index not initialized", 500)
+		http.Error(w, "Index not initialized", http.StatusInternalServerError)
 		return
 	}
 
 	idxMetrics, err := idx.GetMonthlyMetrics(entity, year)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("metrics.Dashboard: %s", err.Error()), 500)
+		http.Error(w, fmt.Sprintf("metrics.Dashboard: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 
@@ -50,7 +50,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	if err := writer.Encode(w, r, m); err != nil {
-		http.Error(w, fmt.Sprintf("metrics.Dashboard: encode failed: %s", err.Error()), 500)
+		http.Error(w, fmt.Sprintf("metrics.Dashboard: encode failed: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 }
@@ -60,12 +60,12 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	entity := ps.ByName("entity")
 	year, err := strconv.Atoi(ps.ByName("year"))
 	if err != nil {
-		http.Error(w, fmt.Sprintf("metrics.DashboardFull: invalid year: %s", err.Error()), 400)
+		http.Error(w, fmt.Sprintf("metrics.DashboardFull: invalid year: %s", err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	if idx.DB == nil {
-		http.Error(w, "Index not initialized", 500)
+		http.Error(w, "Index not initialized", http.StatusInternalServerError)
 		return
 	}
 
@@ -76,7 +76,7 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	// Monthly metrics
 	monthly, err := idx.GetMonthlyMetrics(entity, year)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("metrics.DashboardFull: monthly: %s", err.Error()), 500)
+		http.Error(w, fmt.Sprintf("metrics.DashboardFull: monthly: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 	if monthly == nil {
@@ -87,7 +87,7 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	// Previous year monthly metrics for comparison
 	monthlyPrev, err := idx.GetMonthlyMetrics(entity, year-1)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("metrics.DashboardFull: monthlyPrev: %s", err.Error()), 500)
+		http.Error(w, fmt.Sprintf("metrics.DashboardFull: monthlyPrev: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 	if monthlyPrev == nil {
@@ -98,7 +98,7 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	// Unpaid summary
 	unpaid, err := idx.GetUnpaidSummary(entity, year)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("metrics.DashboardFull: unpaid: %s", err.Error()), 500)
+		http.Error(w, fmt.Sprintf("metrics.DashboardFull: unpaid: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 	resp.Unpaid = *unpaid
@@ -106,7 +106,7 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	// Overdue invoices
 	overdue, err := idx.GetOverdueInvoices(entity, year, today)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("metrics.DashboardFull: overdue: %s", err.Error()), 500)
+		http.Error(w, fmt.Sprintf("metrics.DashboardFull: overdue: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 	if overdue == nil {
@@ -117,7 +117,7 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	// Quarterly breakdown
 	quarters, err := idx.GetYearlyQuarterSummary(entity, year)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("metrics.DashboardFull: quarters: %s", err.Error()), 500)
+		http.Error(w, fmt.Sprintf("metrics.DashboardFull: quarters: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 	if quarters == nil {
@@ -128,7 +128,7 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	// Unbilled hours
 	unbilled, err := idx.GetUnbilledHours(entity, year)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("metrics.DashboardFull: unbilled: %s", err.Error()), 500)
+		http.Error(w, fmt.Sprintf("metrics.DashboardFull: unbilled: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 	resp.UnbilledHours = *unbilled
@@ -136,7 +136,7 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	// Year comparison
 	comparison, err := idx.GetYearComparison(entity, year)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("metrics.DashboardFull: comparison: %s", err.Error()), 500)
+		http.Error(w, fmt.Sprintf("metrics.DashboardFull: comparison: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 	if comparison == nil {
@@ -154,7 +154,7 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	// Top clients (limit to 5)
 	clients, err := idx.GetYearlyCustomerTotals(entity, year, false)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("metrics.DashboardFull: clients: %s", err.Error()), 500)
+		http.Error(w, fmt.Sprintf("metrics.DashboardFull: clients: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 	if clients == nil {
@@ -169,7 +169,7 @@ func DashboardFull(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	}
 
 	if err := writer.Encode(w, r, resp); err != nil {
-		http.Error(w, fmt.Sprintf("metrics.DashboardFull: encode failed: %s", err.Error()), 500)
+		http.Error(w, fmt.Sprintf("metrics.DashboardFull: encode failed: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
 }

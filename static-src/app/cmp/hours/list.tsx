@@ -57,7 +57,7 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
     if (!node) return;
     const id = node.dataset["target"];
     const bucket = node.dataset["bucket"];
-    if (!id || !bucket) return;
+    if (id == null || bucket == null) return;
 
     await Axios.delete(`/api/v1/hour/${this.props.entity}/${this.props.year}/${bucket}/${id}`);
     location.reload();

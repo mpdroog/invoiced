@@ -2,7 +2,7 @@ import * as React from "react";
 import Invoices from "./list-bucket";
 import Axios from "axios";
 import { decode as msgpackDecode } from '@msgpack/msgpack';
-import {IInvoiceState} from "./edit-struct";
+import type {IInvoiceState} from "./edit-struct";
 
 interface InvoicesPageProps {
   entity: string;

@@ -1,10 +1,7 @@
 import * as React from "react";
 import { openModal, closeModal } from "../../shared/Modal";
 
-type MonthKey = 'jan' | 'feb' | 'mar' | 'apr' | 'may' | 'jun' | 'jul' | 'aug' | 'sep' | 'oct' | 'nov' | 'dec' |
-	'january' | 'februari' | 'march' | 'april' | 'june' | 'juni' | 'july' | 'augustus' | 'september' | 'sept' | 'october' | 'okt' | 'november' | 'december';
-
-const monthMap: Record<MonthKey, string> = {
+const monthMap: Partial<Record<string, string>> = {
 	"jan": "01",
 	"feb": "02",
 	"mar": "03",
@@ -50,20 +47,20 @@ interface ImportResult {
 // @return Date|bool
 function parseDate(line: string): string | false {
 	line = line.replace(/ /g, "");
-	const dayMonth = line.split(/^(\d{1,2})([a-zA-Z]+)$/g).filter((i: string) => i);
+	const dayMonth = line.split(/^(\d{1,2})([a-zA-Z]+)$/g).filter((i: string) => i !== '');
 	if (dayMonth.length !== 2) {
 		return false;
 	}
 	const day = dayMonth[0];
 	const month = dayMonth[1];
-	if (!day || !month) {
+	if (day == null || day === '' || month == null || month === '') {
 		return false;
 	}
 	const paddedDay = day.length === 1 ? "0" + day : day;
-	const monthKey = month.toLowerCase() as MonthKey;
+	const monthKey = month.toLowerCase();
 
 	const monthNum = monthMap[monthKey];
-	if (!monthNum) {
+	if (monthNum == null) {
 		return false;
 	}
 	const dateStr = currentYear + "-" + monthNum + "-" + paddedDay;
@@ -78,7 +75,7 @@ function parseDate(line: string): string | false {
 // @return array|bool
 function parseHours(line: string): string[] | false {
 	line = line.replace(/ /g, "");
-	const fromTo = line.split(/^([0-9]{2}:[0-9]{2})-([0-9]{2}:[0-9]{2})$/g).filter((i: string) => i);
+	const fromTo = line.split(/^([0-9]{2}:[0-9]{2})-([0-9]{2}:[0-9]{2})$/g).filter((i: string) => i !== '');
 	if (fromTo.length !== 2) {
 		return false;
 	}
@@ -97,7 +94,7 @@ function importText(lines: string[]): ImportResult {
 	for (let i = 0; i < lines.length; i++) {
 		const lineNum = i + 1;
 		const rawLine = lines[i];
-		if (!rawLine) continue;
+		if (rawLine == null) continue;
 		const line = rawLine.trim();
 		if (line.length === 0) {
 			// ignore empty lines

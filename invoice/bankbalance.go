@@ -40,7 +40,7 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	name := strings.Split(header.Filename, ".")
 	if strings.ToLower(name[1]) != "xml" {
-		http.Error(w, "Sorry, not an XML-file", 400)
+		http.Error(w, "Sorry, not an XML-file", http.StatusBadRequest)
 		return
 	}
 

@@ -1,6 +1,8 @@
 import * as React from "react";
-import { createRoot, Root } from "react-dom/client";
-import Axios, { AxiosError } from "axios";
+import type { Root } from "react-dom/client";
+import { createRoot } from "react-dom/client";
+import type { AxiosError } from "axios";
+import Axios from "axios";
 import {Design} from "./shared/design";
 
 let isLoginModalOpen = false;
@@ -77,7 +79,7 @@ function hashChange(): void {
                         switch (url.shift()) {
                               case "add":
                               case "edit":
-                                    props.bucket = url.shift();
+                                    props.bucket = url.shift() ?? "";
                                     inject = HoursEdit;
                                     break;
 
@@ -92,7 +94,7 @@ function hashChange(): void {
                         switch (url.shift()) {
                               case "add":
                               case "edit":
-                                    props.bucket = url.shift();
+                                    props.bucket = url.shift() ?? "";
                                     inject = InvoicesEdit;
                                     break;
 
@@ -128,9 +130,9 @@ function hashChange(): void {
       let page = null;
       // Use location.hash as key to force unmount/remount on navigation
       // This matches React 15 behavior where we called unmountComponentAtNode
-      const routeKey = location.hash || '/';
+      const routeKey = location.hash !== '' ? location.hash : '/';
       if (props !== null) {
-            props.id = url.shift();
+            props.id = url.shift() ?? "";
             props.key = routeKey;
             page = React.createElement(inject, props);
             page = React.createElement(Design, {...props, key: routeKey}, page);

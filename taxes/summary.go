@@ -95,8 +95,8 @@ func Summary(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		_, e := t.List(paths, db.Pagination{From: 0, Count: 0}, h, func(_, _, _ string) error {
 			hours := zeroDecimal
 			var e error
-			for n := 0; n < len(h.Lines); n++ {
-				raw := strconv.FormatFloat(h.Lines[n].Hours, 'f', 0, 64)
+			for _, line := range h.Lines {
+				raw := strconv.FormatFloat(line.Hours, 'f', 0, 64)
 				hours, e = addValue(hours, raw, 0)
 				if e != nil {
 					return e

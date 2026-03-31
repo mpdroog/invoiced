@@ -38,25 +38,25 @@ func Login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	r.Body = http.MaxBytesReader(w, r.Body, 1024) // 1KB max for login form
 	if e := r.ParseForm(); e != nil {
 		log.Printf("Login: %s\n", strconv.Quote(e.Error()))
-		http.Error(w, "Parse form-failed", 400)
+		http.Error(w, "Parse form-failed", http.StatusBadRequest)
 		return
 	}
 
 	email := r.FormValue("email")
 	pass := r.FormValue("pass")
 	if len(email) == 0 || len(pass) == 0 {
-		http.Error(w, "Missing POST email/pass", 400)
+		http.Error(w, "Missing POST email/pass", http.StatusBadRequest)
 		return
 	}
 
 	sess, e := middleware.Login(email, pass)
 	if e != nil {
 		log.Printf("Login: %s\n", strconv.Quote(e.Error()))
-		http.Error(w, "Login: Auth failed", 400)
+		http.Error(w, "Login: Auth failed", http.StatusBadRequest)
 		return
 	}
 	if len(sess) == 0 {
-		http.Error(w, "Login: Invalid user/pass", 400)
+		http.Error(w, "Login: Invalid user/pass", http.StatusBadRequest)
 		return
 	}
 

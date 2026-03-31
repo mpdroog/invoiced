@@ -3,6 +3,11 @@ import Axios from "axios";
 import "./search.css";
 import { ActionButton } from "./ActionButton";
 import { ModalBackdrop, openModal, closeModal } from "./Modal";
+import type { StatusResponse } from "../types/git";
+
+interface SearchResponse {
+    results: SearchResult[];
+}
 
 interface SearchResult {
     type: string;
@@ -63,9 +68,9 @@ class Menu extends React.Component<MenuProps, MenuState> {
     }
 
     private fetchGitStatus(): void {
-        Axios.get('/api/v1/git/' + this.props.company + '/status')
+        Axios.get<StatusResponse>('/api/v1/git/' + this.props.company + '/status')
             .then(res => {
-                this.setState({ahead: res.data.ahead || 0});
+                this.setState({ahead: res.data.ahead});
             })
             .catch(() => {
                 // Silently ignore - git status may not be available
@@ -87,9 +92,9 @@ class Menu extends React.Component<MenuProps, MenuState> {
 
         this.setState({searching: true});
         this.searchTimeout = setTimeout(() => {
-            Axios.get('/api/v1/search/' + this.props.company, {params: {q: query}})
+            Axios.get<SearchResponse>('/api/v1/search/' + this.props.company, {params: {q: query}})
                 .then(res => {
-                    this.setState({searchResults: res.data.results || [], searching: false});
+                    this.setState({searchResults: res.data.results, searching: false});
                 })
                 .catch(() => {
                     this.setState({searchResults: [], searching: false});
@@ -320,7 +325,7 @@ class LoginModal extends React.Component<Record<string, never>, LoginModalState>
                             </div>
                             <div className="modal-body">
                                 <p>Your session has expired. Please log in again to continue.</p>
-                                {this.state.error && (
+                                {this.state.error !== '' && (
                                     <div className="alert alert-danger">{this.state.error}</div>
                                 )}
                                 <div className="form-group">

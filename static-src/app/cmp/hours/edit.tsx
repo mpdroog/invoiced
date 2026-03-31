@@ -61,13 +61,13 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
   }
 
   componentDidMount(): void {
-    if (this.props.id) {
+    if (this.props.id != null && this.props.id !== '') {
       this.ajax(this.props.id);
     }
   }
 
   private ajax(name: string): void {
-    Axios.get(`/api/v1/hour/${this.props.entity}/${this.props.year}/${this.props.bucket}/${name}`)
+    Axios.get<IHourState>(`/api/v1/hour/${this.props.entity}/${this.props.year}/${this.props.bucket}/${name}`)
     .then(res => {
       this.setState(res.data);
     })
@@ -80,12 +80,12 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     let total = new Big("0.00");
     const out = [...this.state.Lines];
     for (const lineItem of lines) {
-      if (!lineItem.day) continue;
+      if (lineItem.day == null) continue;
       for (const fromTo of lineItem.fromTo) {
         if (fromTo.length < 2) continue;
         const startTime = fromTo[0];
         const stopTime = fromTo[1];
-        if (!startTime || !stopTime) continue;
+        if (startTime == null || stopTime == null) continue;
         const start = Moment(startTime, 'HH:mm')
         const stop = Moment(stopTime, 'HH:mm');
         if (! start.isValid()) {
@@ -196,7 +196,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     const prevMonth = Moment().subtract(1, 'months');
     const s: Partial<IHourState> = {
       Project: prj.Name,
-      HourRate: prj.HourRate || 0,
+      HourRate: prj.HourRate ?? 0,
     };
     if (this.state.Name === "") {
       s.Name = prj.Name + "-" + prevMonth.format("YYYY-MM");
@@ -253,7 +253,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     const req = {...this.state};
     req.Total = this.updateTotal();
 
-    const res = await Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts`, req);
+    const res = await Axios.post<IHourState>(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts`, req);
     console.log(res.data);
     this.setState(res.data);
     history.replaceState({}, "", `#${this.props.entity}/${this.props.year}/hours/edit/concepts/${res.data.Name}`);

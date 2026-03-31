@@ -1,31 +1,7 @@
 import * as React from "react";
 import Axios from "axios";
 import {ActionButton} from "../../shared/ActionButton";
-
-interface CommitInfo {
-  hash: string;
-  fullHash: string;
-  message: string;
-  author: string;
-  date: string;
-}
-
-interface StatusResponse {
-  ahead: number;
-  commits: CommitInfo[];
-  remote: string;
-}
-
-interface HistoryResponse {
-  commits: CommitInfo[];
-  hasMore: boolean;
-  page: number;
-}
-
-interface ActionResponse {
-  success: boolean;
-  message: string;
-}
+import type { StatusResponse, HistoryResponse, PullPushResponse } from "../../types/git";
 
 interface GitState {
   loading: boolean;
@@ -59,19 +35,19 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
 
   private async loadStatus(): Promise<void> {
     this.setState({loading: true, error: null});
-    const res = await Axios.get('/api/v1/git/' + this.props.entity + '/status');
+    const res = await Axios.get<StatusResponse>('/api/v1/git/' + this.props.entity + '/status');
     this.setState({loading: false, status: res.data});
   }
 
   private async loadHistory(page: number): Promise<void> {
-    const res = await Axios.get('/api/v1/git/' + this.props.entity + '/history', {params: {page}});
+    const res = await Axios.get<HistoryResponse>('/api/v1/git/' + this.props.entity + '/history', {params: {page}});
     this.setState({history: res.data});
   }
 
   private async doPush(): Promise<void> {
     this.setState({actionResult: null, error: null});
-    const res = await Axios.post('/api/v1/git/' + this.props.entity + '/push');
-    const result: ActionResponse = res.data;
+    const res = await Axios.post<PullPushResponse>('/api/v1/git/' + this.props.entity + '/push');
+    const result = res.data;
     this.setState({actionResult: result.message});
     if (result.success) {
       await this.loadStatus();
@@ -80,8 +56,8 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
 
   private async doPull(): Promise<void> {
     this.setState({actionResult: null, error: null});
-    const res = await Axios.post('/api/v1/git/' + this.props.entity + '/pull');
-    const result: ActionResponse = res.data;
+    const res = await Axios.post<PullPushResponse>('/api/v1/git/' + this.props.entity + '/pull');
+    const result = res.data;
     this.setState({actionResult: result.message});
     if (result.success) {
       await this.loadStatus();
@@ -94,8 +70,8 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
     }
 
     this.setState({actionResult: null, error: null});
-    const res = await Axios.post('/api/v1/git/' + this.props.entity + '/discard');
-    const result: ActionResponse = res.data;
+    const res = await Axios.post<PullPushResponse>('/api/v1/git/' + this.props.entity + '/discard');
+    const result = res.data;
     this.setState({actionResult: result.message});
     if (result.success) {
       await this.loadStatus();
@@ -108,8 +84,8 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
     }
 
     this.setState({actionResult: null, error: null});
-    const res = await Axios.post('/api/v1/git/' + this.props.entity + '/reset/' + fullHash);
-    const result: ActionResponse = res.data;
+    const res = await Axios.post<PullPushResponse>('/api/v1/git/' + this.props.entity + '/reset/' + fullHash);
+    const result = res.data;
     this.setState({actionResult: result.message});
     if (result.success) {
       await this.loadStatus();
@@ -121,7 +97,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
 
     if (this.state.loading) {
       content = <p><i className="fas fa-spinner fa-spin"></i> Loading git status...</p>;
-    } else if (this.state.error) {
+    } else if (this.state.error != null) {
       content = <div className="alert alert-danger">{this.state.error}</div>;
     } else if (this.state.status) {
       const status = this.state.status;
@@ -165,7 +141,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
       content = <div>
         <div className="row m-b-md">
           <div className="col-md-6">
-            <p><strong>Remote:</strong> {status.remote || 'Not configured'}</p>
+            <p><strong>Remote:</strong> {status.remote !== '' ? status.remote : 'Not configured'}</p>
             <p><strong>Commits ahead:</strong> {status.ahead}</p>
           </div>
           <div className="col-md-6 text-right">
@@ -193,7 +169,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
           </div>
         </div>
 
-        {this.state.actionResult && (
+        {this.state.actionResult != null && (
           <div className="alert alert-info">{this.state.actionResult}</div>
         )}
 

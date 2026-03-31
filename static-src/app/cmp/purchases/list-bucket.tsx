@@ -62,10 +62,13 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
 
   private getSortValue(inv: IPurchaseInvoice, field: string): string | number {
     switch (field) {
-      case "ID": return inv.ID || "";
-      case "Supplier": return inv.Supplier.Name || "";
-      case "Amount": return parseFloat(inv.TotalInc) || 0;
-      case "Duedate": return inv.Duedate || "";
+      case "ID": return inv.ID !== '' ? inv.ID : "";
+      case "Supplier": return inv.Supplier.Name !== '' ? inv.Supplier.Name : "";
+      case "Amount": {
+        const val = parseFloat(inv.TotalInc);
+        return Number.isNaN(val) ? 0 : val;
+      }
+      case "Duedate": return inv.Duedate !== '' ? inv.Duedate : "";
       default: return "";
     }
   }
@@ -162,10 +165,10 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
       const bucket = parts[parts.length - 2] ?? ""; // Get Q1, Q2, etc.
 
       const items = this.props.items[dir];
-      if (!items) continue;
+      if (items == null) continue;
       items.forEach((inv: IPurchaseInvoice) => {
         // Use sanitized filename as key (from ID + Supplier.Name)
-        const key = inv.ID ? (inv.Supplier.Name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + inv.ID.toLowerCase().replace(/[^a-z0-9]/g, '-')) : dir;
+        const key = inv.ID !== '' ? (inv.Supplier.Name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + inv.ID.toLowerCase().replace(/[^a-z0-9]/g, '-')) : dir;
         invoiceList.push({key, inv, bucket});
       });
     }
@@ -175,7 +178,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     const today = new Date().toISOString().split('T')[0] ?? "";
 
     invoiceList.forEach(({key, inv, bucket}) => {
-      const expiryClass = isUnpaid && inv.Duedate && inv.Duedate <= today ? 'bg-danger' : '';
+      const expiryClass = isUnpaid && inv.Duedate !== '' && inv.Duedate <= today ? 'bg-danger' : '';
 
       res.push(<tr key={key}>
         <td>{inv.ID}</td>
@@ -280,12 +283,15 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
   componentDidMount(): void {
     openModal();
     // Fetch concept invoices to add lines to
-    Axios.get('/api/v1/invoices/'+this.props.entity+'/'+this.props.year, {params: {from: 0, count: 0}})
+    interface InvoicesResponse {
+      Invoices: Record<string, IConceptInvoice[]>;
+    }
+    Axios.get<InvoicesResponse>('/api/v1/invoices/'+this.props.entity+'/'+this.props.year, {params: {from: 0, count: 0}})
     .then(res => {
       const concepts: IConceptInvoice[] = [];
       for (const key in res.data.Invoices) {
         if (key.endsWith("/concepts/sales-invoices/")) {
-          res.data.Invoices[key].forEach((inv: IConceptInvoice) => {
+          res.data.Invoices[key]?.forEach((inv: IConceptInvoice) => {
             concepts.push(inv);
           });
         }
@@ -302,7 +308,7 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
   }
 
   private async addLine(): Promise<void> {
-    if (!this.state.selectedConcept) {
+    if (this.state.selectedConcept === '') {
       alert("Please select an invoice");
       return;
     }
@@ -330,7 +336,8 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
     // Recalculate totals
     let totalEx = 0;
     concept.Lines.forEach((l: { Total: string }) => {
-      totalEx += parseFloat(l.Total) || 0;
+      const val = parseFloat(l.Total);
+      totalEx += Number.isNaN(val) ? 0 : val;
     });
     const taxRate = 0.21; // Default 21% VAT
     const totalTax = totalEx * taxRate;

@@ -30,7 +30,7 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
   }
 
   private async ajax(): Promise<void> {
-    const res = await Axios.post('/api/v1/taxes/'+this.props.entity+'/'+this.props.year+'/'+this.state.quarter);
+    const res = await Axios.post<TaxData>('/api/v1/taxes/'+this.props.entity+'/'+this.props.year+'/'+this.state.quarter);
     this.setState({data: res.data});
   }
 

@@ -6,24 +6,26 @@ import './dashboard.css';
 
 // Types generated from Go structs (run: ~/go/bin/tygo generate)
 import type { DashboardResponse } from '../../types/model';
+import type { CommitInfo, HistoryResponse } from '../../types/git';
+
+// Parse string to number, returning 0 for invalid/NaN values
+function safeParseFloat(val: string | undefined | null): number {
+	if (val == null) return 0;
+	const n = parseFloat(val);
+	return Number.isNaN(n) ? 0 : n;
+}
 
 // Chart colors - must match CSS variables in dashboard.css
+const currentColorCss = getComputedStyle(document.documentElement).getPropertyValue('--chart-color-current').trim();
+const previousColorCss = getComputedStyle(document.documentElement).getPropertyValue('--chart-color-previous').trim();
 const CHART_COLORS = {
-	current: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-current').trim() || '#62cb31',
-	previous: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-previous').trim() || '#3498db'
+	current: currentColorCss !== '' ? currentColorCss : '#62cb31',
+	previous: previousColorCss !== '' ? previousColorCss : '#3498db'
 };
-
-interface ICommit {
-	hash: string
-	fullHash: string
-	message: string
-	author: string
-	date: string
-}
 
 interface IState {
 	data: DashboardResponse | null
-	commits: ICommit[]
+	commits: CommitInfo[]
 	loading: boolean
 }
 
@@ -77,12 +79,12 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 			const prevKey = `${prevYear}-${monthStr}`;
 
 			// Current year
-			const currentRev = data.monthly[currentKey] ? parseFloat(data.monthly[currentKey].RevenueEx) || 0 : 0;
-			const currentHours = data.monthly[currentKey] ? parseFloat(data.monthly[currentKey].Hours) || 0 : 0;
+			const currentRev = safeParseFloat(data.monthly[currentKey]?.RevenueEx);
+			const currentHours = safeParseFloat(data.monthly[currentKey]?.Hours);
 
 			// Previous year
-			const prevRev = data.monthlyPrevYear[prevKey] ? parseFloat(data.monthlyPrevYear[prevKey].RevenueEx) || 0 : 0;
-			const prevHours = data.monthlyPrevYear[prevKey] ? parseFloat(data.monthlyPrevYear[prevKey].Hours) || 0 : 0;
+			const prevRev = safeParseFloat(data.monthlyPrevYear[prevKey]?.RevenueEx);
+			const prevHours = safeParseFloat(data.monthlyPrevYear[prevKey]?.Hours);
 
 			revstats.push({month: months[m-1] ?? "", current: currentRev, previous: prevRev});
 			hourstats.push({month: months[m-1] ?? "", current: currentHours, previous: prevHours});
@@ -101,9 +103,9 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 							<div className="stats-title">
 								<span className="fas fa-money-bill"></span> Unpaid Invoices
 							</div>
-							<h1>&euro; {formatCurrency(parseFloat(data.unpaid.TotalAmount || "0"))}</h1>
+							<h1>&euro; {formatCurrency(safeParseFloat(data.unpaid.TotalAmount))}</h1>
 							<div className="stats-info">
-								{data.unpaid.Count || 0} invoices pending payment
+								{data.unpaid.Count} invoices pending payment
 							</div>
 						</div>
 					</div>
@@ -114,9 +116,9 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 							<div className="stats-title">
 								<span className="far fa-clock"></span> Unbilled Hours
 							</div>
-							<h1>{formatCurrency(parseFloat(data.unbilledHours.TotalHours || "0"))}</h1>
+							<h1>{formatCurrency(safeParseFloat(data.unbilledHours.TotalHours))}</h1>
 							<div className="stats-info">
-								{data.unbilledHours.Count || 0} hour sheets to bill
+								{data.unbilledHours.Count} hour sheets to bill
 							</div>
 						</div>
 					</div>
@@ -375,7 +377,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 		const year = this.props.year;
 
 		// Fetch comprehensive dashboard data
-		Axios.get('/api/v1/dashboard/'+entity+'/'+year, {})
+		Axios.get<DashboardResponse>('/api/v1/dashboard/'+entity+'/'+year, {})
 		.then(res => {
 			this.setState({data: res.data, loading: false});
 		})
@@ -385,9 +387,9 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 		});
 
 		// Fetch git commits
-		Axios.get('/api/v1/git/'+entity+'/history', {params: {page: 0}})
+		Axios.get<HistoryResponse>('/api/v1/git/'+entity+'/history', {params: {page: 0}})
 		.then(res => {
-			this.setState({commits: res.data.commits || []});
+			this.setState({commits: res.data.commits});
 		})
 		.catch(_err => {
 			// Silently ignore - git history may not be available

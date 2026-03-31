@@ -1,6 +1,6 @@
 import * as React from "react";
 import Axios from "axios";
-import {IInvoiceMail, IInvoiceMeta} from "./edit-struct";
+import type {IInvoiceMail, IInvoiceMeta} from "./edit-struct";
 import {ActionLink} from "../../shared/ActionButton";
 import { openModal, closeModal } from "../../shared/Modal";
 
@@ -46,7 +46,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
     const mail = parent.state.Mail;
     const meta = parent.state.Meta;
     if (!mail || !meta) return;
-    const req = JSON.parse(JSON.stringify(mail));
+    const req = JSON.parse(JSON.stringify(mail)) as IInvoiceMail;
     console.log("Send!", req);
 
     await Axios.post('/api/v1/invoice/'+parent.props.entity+'/'+parent.props.year+'/'+parent.props.bucket+'/'+meta.Conceptid+'/email', req);

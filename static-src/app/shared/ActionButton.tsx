@@ -27,7 +27,7 @@ export function ActionButton({ onClick, disabled, children, className, ...props 
       {...props}
       type="button"
       className={className}
-      disabled={disabled || loading}
+      disabled={disabled === true || loading}
       onClick={handleClick}
     >
       {loading ? <><i className="fas fa-spinner fa-spin" /> Working...</> : children}
@@ -62,7 +62,7 @@ export function ActionLink({ onClick, disabled, children, className, ...props }:
   return (
     <a
       {...props}
-      className={`${className || ""}${disabledClass}`}
+      className={`${className ?? ""}${disabledClass}`}
       onClick={handleClick}
     >
       {loading ? <i className="fas fa-spinner fa-spin" /> : children}

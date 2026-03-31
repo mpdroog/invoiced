@@ -6,7 +6,7 @@ import {ActionButton} from "../../shared/ActionButton";
 import {InvoiceLineEdit} from "./edit-line";
 import {InvoiceMail} from "./edit-mail";
 import Big from "big.js";
-import * as Struct from "./edit-struct";
+import type * as Struct from "./edit-struct";
 
 interface InvoiceEditProps {
   entity: string;
@@ -88,7 +88,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
 
   componentDidMount(): void {
     const params = this.props;
-    if (params.id && params.bucket) {
+    if (params.id != null && params.id !== '' && params.bucket != null && params.bucket !== '') {
       this.ajax(params.bucket, params.id);
     } else {
       this.ajaxDefaults(params.entity);
@@ -96,7 +96,11 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
   }
 
   private ajaxDefaults(entity: string): void {
-    Axios.get(`/api/v1/entities/${entity}/details`)
+    interface EntityDetails {
+      Entity: { Name: string; VAT: string; COC: string; IBAN: string; BIC: string };
+      User: { Name: string; Address1: string; Address2: string };
+    }
+    Axios.get<EntityDetails>(`/api/v1/entities/${entity}/details`)
     .then(res => {
       this.setState({
         Company: res.data.Entity.Name,
@@ -119,7 +123,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
   }
 
   private ajax(bucket: string, name: string): void {
-    Axios.get(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${name}`)
+    Axios.get<Struct.IInvoiceState>(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${name}`)
     .then(res => {
       this.parseInput(res.data);
     })
@@ -130,17 +134,17 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
 
   private parseInput(data: Struct.IInvoiceState, newbucket?: string): void {
     const meta = data.Meta;
-    if (!meta) return;
+    if (meta == null) return;
 
-    const bucket = newbucket || this.props.bucket || 'concepts';
+    const bucket = newbucket ?? this.props.bucket ?? 'concepts';
     const url = `#${this.props.entity}/${this.props.year}/invoices/edit/${bucket}/${meta.Conceptid}`;
     if (window.location.hash !== url) {
       // Update URL so refresh will keep the invoice open
       history.replaceState({}, "", url);
     }
-    meta.Issuedate = meta.Issuedate ? Moment(meta.Issuedate).format('YYYY-MM-DD') : null;
-    meta.Duedate = meta.Duedate ? Moment(meta.Duedate).format('YYYY-MM-DD') : null;
-    meta.Paydate = meta.Paydate ? Moment(meta.Paydate).format('YYYY-MM-DD') : null;
+    meta.Issuedate = meta.Issuedate != null ? Moment(meta.Issuedate).format('YYYY-MM-DD') : null;
+    meta.Duedate = meta.Duedate != null ? Moment(meta.Duedate).format('YYYY-MM-DD') : null;
+    meta.Paydate = meta.Paydate != null ? Moment(meta.Paydate).format('YYYY-MM-DD') : null;
 
     this.setState(data as InvoiceEditState);
   }
@@ -151,15 +155,18 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       console.log("Finalized, not allowing changes!");
       return;
     }
+    // Dynamic nested object traversal requires any - this navigates paths like "Customer.Name"
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let node: any = this.state;
     for (let i = 0; i < indices.length-1; i++) {
       const key = indices[i];
       if (key === undefined) return;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       node = node[key];
     }
     const lastKey = indices[indices.length-1];
     if (lastKey === undefined) return;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     node[lastKey] = val;
 
     // Any post-processing
@@ -238,33 +245,33 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
 
   handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void {
     const key = e.target.dataset["key"];
-    if (!key) return;
+    if (key == null) return;
     console.log("handleChange", key);
     const indices = key.split('.');
     this.triggerChange(indices, e.target.value);
   }
 
   private async save(): Promise<void> {
-    const req = JSON.parse(JSON.stringify(this.state));
+    const req = JSON.parse(JSON.stringify(this.state)) as InvoiceEditState;
     console.log(req);
 
-    const res = await Axios.post('/api/v1/invoice/'+this.props.entity+'/'+this.props.year, req);
+    const res = await Axios.post<Struct.IInvoiceState>('/api/v1/invoice/'+this.props.entity+'/'+this.props.year, req);
     this.parseInput.call(this, res.data);
   }
 
   private async reset(): Promise<void> {
     const meta = this.state.Meta;
-    if (!meta) return;
-    const res = await Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/reset`, {});
+    if (meta == null) return;
+    const res = await Axios.post<Struct.IInvoiceState>(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/reset`, {});
     // Reset always moves to concepts bucket
     this.parseInput(res.data, "concepts");
   }
 
   private async finalize(): Promise<void> {
     const meta = this.state.Meta;
-    if (!meta) return;
-    const res = await Axios.post(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/finalize`, {});
-    this.parseInput(res.data, res.headers["x-bucket-change"]);
+    if (meta == null) return;
+    const res = await Axios.post<Struct.IInvoiceState>(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/finalize`, {});
+    this.parseInput(res.data, res.headers["x-bucket-change"] as string | undefined);
   }
 
   private pdf(): void {
@@ -283,19 +290,19 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     this.setState({
       Customer: {
         Name: data.Name,
-        Street1: data.Street1 || "",
-        Street2: data.Street2 || "",
-        Vat: data.VAT || "",
-        Coc: data.COC || "",
+        Street1: data.Street1 ?? "",
+        Street2: data.Street2 ?? "",
+        Vat: data.VAT ?? "",
+        Coc: data.COC ?? "",
         Tax: "NL21"
       },
-      Notes: data.NoteAdd,
+      Notes: data.NoteAdd ?? "",
       Mail: {
         ...this.state.Mail,
-        From: this.state.Mail?.From || "",
-        Subject: this.state.Mail?.Subject || "",
-        Body: this.state.Mail?.Body || "",
-        To: (data.BillingEmail || []).join(", ")
+        From: this.state.Mail?.From ?? "",
+        Subject: this.state.Mail?.Subject ?? "",
+        Body: this.state.Mail?.Body ?? "",
+        To: (data.BillingEmail ?? []).join(", ")
       }
     });
   }
@@ -306,7 +313,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
 
   public pushUndo(): void {
     // Save current lines state for undo
-    const linesCopy = JSON.parse(JSON.stringify(this.state.Lines || []));
+    const linesCopy = JSON.parse(JSON.stringify(this.state.Lines ?? [])) as Struct.IInvoiceLine[];
     this.undoStack.push(linesCopy);
     this.redoStack = []; // Clear redo stack on new change
   }
@@ -315,10 +322,10 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     e.preventDefault();
     if (this.undoStack.length === 0) return;
     const previousLines = this.undoStack.pop();
-    if (!previousLines) return;
+    if (previousLines == null) return;
 
     // Save current state to redo stack
-    const currentLines = JSON.parse(JSON.stringify(this.state.Lines || []));
+    const currentLines = JSON.parse(JSON.stringify(this.state.Lines ?? [])) as Struct.IInvoiceLine[];
     this.redoStack.push(currentLines);
 
     // Restore previous state
@@ -329,10 +336,10 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     e.preventDefault();
     if (this.redoStack.length === 0) return;
     const nextLines = this.redoStack.pop();
-    if (!nextLines) return;
+    if (nextLines == null) return;
 
     // Save current state to undo stack
-    const currentLines = JSON.parse(JSON.stringify(this.state.Lines || []));
+    const currentLines = JSON.parse(JSON.stringify(this.state.Lines ?? [])) as Struct.IInvoiceLine[];
     this.undoStack.push(currentLines);
 
     // Restore next state
@@ -342,9 +349,9 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
 	render(): React.JSX.Element {
     const inv = this.state;
     const that = this;
-    const meta = inv.Meta || { Status: "NEW", Conceptid: "", Invoiceid: "", Ponumber: "", HourFile: "" };
-    const entity = inv.Entity || { Name: "", Street1: "", Street2: "" };
-    const customer = inv.Customer || { Name: "", Street1: "", Street2: "", Vat: "", Coc: "", Tax: "NL21" };
+    const meta = inv.Meta ?? { Status: "NEW", Conceptid: "", Invoiceid: "", Ponumber: "", HourFile: "" };
+    const entity = inv.Entity ?? { Name: "", Street1: "", Street2: "" };
+    const customer = inv.Customer ?? { Name: "", Street1: "", Street2: "", Vat: "", Coc: "", Tax: "NL21" };
 
 		return <form><div>
 		    <div className="panel panel-primary">
@@ -415,7 +422,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
           <tr>
             <td className="text">Issue Date</td>
             <td>
-              <LockedInput type="date" value={meta.Issuedate || ""} placeholder="AUTOGENERATED" onChange={that.handleChange.bind(that)} locked={true} data-key="Meta.Issuedate"/>
+              <LockedInput type="date" value={meta.Issuedate ?? ""} placeholder="AUTOGENERATED" onChange={that.handleChange.bind(that)} locked={true} data-key="Meta.Issuedate"/>
             </td>
           </tr>
           <tr>
@@ -425,7 +432,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
           <tr>
             <td className="text">Due Date</td>
             <td>
-                <input type="date" value={meta.Duedate || ""} onChange={that.handleChange.bind(that)} className="form-control" data-key="Meta.Duedate" />
+                <input type="date" value={meta.Duedate ?? ""} onChange={that.handleChange.bind(that)} className="form-control" data-key="Meta.Duedate" />
             </td>
           </tr>
         </tbody>
@@ -445,8 +452,8 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       <p>Banking details</p>
       <table className="table mb0"><tbody>
         <tr><td className="text">VAT</td><td className="pr">
-          <LockedInput type="text" value={(inv.Bank || {Vat: "", Coc: "", Iban: "", Bic: ""}).Vat} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Vat" required={true} /></td></tr>
-        <tr><td className="text">CoC</td><td className="pr"><LockedInput type="text" value={(inv.Bank || {Vat: "", Coc: "", Iban: "", Bic: ""}).Coc} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Coc" required={true} /></td></tr>
+          <LockedInput type="text" value={(inv.Bank ?? {Vat: "", Coc: "", Iban: "", Bic: ""}).Vat} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Vat" required={true} /></td></tr>
+        <tr><td className="text">CoC</td><td className="pr"><LockedInput type="text" value={(inv.Bank ?? {Vat: "", Coc: "", Iban: "", Bic: ""}).Coc} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Coc" required={true} /></td></tr>
         <tr><td className="text">IBAN</td><td className="pr"><LockedInput type="text" value={inv.Bank?.Iban ?? ""} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Iban" required={true} /></td></tr>
         <tr><td className="text">BIC</td><td className="pr"><LockedInput type="text" value={inv.Bank?.Bic ?? ""} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Bic" required={true} /></td></tr>
       </tbody></table>
