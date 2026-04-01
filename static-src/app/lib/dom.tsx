@@ -6,11 +6,11 @@ interface DOMNode extends HTMLElement {
 }
 
 function isNode(target: EventTarget | null): target is Node {
-  return target !== null && 'parentNode' in target;
+  return target !== null && "parentNode" in target;
 }
 
 function isHTMLElement(node: Node): node is HTMLElement {
-  return 'nodeName' in node && 'dataset' in node;
+  return "nodeName" in node && "dataset" in node;
 }
 
 export class DOM {

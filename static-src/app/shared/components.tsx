@@ -3,7 +3,7 @@ import Axios from "axios";
 
 interface LockedInputProps {
   locked: boolean;
-  'data-key'?: string;
+  "data-key"?: string;
   type: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   value: string;
@@ -23,28 +23,39 @@ export class LockedInput extends React.Component<LockedInputProps, LockedInputSt
   constructor(props: LockedInputProps) {
     super(props);
     this.state = {
-      locked: props.locked
-    }
+      locked: props.locked,
+    };
   }
 
   private toggle(e: React.MouseEvent<HTMLAnchorElement>): void {
     e.preventDefault();
-  	console.log("toggle lock");
-  	this.setState({locked: !this.state.locked});
+    console.log("toggle lock");
+    this.setState({ locked: !this.state.locked });
   }
 
   render(): React.JSX.Element {
     const locked = this.state.locked;
-	const icon = locked ? "fa-lock" : "fa-unlock";
-	return <div className="input-group">
-		<input className="form-control" data-key={this.props['data-key']} disabled={locked} type={this.props.type} onChange={this.props.onChange} value={this.props.value} placeholder={this.props.placeholder} id={this.props.id} />
+    const icon = locked ? "fa-lock" : "fa-unlock";
+    return (
+      <div className="input-group">
+        <input
+          className="form-control"
+          data-key={this.props["data-key"]}
+          disabled={locked}
+          type={this.props.type}
+          onChange={this.props.onChange}
+          value={this.props.value}
+          placeholder={this.props.placeholder}
+          id={this.props.id}
+        />
         <span className="input-group-text">
-        	<a onClick={this.toggle.bind(this)} className="lock-toggle">
-        		<i className={"fas fa-hover-shake " + icon}></i>
-        	</a>
+          <a onClick={this.toggle.bind(this)} className="lock-toggle">
+            <i className={"fas fa-hover-shake " + icon}></i>
+          </a>
         </span>
-    </div>;
-   }
+      </div>
+    );
+  }
 }
 
 interface AutocompleteProps {
@@ -55,7 +66,7 @@ interface AutocompleteProps {
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
-  'data-key'?: string;
+  "data-key"?: string;
   id?: string;
 }
 
@@ -79,80 +90,97 @@ interface AutocompleteState {
  * Autocomplete dropdown
  */
 export class Autocomplete extends React.Component<AutocompleteProps, AutocompleteState> {
-  private lookupQuery: string = '';
+  private lookupQuery: string = "";
 
   constructor(props: AutocompleteProps) {
     super(props);
     this.state = {
-    	suggestions: [],
-    	show: false
-    }
+      suggestions: [],
+      show: false,
+    };
   }
 
   lookup(e: React.ChangeEvent<HTMLInputElement>): void {
-  	this.props.onChange(e);
+    this.props.onChange(e);
     const txt = e.target.value;
     if (txt === this.lookupQuery) {
-    	return;
+      return;
     }
     this.lookupQuery = txt;
 
     console.log("lookup", this.props.url, txt);
 
-    Axios.get<AutocompleteSuggestion[]>(this.props.url, {params: {"query": txt}})
-    .then(res => {
-		console.log("lookup::suggest", res.data);
-		this.setState({suggestions: res.data});
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+    Axios.get<AutocompleteSuggestion[]>(this.props.url, { params: { query: txt } })
+      .then((res) => {
+        console.log("lookup::suggest", res.data);
+        this.setState({ suggestions: res.data });
+      })
+      .catch((err) => {
+        handleErr(err);
+      });
   }
 
   onFocus(_e: React.FocusEvent<HTMLInputElement>): void {
-    this.setState({show: true});
+    this.setState({ show: true });
   }
 
   onBlur(e: React.FocusEvent<HTMLDivElement>): void {
     const currentTarget = e.currentTarget;
     window.setTimeout(() => {
-      if (! currentTarget.contains(document.activeElement)) {
-        this.setState({show: false});
+      if (!currentTarget.contains(document.activeElement)) {
+        this.setState({ show: false });
       }
     }, 0);
   }
 
   onSelect(e: React.MouseEvent<HTMLAnchorElement>): void {
-  	e.preventDefault();
-  	const target = e.currentTarget;
-  	const key = target.dataset["key"];
-  	if (key === undefined) return;
-  	const data = this.state.suggestions[parseInt(key, 10)];
-  	if (!data) return;
-	  this.props.onSelect(data);
-    this.setState({show: false});
+    e.preventDefault();
+    const target = e.currentTarget;
+    const key = target.dataset["key"];
+    if (key === undefined) return;
+    const data = this.state.suggestions[parseInt(key, 10)];
+    if (!data) return;
+    this.props.onSelect(data);
+    this.setState({ show: false });
   }
 
   render(): React.JSX.Element {
-	let suggest: React.JSX.Element | null = null;
-	if (this.state.show && this.state.suggestions.length > 0) {
-		const items: React.JSX.Element[] = [];
-		this.state.suggestions.forEach((item, idx) => {
-			items.push(<div key={"suggest-"+String(idx)} className="autocomplete-item"><a data-key={idx} onClick={this.onSelect.bind(this)}>{item.Name}</a></div>);
-		})
-		suggest = <div className="autocomplete-dropdown">
-			{items}
-		</div>;
-	}
+    let suggest: React.JSX.Element | null = null;
+    if (this.state.show && this.state.suggestions.length > 0) {
+      const items: React.JSX.Element[] = [];
+      this.state.suggestions.forEach((item, idx) => {
+        items.push(
+          <div key={"suggest-" + String(idx)} className="autocomplete-item">
+            <a data-key={idx} onClick={this.onSelect.bind(this)}>
+              {item.Name}
+            </a>
+          </div>
+        );
+      });
+      suggest = <div className="autocomplete-dropdown">{items}</div>;
+    }
 
-  let req: React.JSX.Element | null = null;
-  if (this.props.required) {
-    req = <i className="fas fa-asterisk text-danger fa-input"></i>;
+    let req: React.JSX.Element | null = null;
+    if (this.props.required) {
+      req = <i className="fas fa-asterisk text-danger fa-input"></i>;
+    }
+    return (
+      <div className="autocomplete-container" tabIndex={1} onBlur={this.onBlur.bind(this)}>
+        <input
+          type="text"
+          className="form-control"
+          onFocus={this.onFocus.bind(this)}
+          onChange={this.lookup.bind(this)}
+          value={this.props.value}
+          disabled={this.props.disabled}
+          placeholder={this.props.placeholder}
+          data-key={this.props["data-key"]}
+          id={this.props.id}
+          autoComplete="off"
+        />
+        {req}
+        {suggest}
+      </div>
+    );
   }
-	return <div className="autocomplete-container" tabIndex={1} onBlur={this.onBlur.bind(this)}>
-		<input type="text" className="form-control" onFocus={this.onFocus.bind(this)} onChange={this.lookup.bind(this)} value={this.props.value} disabled={this.props.disabled} placeholder={this.props.placeholder} data-key={this.props['data-key']} id={this.props.id} autoComplete="off" />
-    {req}
-		{suggest}
-		</div>;
-	}
 }

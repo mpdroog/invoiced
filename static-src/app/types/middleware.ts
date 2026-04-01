@@ -27,7 +27,7 @@ export interface Sess {
  */
 export interface Entities {
   Version: number /* int */;
-  Company: { [key: string]: Entity};
+  Company: { [key: string]: Entity };
   User: User[];
 }
 /**
@@ -35,7 +35,7 @@ export interface Entities {
  */
 export interface Entity {
   Years: string[];
-  YearRevenue: { [key: string]: string}; // Revenue per year (EUR)
+  YearRevenue: { [key: string]: string }; // Revenue per year (EUR)
   Name: string;
   COC: string;
   VAT: string;

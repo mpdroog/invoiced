@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc --noEmit && eslint app/ && vite build",
     "lint": "eslint app/",
-    "lint:fix": "eslint app/ --fix"
+    "lint:fix": "eslint app/ --fix",
+    "format": "prettier --write app/",
+    "format:check": "prettier --check app/"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
@@ -21,6 +23,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.4.0",
+    "prettier": "^3.8.1",
     "typescript": "^5.3.3",
     "vite": "^6.0.0"
   },

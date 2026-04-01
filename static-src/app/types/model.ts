@@ -13,7 +13,7 @@ export interface TaxSummary {
   Ex: string; // Sum revenue of NL invoices
   Tax: string; // Tax to pay
   EUEx: string; // Sum revenue of EU invoices
-  EUCompany: { [key: string]: string}; // Revenue per EU company VAT number (for ICP)
+  EUCompany: { [key: string]: string }; // Revenue per EU company VAT number (for ICP)
   ExWorld: string; // Sum revenue of world invoices
   ExRevenue: string; // Sum revenue of everything
 }
@@ -104,8 +104,8 @@ export interface DashboardMetric {
  * DashboardResponse contains all dashboard data for the API
  */
 export interface DashboardResponse {
-  monthly: { [key: string]: MonthlyMetric | undefined};
-  monthlyPrevYear: { [key: string]: MonthlyMetric | undefined};
+  monthly: { [key: string]: MonthlyMetric | undefined };
+  monthlyPrevYear: { [key: string]: MonthlyMetric | undefined };
   unpaid: UnpaidSummary;
   overdue: OverdueInvoice[];
   quarters: QuarterSummary[];

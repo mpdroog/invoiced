@@ -47,5 +47,5 @@ export interface PurchaseLine {
  * ListReply contains the response for listing purchase invoices.
  */
 export interface ListReply {
-  Invoices: { [key: string]: (PurchaseInvoice | undefined)[]};
+  Invoices: { [key: string]: (PurchaseInvoice | undefined)[] };
 }

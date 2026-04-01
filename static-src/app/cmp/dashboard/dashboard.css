@@ -1,67 +1,67 @@
 :root {
-    --chart-color-current: #62cb31;
-    --chart-color-previous: #3498db;
+  --chart-color-current: #62cb31;
+  --chart-color-previous: #3498db;
 }
 
 /* Stats panels */
 .card.stats .card-body {
-    text-align: center;
-    padding: 20px;
+  text-align: center;
+  padding: 20px;
 }
 
 .card.stats .stats-title {
-    font-size: 12px;
-    color: var(--bs-secondary-color);
-    text-transform: uppercase;
-    margin-bottom: 5px;
+  font-size: 12px;
+  color: var(--bs-secondary-color);
+  text-transform: uppercase;
+  margin-bottom: 5px;
 }
 
 .card.stats h1 {
-    font-size: 32px;
-    margin: 10px 0;
-    font-weight: 300;
+  font-size: 32px;
+  margin: 10px 0;
+  font-weight: 300;
 }
 
 .card.stats .stats-info {
-    font-size: 12px;
-    color: var(--bs-secondary-color);
+  font-size: 12px;
+  color: var(--bs-secondary-color);
 }
 
 /* Chart legend */
 .chart-legend {
-    font-size: 12px;
-    font-weight: normal;
+  font-size: 12px;
+  font-weight: normal;
 }
 
 .chart-legend .legend-current {
-    color: var(--chart-color-current);
-    margin-right: 15px;
+  color: var(--chart-color-current);
+  margin-right: 15px;
 }
 
 .chart-legend .legend-current::before {
-    content: "";
-    display: inline-block;
-    width: 12px;
-    height: 3px;
-    background-color: var(--chart-color-current);
-    margin-right: 5px;
-    vertical-align: middle;
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  background-color: var(--chart-color-current);
+  margin-right: 5px;
+  vertical-align: middle;
 }
 
 .chart-legend .legend-prev {
-    color: var(--chart-color-previous);
+  color: var(--chart-color-previous);
 }
 
 .chart-legend .legend-prev::before {
-    content: "";
-    display: inline-block;
-    width: 12px;
-    height: 3px;
-    background-color: var(--chart-color-previous);
-    margin-right: 5px;
-    vertical-align: middle;
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  background-color: var(--chart-color-previous);
+  margin-right: 5px;
+  vertical-align: middle;
 }
 
 .chart-container {
-    height: 250px;
+  height: 250px;
 }

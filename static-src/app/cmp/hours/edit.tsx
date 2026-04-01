@@ -1,10 +1,10 @@
 import * as React from "react";
 import Axios from "axios";
 import Big from "big.js";
-import {today, prevMonth, timeDiffHours, formatDate} from "../../utils/date";
+import { today, prevMonth, timeDiffHours, formatDate } from "../../utils/date";
 import Import from "./edit-import";
-import {Autocomplete, LockedInput} from "../../shared/components";
-import {ActionButton} from "../../shared/ActionButton";
+import { Autocomplete, LockedInput } from "../../shared/components";
+import { ActionButton } from "../../shared/ActionButton";
 
 interface IHourLineState {
   Hours: number;
@@ -56,27 +56,27 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
       Name: "",
       Project: "",
       Status: "NEW",
-      Total: "0"
+      Total: "0",
     };
   }
 
   componentDidMount(): void {
-    if (this.props.id != null && this.props.id !== '') {
+    if (this.props.id != null && this.props.id !== "") {
       this.ajax(this.props.id);
     }
   }
 
   private ajax(name: string): void {
     Axios.get<IHourState>(`/api/v1/hour/${this.props.entity}/${this.props.year}/${this.props.bucket}/${name}`)
-    .then(res => {
-      this.setState(res.data);
-    })
-    .catch(err => {
-      handleErr(err);
-    });
+      .then((res) => {
+        this.setState(res.data);
+      })
+      .catch((err) => {
+        handleErr(err);
+      });
   }
 
-  private importLine(lines: Array<{day: string | null; text: string; fromTo: string[][]}>): void {
+  private importLine(lines: Array<{ day: string | null; text: string; fromTo: string[][] }>): void {
     const out = [...this.state.Lines];
     for (const lineItem of lines) {
       if (lineItem.day == null) continue;
@@ -96,14 +96,14 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
           Stop: stopTime,
           Hours: diff,
           Description: lineItem.text,
-          Day: lineItem.day
+          Day: lineItem.day,
         });
       }
     }
 
     this.setState({
       Lines: out,
-      Total: this.updateTotalFromLines(out)
+      Total: this.updateTotalFromLines(out),
     });
   }
 
@@ -127,17 +127,17 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
       Stop: this.state.stop,
       Hours: sum,
       Description: this.state.description,
-      Day: formatDate(this.state.day)
+      Day: formatDate(this.state.day),
     });
     this.setState({
       Lines: this.state.Lines,
-      Total: total.plus(sum).toFixed(2).toString()
+      Total: total.plus(sum).toFixed(2).toString(),
     });
   }
 
   private updateTotal(): string {
     let total = new Big("0.00");
-    this.state.Lines.forEach(function(val) {
+    this.state.Lines.forEach(function (val) {
       total = total.plus(val.Hours);
     });
     return total.toFixed(2).toString();
@@ -147,19 +147,19 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     const elem = e.target;
 
     if (elem.id === "hour-start") {
-      this.setState({start: elem.value});
+      this.setState({ start: elem.value });
     }
     if (elem.id === "hour-stop") {
-      this.setState({stop: elem.value});
+      this.setState({ stop: elem.value });
     }
     if (elem.id === "hour-description") {
-      this.setState({description: elem.value});
+      this.setState({ description: elem.value });
     }
     if (elem.id === "hour-name") {
-      this.setState({Name: elem.value});
+      this.setState({ Name: elem.value });
     }
     if (elem.id === "hour-day") {
-      this.setState({day: elem.value});
+      this.setState({ day: elem.value });
     }
     if (elem.id === "hour-project") {
       const prevMonthStr = prevMonth();
@@ -173,11 +173,11 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
       }
 
       console.log("diff", diff);
-      if (Object.keys(diff).length > 0) this.setState(prev => ({...prev, ...diff}));
+      if (Object.keys(diff).length > 0) this.setState((prev) => ({ ...prev, ...diff }));
     }
   }
 
-  private selectProject(prj: {Name: string; HourRate?: number}): void {
+  private selectProject(prj: { Name: string; HourRate?: number }): void {
     console.log("Change", prj);
     const diff: Partial<IHourState> = {
       Project: prj.Name,
@@ -186,7 +186,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     if (this.state.Name === "") {
       diff.Name = prj.Name + "-" + prevMonth();
     }
-    this.setState(prev => ({...prev, ...diff}));
+    this.setState((prev) => ({ ...prev, ...diff }));
   }
 
   private pushUndo(): void {
@@ -204,7 +204,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     const currentLines = structuredClone(this.state.Lines);
     this.redoStack.push(currentLines);
 
-    this.setState({Lines: previousLines, Total: this.updateTotalFromLines(previousLines)});
+    this.setState({ Lines: previousLines, Total: this.updateTotalFromLines(previousLines) });
   }
 
   private redo(e: React.MouseEvent<HTMLButtonElement>): void {
@@ -216,12 +216,12 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     const currentLines = structuredClone(this.state.Lines);
     this.undoStack.push(currentLines);
 
-    this.setState({Lines: nextLines, Total: this.updateTotalFromLines(nextLines)});
+    this.setState({ Lines: nextLines, Total: this.updateTotalFromLines(nextLines) });
   }
 
   private updateTotalFromLines(lines: IHourLineState[]): string {
     let total = new Big("0.00");
-    lines.forEach(function(val) {
+    lines.forEach(function (val) {
       total = total.plus(val.Hours);
     });
     return total.toFixed(2).toString();
@@ -231,11 +231,11 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     this.pushUndo();
     const newLines = [...this.state.Lines];
     console.log(`Deleted ${key} idx `, newLines.splice(key, 1)[0]);
-    this.setState({Lines: newLines, Total: this.updateTotalFromLines(newLines)});
+    this.setState({ Lines: newLines, Total: this.updateTotalFromLines(newLines) });
   }
 
   private async save(): Promise<void> {
-    const req = {...this.state};
+    const req = { ...this.state };
     req.Total = this.updateTotal();
 
     const res = await Axios.post<IHourState>(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts`, req);
@@ -246,15 +246,18 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
 
   private async bill(): Promise<void> {
     const args = this.state;
-    const res = await Axios.post(`/api/v1/hour/${this.props.entity}/${this.props.year}/concepts/${args.Name}/bill`, args);
+    const res = await Axios.post(
+      `/api/v1/hour/${this.props.entity}/${this.props.year}/concepts/${args.Name}/bill`,
+      args
+    );
     location.href = `#${this.props.entity}/${this.props.year}/invoices/edit/concepts/${res.headers["x-redirect-invoice"]}`;
   }
 
   private shortHand(d: number): string {
-    const date = new Date(1000*60*60*d);
-    let str = '';
-    if (date.getUTCDate()-1 > 0) {
-      str += date.getUTCDate()-1 + "d";
+    const date = new Date(1000 * 60 * 60 * d);
+    let str = "";
+    if (date.getUTCDate() - 1 > 0) {
+      str += date.getUTCDate() - 1 + "d";
     }
     str += date.getUTCHours() + "h";
     str += date.getUTCMinutes() + "m";
@@ -263,95 +266,172 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
 
   private toggleImport(e?: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>): void {
     e?.preventDefault();
-    this.setState({import: !this.state.import});
+    this.setState({ import: !this.state.import });
   }
 
-	render(): React.JSX.Element {
+  render(): React.JSX.Element {
     const lines: React.JSX.Element[] = [];
     const that = this;
     const isEditable = this.state.Status === "NEW" || this.state.Status === "CONCEPT";
 
-    this.state.Lines.forEach(function(item:IHourLineState, idx:number) {
-      lines.push(<tr key={idx}>
-        <td><button type="button" className="btn btn-danger" onClick={that.lineRemove.bind(that, idx)}><i className="fas fa-trash"></i></button></td>
-        <td>{item.Day}</td>
-        <td>{item.Start}</td><td>{item.Stop}</td><td>{that.shortHand(item.Hours)}</td><td>{item.Description}</td>
-      </tr>);
+    this.state.Lines.forEach(function (item: IHourLineState, idx: number) {
+      lines.push(
+        <tr key={idx}>
+          <td>
+            <button type="button" className="btn btn-danger" onClick={that.lineRemove.bind(that, idx)}>
+              <i className="fas fa-trash"></i>
+            </button>
+          </td>
+          <td>{item.Day}</td>
+          <td>{item.Start}</td>
+          <td>{item.Stop}</td>
+          <td>{that.shortHand(item.Hours)}</td>
+          <td>{item.Description}</td>
+        </tr>
+      );
     });
 
-		return <form>
-      <div>
-		    <div className="card">
-          <div className="card-header">
-            Project Hour Calc
-          </div>
-          <div className="card-body">
-            <div className="row g-2 align-items-center">
-              <div className="col-auto">
-                <input type="date" id="hour-day" className="form-control" value={this.state.day} onChange={this.update.bind(this)}/>
+    return (
+      <form>
+        <div>
+          <div className="card">
+            <div className="card-header">Project Hour Calc</div>
+            <div className="card-body">
+              <div className="row g-2 align-items-center">
+                <div className="col-auto">
+                  <input
+                    type="date"
+                    id="hour-day"
+                    className="form-control"
+                    value={this.state.day}
+                    onChange={this.update.bind(this)}
+                  />
+                </div>
+                <div className="col-auto">
+                  <input
+                    type="text"
+                    id="hour-start"
+                    className="form-control"
+                    placeholder="HH:mm"
+                    value={this.state.start}
+                    onChange={this.update.bind(this)}
+                  />
+                </div>
+                <div className="col-auto">
+                  <input
+                    type="text"
+                    id="hour-stop"
+                    className="form-control"
+                    placeholder="HH:mm"
+                    value={this.state.stop}
+                    onChange={this.update.bind(this)}
+                  />
+                </div>
+                <div className="col">
+                  <input
+                    type="text"
+                    id="hour-description"
+                    className="form-control"
+                    placeholder="Description"
+                    value={this.state.description}
+                    onChange={this.update.bind(this)}
+                  />
+                </div>
+                <div className="col-auto">
+                  <button type="button" onClick={this.recalc.bind(this)} className="btn btn-success">
+                    <i className="fas fa-plus"></i>
+                    &nbsp;Add
+                  </button>
+                </div>
               </div>
-              <div className="col-auto">
-                <input type="text" id="hour-start" className="form-control" placeholder="HH:mm" value={this.state.start} onChange={this.update.bind(this)}/>
-              </div>
-              <div className="col-auto">
-                <input type="text" id="hour-stop" className="form-control" placeholder="HH:mm" value={this.state.stop} onChange={this.update.bind(this)}/>
-              </div>
-              <div className="col">
-                <input type="text" id="hour-description" className="form-control" placeholder="Description" value={this.state.description} onChange={this.update.bind(this)}/>
-              </div>
-              <div className="col-auto">
-                <button type="button" onClick={this.recalc.bind(this)} className="btn btn-success">
-                  <i className="fas fa-plus"></i>
-                  &nbsp;Add
-                </button>
-	            </div>
             </div>
           </div>
-		    </div>
-    </div>
-    <Import hide={this.state.import} onHide={this.toggleImport.bind(this)} importFn={this.importLine.bind(this)} />
+        </div>
+        <Import hide={this.state.import} onHide={this.toggleImport.bind(this)} importFn={this.importLine.bind(this)} />
 
-    <div>
-      <div className="card">
-        <div className="card-header">
-          <div className="float-end">
-            <div className="btn-group nm7">
-              <button type="button" className="btn btn-warning" disabled={this.undoStack.length === 0 || !isEditable} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i>&nbsp;Undo</button>
-              <button type="button" className="btn btn-warning" disabled={this.redoStack.length === 0 || !isEditable} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i>&nbsp;Redo</button>
-              <button type="button" className="btn btn-success" disabled={!isEditable} onClick={this.toggleImport.bind(this)}><i className="fas fa-arrow-up"></i>&nbsp;Import</button>
-              <ActionButton className="btn btn-success" disabled={!isEditable} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i>&nbsp;Save</ActionButton>
-              <ActionButton className="btn btn-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fas fa-share"></i>&nbsp;Bill</ActionButton>
+        <div>
+          <div className="card">
+            <div className="card-header">
+              <div className="float-end">
+                <div className="btn-group nm7">
+                  <button
+                    type="button"
+                    className="btn btn-warning"
+                    disabled={this.undoStack.length === 0 || !isEditable}
+                    onClick={this.undo.bind(this)}
+                  >
+                    <i className="fas fa-rotate-left"></i>&nbsp;Undo
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-warning"
+                    disabled={this.redoStack.length === 0 || !isEditable}
+                    onClick={this.redo.bind(this)}
+                  >
+                    <i className="fas fa-rotate-right"></i>&nbsp;Redo
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-success"
+                    disabled={!isEditable}
+                    onClick={this.toggleImport.bind(this)}
+                  >
+                    <i className="fas fa-arrow-up"></i>&nbsp;Import
+                  </button>
+                  <ActionButton className="btn btn-success" disabled={!isEditable} onClick={this.save.bind(this)}>
+                    <i className="fas fa-floppy-disk"></i>&nbsp;Save
+                  </ActionButton>
+                  <ActionButton
+                    className="btn btn-danger"
+                    disabled={this.state.Status !== "CONCEPT"}
+                    onClick={this.bill.bind(this)}
+                  >
+                    <i className="fas fa-share"></i>&nbsp;Bill
+                  </ActionButton>
+                </div>
+              </div>
+              Sum ({this.state.Total} hours/{parseFloat(this.state.Total) * this.state.HourRate} EUR)
+            </div>
+            <div className="card-body">
+              <div className="row">
+                <div className="col-sm-6">
+                  <Autocomplete
+                    id="hour-project"
+                    onSelect={this.selectProject.bind(this)}
+                    onChange={this.update.bind(this)}
+                    placeholder="Project name"
+                    url={"/api/v1/projects/" + that.props.entity + "/search"}
+                    value={this.state.Project}
+                  />
+                </div>
+                <div className="col-sm-6">
+                  <LockedInput
+                    type="text"
+                    id="hour-name"
+                    value={this.state.Name}
+                    placeholder="AUTOGENERATED"
+                    onChange={this.update.bind(this)}
+                    locked={true}
+                  />
+                </div>
+              </div>
+              <table className="table table-striped">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Day</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Hours</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>{lines}</tbody>
+              </table>
             </div>
           </div>
-          Sum ({this.state.Total} hours/{parseFloat(this.state.Total) * this.state.HourRate} EUR)
         </div>
-        <div className="card-body">
-          <div className="row">
-            <div className="col-sm-6">
-              <Autocomplete id="hour-project" onSelect={this.selectProject.bind(this)} onChange={this.update.bind(this)} placeholder="Project name" url={"/api/v1/projects/"+that.props.entity+"/search"} value={this.state.Project} />
-            </div>
-            <div className="col-sm-6">
-              <LockedInput type="text" id="hour-name" value={this.state.Name} placeholder="AUTOGENERATED" onChange={this.update.bind(this)} locked={true} />
-            </div>
-          </div>
-          <table className="table table-striped">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Day</th>
-                <th>From</th>
-                <th>To</th>
-                <th>Hours</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    </form>;
-	}
+      </form>
+    );
+  }
 }

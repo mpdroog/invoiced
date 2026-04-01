@@ -1,8 +1,8 @@
 import * as React from "react";
 import Axios from "axios";
-import {DOM} from "../../lib/dom";
-import { decode as msgpackDecode } from '@msgpack/msgpack';
-import {ActionLink} from "../../shared/ActionButton";
+import { DOM } from "../../lib/dom";
+import { decode as msgpackDecode } from "@msgpack/msgpack";
+import { ActionLink } from "../../shared/ActionButton";
 
 interface IHourPagination {
   from?: number;
@@ -42,11 +42,11 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
     this.state = {
       pagination: {
         from: 0,
-        count: 50
+        count: 50,
       },
       hours: null,
       sortField: "name",
-      sortDirection: "asc"
+      sortDirection: "asc",
     };
   }
 
@@ -57,16 +57,20 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
   private ajax(): void {
     const entity = this.props.entity;
     const year = this.props.year;
-    Axios.get('/api/v1/hours/'+entity+'/'+year, {params: this.state.pagination, headers: {'Accept': 'application/x-msgpack'}, responseType: 'arraybuffer'})
-    .then(res => {
-      // Server returns a known shape - runtime validation would be overkill for internal API
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-      const data = msgpackDecode(new Uint8Array(res.data)) as Record<string, HourListItem[]>;
-      this.setState({hours: data});
+    Axios.get("/api/v1/hours/" + entity + "/" + year, {
+      params: this.state.pagination,
+      headers: { Accept: "application/x-msgpack" },
+      responseType: "arraybuffer",
     })
-    .catch(err => {
-      handleErr(err);
-    });
+      .then((res) => {
+        // Server returns a known shape - runtime validation would be overkill for internal API
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+        const data = msgpackDecode(new Uint8Array(res.data)) as Record<string, HourListItem[]>;
+        this.setState({ hours: data });
+      })
+      .catch((err) => {
+        handleErr(err);
+      });
   }
 
   private async delete(e: React.MouseEvent<HTMLAnchorElement>): Promise<void> {
@@ -82,9 +86,9 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
 
   private toggleSort(field: SortField): void {
     if (this.state.sortField === field) {
-      this.setState({sortDirection: this.state.sortDirection === "asc" ? "desc" : "asc"});
+      this.setState({ sortDirection: this.state.sortDirection === "asc" ? "desc" : "asc" });
     } else {
-      this.setState({sortField: field, sortDirection: "asc"});
+      this.setState({ sortField: field, sortDirection: "asc" });
     }
   }
 
@@ -103,11 +107,11 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
       const items = hours[bucket];
       if (items === undefined) continue;
       for (const item of items) {
-        flattened.push({bucket, name: item.Name, total: item.Total});
+        flattened.push({ bucket, name: item.Name, total: item.Total });
       }
     }
 
-    const {sortField, sortDirection} = this.state;
+    const { sortField, sortDirection } = this.state;
     flattened.sort((a, b) => {
       let cmp: number;
       switch (sortField) {
@@ -138,23 +142,46 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
         <td>{item.total}h</td>
         <td className="text-end">
           <div className="btn-group">
-            <a className="btn btn-primary btn-sm" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+item.bucket+"/"+item.name}><i className="fas fa-pencil"></i></a>
-            <ActionLink className="btn btn-danger btn-sm" data-target={item.name} data-bucket={item.bucket} onClick={that.delete.bind(that)}><i className="fas fa-trash"></i></ActionLink>
+            <a
+              className="btn btn-primary btn-sm"
+              href={"#" + that.props.entity + "/" + that.props.year + "/hours/edit/" + item.bucket + "/" + item.name}
+            >
+              <i className="fas fa-pencil"></i>
+            </a>
+            <ActionLink
+              className="btn btn-danger btn-sm"
+              data-target={item.name}
+              data-bucket={item.bucket}
+              onClick={that.delete.bind(that)}
+            >
+              <i className="fas fa-trash"></i>
+            </ActionLink>
           </div>
         </td>
       </tr>
     ));
 
     if (rows.length === 0 && this.state.hours !== null) {
-      rows.push(<tr key="empty"><td colSpan={4}>No hours yet :)</td></tr>);
+      rows.push(
+        <tr key="empty">
+          <td colSpan={4}>No hours yet :)</td>
+        </tr>
+      );
     }
 
-    return <div className="mb-4">
+    return (
+      <div className="mb-4">
         <div className="card">
           <div className="card-header">
             <div className="float-end">
               <div className="btn-group nm7">
-                <a href={"#"+that.props.entity+"/"+that.props.year+"/hours/add"} id="js-new" className="btn btn-primary showhide"><i className="fas fa-plus"></i> New</a>
+                <a
+                  href={"#" + that.props.entity + "/" + that.props.year + "/hours/add"}
+                  id="js-new"
+                  className="btn btn-primary showhide"
+                >
+                  <i className="fas fa-plus"></i> New
+                </a>
               </div>
             </div>
             Hour registration
@@ -179,6 +206,7 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
             </table>
           </div>
         </div>
-    </div>;
+      </div>
+    );
   }
 }

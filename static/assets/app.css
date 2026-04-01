@@ -1,128 +1,128 @@
 .search-container {
-    position: relative;
+  position: relative;
 }
 
 .search-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    min-width: 400px;
-    background-color: var(--bs-body-bg);
-    border: 1px solid var(--bs-border-color);
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    max-height: 500px;
-    overflow-y: auto;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 400px;
+  background-color: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .search-loading {
-    padding: 15px;
-    text-align: center;
+  padding: 15px;
+  text-align: center;
 }
 
 .search-no-results {
-    padding: 15px;
-    text-align: center;
-    color: var(--bs-secondary-color);
+  padding: 15px;
+  text-align: center;
+  color: var(--bs-secondary-color);
 }
 
 .search-result-item {
-    padding: 12px 15px;
-    border-bottom: 1px solid var(--bs-border-color);
-    cursor: pointer;
-    font-size: 14px;
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--bs-border-color);
+  cursor: pointer;
+  font-size: 14px;
 }
 
 .search-result-item:hover {
-    background-color: var(--bs-tertiary-bg);
+  background-color: var(--bs-tertiary-bg);
 }
 
 .search-result-item:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .search-result-icon {
-    margin-right: 10px;
-    color: var(--bs-secondary-color);
+  margin-right: 10px;
+  color: var(--bs-secondary-color);
 }
 
 .search-result-subtitle {
-    float: right;
-    color: var(--bs-secondary-color);
-    font-size: 13px;
-    font-weight: 500;
+  float: right;
+  color: var(--bs-secondary-color);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .search-result-meta {
-    font-size: 12px;
-    color: var(--bs-secondary-color);
-    margin-top: 4px;
+  font-size: 12px;
+  color: var(--bs-secondary-color);
+  margin-top: 4px;
 }
 :root {
-    --chart-color-current: #62cb31;
-    --chart-color-previous: #3498db;
+  --chart-color-current: #62cb31;
+  --chart-color-previous: #3498db;
 }
 
 /* Stats panels */
 .card.stats .card-body {
-    text-align: center;
-    padding: 20px;
+  text-align: center;
+  padding: 20px;
 }
 
 .card.stats .stats-title {
-    font-size: 12px;
-    color: var(--bs-secondary-color);
-    text-transform: uppercase;
-    margin-bottom: 5px;
+  font-size: 12px;
+  color: var(--bs-secondary-color);
+  text-transform: uppercase;
+  margin-bottom: 5px;
 }
 
 .card.stats h1 {
-    font-size: 32px;
-    margin: 10px 0;
-    font-weight: 300;
+  font-size: 32px;
+  margin: 10px 0;
+  font-weight: 300;
 }
 
 .card.stats .stats-info {
-    font-size: 12px;
-    color: var(--bs-secondary-color);
+  font-size: 12px;
+  color: var(--bs-secondary-color);
 }
 
 /* Chart legend */
 .chart-legend {
-    font-size: 12px;
-    font-weight: normal;
+  font-size: 12px;
+  font-weight: normal;
 }
 
 .chart-legend .legend-current {
-    color: var(--chart-color-current);
-    margin-right: 15px;
+  color: var(--chart-color-current);
+  margin-right: 15px;
 }
 
 .chart-legend .legend-current::before {
-    content: "";
-    display: inline-block;
-    width: 12px;
-    height: 3px;
-    background-color: var(--chart-color-current);
-    margin-right: 5px;
-    vertical-align: middle;
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  background-color: var(--chart-color-current);
+  margin-right: 5px;
+  vertical-align: middle;
 }
 
 .chart-legend .legend-prev {
-    color: var(--chart-color-previous);
+  color: var(--chart-color-previous);
 }
 
 .chart-legend .legend-prev::before {
-    content: "";
-    display: inline-block;
-    width: 12px;
-    height: 3px;
-    background-color: var(--chart-color-previous);
-    margin-right: 5px;
-    vertical-align: middle;
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 3px;
+  background-color: var(--chart-color-previous);
+  margin-right: 5px;
+  vertical-align: middle;
 }
 
 .chart-container {
-    height: 250px;
+  height: 250px;
 }
