@@ -37,7 +37,7 @@ func ProjectSearch(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 		return
 	}
 
-	var out []Project
+	out := []Project{}
 	for name, project := range projectList {
 		name = strings.ToLower(name)
 		if strings.Contains(name, query) {
