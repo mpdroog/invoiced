@@ -291,8 +291,8 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 								<span className="legend-prev">{prevYear}</span>
 							</span>
 						</div>
-						<div className="card-body chart-container">
-							<ResponsiveContainer width="100%" height="100%">
+						<div className="card-body">
+							<ResponsiveContainer width="100%" height={250}>
 								<LineChart data={revstats}>
 									<CartesianGrid strokeDasharray="3 3" />
 									<XAxis dataKey="month" tick={{fontSize: 12}} interval={1} />
@@ -315,8 +315,8 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 								<span className="legend-prev">{prevYear}</span>
 							</span>
 						</div>
-						<div className="card-body chart-container">
-							<ResponsiveContainer width="100%" height="100%">
+						<div className="card-body">
+							<ResponsiveContainer width="100%" height={250}>
 								<LineChart data={hourstats}>
 									<CartesianGrid strokeDasharray="3 3" />
 									<XAxis dataKey="month" tick={{fontSize: 12}} interval={1} />
