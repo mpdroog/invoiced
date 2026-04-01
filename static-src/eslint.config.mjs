@@ -94,6 +94,7 @@ export default [
       '@typescript-eslint/await-thenable': 'error',
       '@typescript-eslint/no-unnecessary-condition': 'error',
       '@typescript-eslint/only-throw-error': 'error',
+      '@typescript-eslint/no-unsafe-type-assertion': 'error',
 
       // General rules
       'no-unused-vars': 'off',

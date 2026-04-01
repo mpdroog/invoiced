@@ -1,11 +1,11 @@
 import * as React from "react";
 import {DOM} from "../../lib/dom";
-import type {IInvoiceLine, IInvoiceState} from "./edit-struct";
+import type {Invoice, InvoiceLine} from "../../types/model";
 
 interface InvoiceLineEditProps {
   parent: {
-    state: IInvoiceState;
-    setState: (state: Partial<IInvoiceState>) => void;
+    state: Invoice;
+    setState: (state: Pick<Invoice, 'Lines'>) => void;
     handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     pushUndo: () => void;
   };
@@ -19,12 +19,12 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
   private lineAdd(e: React.MouseEvent<HTMLButtonElement>): void {
     e.preventDefault();
     const parent = this.props.parent;
-    if (parent.state.Meta?.Status === 'FINAL') {
+    if (parent.state.Meta.Status === 'FINAL') {
       console.log("Finalized, not allowing changes!");
       return;
     }
     parent.pushUndo();
-    const lines = [...(parent.state.Lines ?? [])];
+    const lines = [...parent.state.Lines];
     console.log("Add invoice line");
     lines.push({
       Description: "",
@@ -43,13 +43,12 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
     if (key === undefined) return;
     const parent = this.props.parent;
 
-    if (parent.state.Meta?.Status === 'FINAL') {
+    if (parent.state.Meta.Status === 'FINAL') {
       console.log("Finalized, not allowing changes!");
       return;
     }
     const keyNum = parseInt(key, 10);
     const lines = parent.state.Lines;
-    if (!lines) return;
 
     parent.pushUndo();
     const newLines = [...lines];
@@ -61,11 +60,11 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
   	const that = this;
   	const parent = this.props.parent;
   	const inv = parent.state;
-  	const invLines = inv.Lines ?? [];
-  	const invTotal = inv.Total ?? { Ex: "0.00", Tax: "0.00", Total: "0.00" };
-  	const invStatus = inv.Meta?.Status;
+  	const invLines = inv.Lines;
+  	const invTotal = inv.Total;
+  	const invStatus = inv.Meta.Status;
   	const lines: React.JSX.Element[] = [];
-	invLines.forEach(function(line: IInvoiceLine, idx: number) {
+	invLines.forEach(function(line: InvoiceLine, idx: number) {
       lines.push(
         <tr key={"line"+idx}>
           <td><button type="button" disabled={invStatus === 'FINAL'} className={"btn " + (invStatus !== 'FINAL' ? 'btn-danger' : 'btn-secondary')} onClick={that.lineRemove.bind(that)} data-idx={idx}><i className="fas fa-trash"></i></button></td>

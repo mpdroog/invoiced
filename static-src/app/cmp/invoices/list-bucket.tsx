@@ -1,6 +1,6 @@
 import * as React from "react";
 import Axios from "axios";
-import type {IInvoiceState} from "./edit-struct";
+import type {Invoice} from "../../types/model";
 import {DOM} from "../../lib/dom";
 import {ActionLink} from "../../shared/ActionButton";
 
@@ -10,7 +10,7 @@ interface IInvoicePagination {
 }
 interface IInvoiceListState {
   pagination?: IInvoicePagination;
-  invoices?: IInvoiceState[];
+  invoices?: Invoice[];
   isBalance: boolean;
   sortField: string;
   sortAsc: boolean;
@@ -22,7 +22,7 @@ interface IInvoiceListProps {
   title: string;
   entity: string;
   year: string;
-  items: Record<string, IInvoiceState[]>;
+  items: Record<string, Invoice[]>;
 }
 
 export default class Invoices extends React.Component<IInvoiceListProps, IInvoiceListState> {
@@ -72,11 +72,11 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     this.setState({selectedKeys: new Set<string>()});
   }
 
-  private getSelectedSum(invoiceList: {key: string, inv: IInvoiceState}[]): number {
+  private getSelectedSum(invoiceList: {key: string, inv: Invoice}[]): number {
     let sum = 0;
     for (const {key, inv} of invoiceList) {
       if (this.state.selectedKeys.has(key)) {
-        const val = parseFloat(inv.Total?.Total ?? "0");
+        const val = parseFloat(inv.Total.Total);
         if (!Number.isNaN(val)) {
           sum += val;
         }
@@ -85,20 +85,20 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     return sum;
   }
 
-  private getSortValue(inv: IInvoiceState, field: string): string | number {
+  private getSortValue(inv: Invoice, field: string): string | number {
     switch (field) {
-      case "Invoice": return inv.Meta?.Invoiceid ?? inv.Meta?.Conceptid ?? "";
-      case "Customer": return inv.Customer?.Name ?? "";
+      case "Invoice": return inv.Meta.Invoiceid !== "" ? inv.Meta.Invoiceid : inv.Meta.Conceptid;
+      case "Customer": return inv.Customer.Name;
       case "Amount": {
-        const val = parseFloat(inv.Total?.Total ?? "0");
+        const val = parseFloat(inv.Total.Total);
         return Number.isNaN(val) ? 0 : val;
       }
-      case "Duedate": return inv.Meta?.Duedate ?? "";
+      case "Duedate": return inv.Meta.Duedate;
       default: return "";
     }
   }
 
-  private sortInvoices(invoices: {key: string, inv: IInvoiceState, bucket: string}[]): {key: string, inv: IInvoiceState, bucket: string}[] {
+  private sortInvoices(invoices: {key: string, inv: Invoice, bucket: string}[]): {key: string, inv: Invoice, bucket: string}[] {
     const field = this.state.sortField;
     const asc = this.state.sortAsc;
 
@@ -138,15 +138,16 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     location.reload();
   }
 
-  private conceptLine(key: string, inv: IInvoiceState, bucket: string, isPending: boolean): React.JSX.Element {
-    const today = new Date().toISOString().split('T')[0] ?? "";
+  private conceptLine(key: string, inv: Invoice, bucket: string, isPending: boolean): React.JSX.Element {
+    const todayParts = new Date().toISOString().split('T');
+    const today = todayParts[0] ?? "";
     let expiryClass = "";
-    if (isPending && inv.Meta?.Duedate != null && inv.Meta.Duedate !== '' && inv.Meta.Duedate <= today) {
+    if (isPending && inv.Meta.Duedate !== '' && inv.Meta.Duedate <= today) {
       expiryClass = 'bg-danger';
     }
-    const meta = inv.Meta ?? { Status: "NEW", Invoiceid: "", Conceptid: "", Duedate: "", Ponumber: "", HourFile: "" };
-    const customer = inv.Customer ?? { Name: "", Street1: "", Street2: "", Vat: "", Coc: "", Tax: "NL21" };
-    const total = inv.Total ?? { Ex: "0.00", Tax: "0.00", Total: "0.00" };
+    const meta = inv.Meta;
+    const customer = inv.Customer;
+    const total = inv.Total;
     const isDeleteDisabled = meta.Status === 'FINAL' || meta.Invoiceid.length > 0;
     const isPaidDisabled = bucket === 'concepts';
     const isSelected = this.state.selectedKeys.has(key);
@@ -167,15 +168,15 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     </tr>;
   }
 
-  private finishedLine(key: string, inv: IInvoiceState, bucket: string): React.JSX.Element {
+  private finishedLine(key: string, inv: Invoice, bucket: string): React.JSX.Element {
     const isSelected = this.state.selectedKeys.has(key);
     return <tr key={key} className={isSelected ? "table-active" : ""}>
       <td><input type="checkbox" className="form-check-input" checked={isSelected} onChange={() => this.toggleSelect(key)} /></td>
       <td className="d-none d-md-table-cell">{key}</td>
-      <td>{inv.Meta?.Invoiceid}</td>
-      <td><span className="d-inline-block text-truncate-sm" title={inv.Customer?.Name}>{inv.Customer?.Name}</span></td>
-      <td className="text-end text-nowrap">&euro; {inv.Total?.Total}</td>
-      <td>{inv.Meta?.Duedate}</td>
+      <td>{inv.Meta.Invoiceid}</td>
+      <td><span className="d-inline-block text-truncate-sm" title={inv.Customer.Name}>{inv.Customer.Name}</span></td>
+      <td className="text-end text-nowrap">&euro; {inv.Total.Total}</td>
+      <td>{inv.Meta.Duedate}</td>
       <td className="text-end">
         <div className="btn-group">
           <a className="btn btn-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fas fa-pencil"></i></a>
@@ -223,7 +224,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
 
 	render(): React.JSX.Element {
     const res:React.JSX.Element[] = [];
-    let invoiceList: {key: string, inv: IInvoiceState, bucket: string}[] = [];
+    let invoiceList: {key: string, inv: Invoice, bucket: string}[] = [];
     const isPending = this.props.bucket === "sales-invoices-unpaid";
 
     for (const dir in this.props.items) {
@@ -237,7 +238,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
         const items = this.props.items[dir];
         if (!items) continue;
         items.forEach((inv) => {
-          const key: string = inv.Meta?.Conceptid ?? "";
+          const key: string = inv.Meta.Conceptid;
           invoiceList.push({key, inv, bucket});
         });
     }

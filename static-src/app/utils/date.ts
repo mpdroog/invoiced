@@ -7,30 +7,30 @@
 import Moment from "moment";
 
 /**
- * Safely format a date string. Returns null for empty, null, undefined, or invalid dates.
+ * Safely format a date string. Returns empty string for empty, null, undefined, or invalid dates.
  */
-export function formatDate(d: string | null | undefined, format: string = 'YYYY-MM-DD'): string | null {
-  if (d == null || d === '') return null;
+export function formatDate(d: string | null | undefined, format: string = 'YYYY-MM-DD'): string {
+  if (d == null || d === '') return '';
   const m = Moment(d);
-  return m.isValid() ? m.format(format) : null;
+  return m.isValid() ? m.format(format) : '';
 }
 
 /**
- * Get relative time (e.g., "2 hours ago") or null if invalid.
+ * Get relative time (e.g., "2 hours ago") or empty string if invalid.
  */
-export function fromNow(d: string | null | undefined): string | null {
-  if (d == null || d === '') return null;
+export function fromNow(d: string | null | undefined): string {
+  if (d == null || d === '') return '';
   const m = Moment(d);
-  return m.isValid() ? m.fromNow() : null;
+  return m.isValid() ? m.fromNow() : '';
 }
 
 /**
  * Get a date N days from today.
- * Returns null if moment creation fails (should not happen in practice).
+ * Returns empty string if moment creation fails (should not happen in practice).
  */
-export function daysFromNow(days: number, format: string = 'YYYY-MM-DD'): string | null {
+export function daysFromNow(days: number, format: string = 'YYYY-MM-DD'): string {
   const m = Moment().add(days, 'days');
-  return m.isValid() ? m.format(format) : null;
+  return m.isValid() ? m.format(format) : '';
 }
 
 /**

@@ -64,7 +64,8 @@ class Menu extends React.Component<MenuProps, MenuState> {
 
     private handleClickOutside(e: MouseEvent): void {
         const searchContainer = document.getElementById('search-container');
-        if (searchContainer && !searchContainer.contains(e.target as Node)) {
+        const target = e.target;
+        if (searchContainer && target instanceof Node && !searchContainer.contains(target)) {
             this.setState({showResults: false});
         }
     }

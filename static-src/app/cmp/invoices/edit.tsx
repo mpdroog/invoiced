@@ -6,7 +6,7 @@ import {ActionButton} from "../../shared/ActionButton";
 import {InvoiceLineEdit} from "./edit-line";
 import {InvoiceMail} from "./edit-mail";
 import Big from "big.js";
-import type * as Struct from "./edit-struct";
+import type {Invoice, InvoiceLine, InvoiceTotal} from "../../types/model";
 
 interface InvoiceEditProps {
   entity: string;
@@ -15,7 +15,7 @@ interface InvoiceEditProps {
   bucket?: string;
 }
 
-interface InvoiceEditState extends Struct.IInvoiceState {
+interface InvoiceEditState extends Invoice {
   State: {
     email: boolean;
     currentBucket: string;
@@ -23,8 +23,8 @@ interface InvoiceEditState extends Struct.IInvoiceState {
 }
 
 export default class InvoiceEdit extends React.Component<InvoiceEditProps, InvoiceEditState> {
-  private undoStack: Struct.IInvoiceLine[][];
-  private redoStack: Struct.IInvoiceLine[][];
+  private undoStack: InvoiceLine[][];
+  private redoStack: InvoiceLine[][];
   public errors: Record<string, string>;
 
   constructor(props: InvoiceEditProps) {
@@ -51,10 +51,11 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
         Conceptid: "",
         Status: "NEW",
         Invoiceid: "",
-        Issuedate: null,
+        Issuedate: "",
         Ponumber: "",
         Duedate: daysFromNow(14),
-        Paydate: null,
+        Paydate: "",
+        Freefield: "",
         HourFile: ""
       },
       Lines: [{
@@ -125,7 +126,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
   }
 
   private ajax(bucket: string, name: string): void {
-    Axios.get<Struct.IInvoiceState>(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${name}`)
+    Axios.get<Invoice>(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${bucket}/${name}`)
     .then(res => {
       this.parseInput(res.data);
     })
@@ -134,9 +135,8 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     });
   }
 
-  private parseInput(data: Struct.IInvoiceState, newbucket?: string): void {
+  private parseInput(data: Invoice, newbucket?: string): void {
     const meta = data.Meta;
-    if (meta == null) return;
 
     const bucket = newbucket ?? this.props.bucket ?? 'concepts';
     const url = `#${this.props.entity}/${this.props.year}/invoices/edit/${bucket}/${meta.Conceptid}`;
@@ -149,14 +149,16 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     meta.Paydate = formatDate(meta.Paydate);
 
     // Update current bucket in state so it reflects the actual location after finalize/reset
-    const newData = data as InvoiceEditState;
-    newData.State = { ...this.state.State, currentBucket: bucket };
-    this.setState(newData);
+    // Add local State to server response data
+    this.setState({
+      ...data,
+      State: { ...this.state.State, currentBucket: bucket }
+    });
   }
 
   private triggerChange(indices: string[], val: string): void {
     const meta = this.state.Meta;
-    if (meta?.Status === 'FINAL') {
+    if (meta.Status === 'FINAL') {
       console.log("Finalized, not allowing changes!");
       return;
     }
@@ -177,7 +179,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     // Any post-processing
     const lines = this.state.Lines;
     const lineIdx = indices[1];
-    if (indices[0] === "Lines" && lines && lineIdx !== undefined) {
+    if (indices[0] === "Lines" && lineIdx !== undefined) {
       const idx = parseInt(lineIdx, 10);
       const line = lines[idx];
       if (line) {
@@ -218,7 +220,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     return val;
   }
 
-  private lineUpdate(line: Struct.IInvoiceLine): Struct.IInvoiceLine {
+  private lineUpdate(line: InvoiceLine): InvoiceLine {
     line.Quantity = this.defaultDecimal(line.Quantity, false);
     line.Price = this.defaultDecimal(line.Price, true);
 
@@ -226,16 +228,16 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     return line;
   }
 
-  private totalUpdate(lines: Struct.IInvoiceLine[]): Struct.IInvoiceTotal {
+  private totalUpdate(lines: InvoiceLine[]): InvoiceTotal {
     let ex = new Big(0);
-    lines.forEach(function(val: Struct.IInvoiceLine) {
+    lines.forEach(function(val: InvoiceLine) {
       console.log("Add", val.Total);
       ex = ex.plus(val.Total);
     });
 
     let tax = new Big(0);
     const customer = this.state.Customer;
-    if (customer?.Tax === "NL21") {
+    if (customer.Tax === "NL21") {
       tax = ex.div("100").times("21");
     }
     const total = ex.plus(tax);
@@ -257,31 +259,32 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
   }
 
   private async save(): Promise<void> {
-    const req = JSON.parse(JSON.stringify(this.state)) as InvoiceEditState;
+    const req = structuredClone(this.state);
     console.log(req);
 
-    const res = await Axios.post<Struct.IInvoiceState>('/api/v1/invoice/'+this.props.entity+'/'+this.props.year, req);
+    const res = await Axios.post<Invoice>('/api/v1/invoice/'+this.props.entity+'/'+this.props.year, req);
     this.parseInput.call(this, res.data);
   }
 
   private async reset(): Promise<void> {
     const meta = this.state.Meta;
-    if (meta == null) return;
-    const res = await Axios.post<Struct.IInvoiceState>(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/reset`, {});
+    const res = await Axios.post<Invoice>(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/reset`, {});
     // Reset always moves to concepts bucket
     this.parseInput(res.data, "concepts");
   }
 
   private async finalize(): Promise<void> {
     const meta = this.state.Meta;
-    if (meta == null) return;
-    const res = await Axios.post<Struct.IInvoiceState>(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/finalize`, {});
-    this.parseInput(res.data, res.headers["x-bucket-change"] as string | undefined);
+    const res = await Axios.post<Invoice>(`/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/finalize`, {});
+    // Axios headers type returns any for custom headers - validated via typeof
+    const bucketHeader: unknown = res.headers["x-bucket-change"];
+    const bucket = typeof bucketHeader === 'string' ? bucketHeader : undefined;
+    this.parseInput(res.data, bucket);
   }
 
   private pdf(): void {
     const meta = this.state.Meta;
-    if (meta?.Status !== 'FINAL') {
+    if (meta.Status !== 'FINAL') {
       console.log("PDF only available in finalized invoices");
       return;
     }
@@ -304,9 +307,9 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       Notes: data.NoteAdd ?? "",
       Mail: {
         ...this.state.Mail,
-        From: this.state.Mail?.From ?? "",
-        Subject: this.state.Mail?.Subject ?? "",
-        Body: this.state.Mail?.Body ?? "",
+        From: this.state.Mail.From,
+        Subject: this.state.Mail.Subject,
+        Body: this.state.Mail.Body,
         To: (data.BillingEmail ?? []).join(", ")
       }
     });
@@ -318,7 +321,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
 
   public pushUndo(): void {
     // Save current lines state for undo
-    const linesCopy = JSON.parse(JSON.stringify(this.state.Lines ?? [])) as Struct.IInvoiceLine[];
+    const linesCopy = structuredClone(this.state.Lines);
     this.undoStack.push(linesCopy);
     this.redoStack = []; // Clear redo stack on new change
   }
@@ -330,7 +333,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     if (previousLines == null) return;
 
     // Save current state to redo stack
-    const currentLines = JSON.parse(JSON.stringify(this.state.Lines ?? [])) as Struct.IInvoiceLine[];
+    const currentLines = structuredClone(this.state.Lines);
     this.redoStack.push(currentLines);
 
     // Restore previous state
@@ -344,7 +347,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     if (nextLines == null) return;
 
     // Save current state to undo stack
-    const currentLines = JSON.parse(JSON.stringify(this.state.Lines ?? [])) as Struct.IInvoiceLine[];
+    const currentLines = structuredClone(this.state.Lines);
     this.undoStack.push(currentLines);
 
     // Restore next state
@@ -354,9 +357,9 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
 	render(): React.JSX.Element {
     const inv = this.state;
     const that = this;
-    const meta = inv.Meta ?? { Status: "NEW", Conceptid: "", Invoiceid: "", Ponumber: "", HourFile: "" };
-    const entity = inv.Entity ?? { Name: "", Street1: "", Street2: "" };
-    const customer = inv.Customer ?? { Name: "", Street1: "", Street2: "", Vat: "", Coc: "", Tax: "NL21" };
+    const meta = inv.Meta;
+    const entity = inv.Entity;
+    const customer = inv.Customer;
 
 		return <form><div>
 		    <div className="card">
@@ -426,7 +429,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
           <tr>
             <td className="text">Issue Date</td>
             <td>
-              <LockedInput type="date" value={meta.Issuedate ?? ""} placeholder="AUTOGENERATED" onChange={that.handleChange.bind(that)} locked={true} data-key="Meta.Issuedate"/>
+              <LockedInput type="date" value={meta.Issuedate} placeholder="AUTOGENERATED" onChange={that.handleChange.bind(that)} locked={true} data-key="Meta.Issuedate"/>
             </td>
           </tr>
           <tr>
@@ -436,7 +439,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
           <tr>
             <td className="text">Due Date</td>
             <td>
-                <input type="date" value={meta.Duedate ?? ""} onChange={that.handleChange.bind(that)} className="form-control" data-key="Meta.Duedate" />
+                <input type="date" value={meta.Duedate} onChange={that.handleChange.bind(that)} className="form-control" data-key="Meta.Duedate" />
             </td>
           </tr>
         </tbody>
@@ -458,10 +461,10 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       <label className="form-label text-muted small">Banking details</label>
       <table className="table table-sm mb0"><tbody>
         <tr><td className="text">VAT</td><td className="pr">
-          <LockedInput type="text" value={(inv.Bank ?? {Vat: "", Coc: "", Iban: "", Bic: ""}).Vat} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Vat" required={true} /></td></tr>
-        <tr><td className="text">CoC</td><td className="pr"><LockedInput type="text" value={(inv.Bank ?? {Vat: "", Coc: "", Iban: "", Bic: ""}).Coc} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Coc" required={true} /></td></tr>
-        <tr><td className="text">IBAN</td><td className="pr"><LockedInput type="text" value={inv.Bank?.Iban ?? ""} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Iban" required={true} /></td></tr>
-        <tr><td className="text">BIC</td><td className="pr"><LockedInput type="text" value={inv.Bank?.Bic ?? ""} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Bic" required={true} /></td></tr>
+          <LockedInput type="text" value={inv.Bank.Vat} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Vat" required={true} /></td></tr>
+        <tr><td className="text">CoC</td><td className="pr"><LockedInput type="text" value={inv.Bank.Coc} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Coc" required={true} /></td></tr>
+        <tr><td className="text">IBAN</td><td className="pr"><LockedInput type="text" value={inv.Bank.Iban} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Iban" required={true} /></td></tr>
+        <tr><td className="text">BIC</td><td className="pr"><LockedInput type="text" value={inv.Bank.Bic} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Bic" required={true} /></td></tr>
       </tbody></table>
       <small><i className="fas fa-info"></i> Edit these from your settings file.</small>
     </div>

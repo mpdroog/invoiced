@@ -1,6 +1,6 @@
 import * as React from "react";
 import Axios from "axios";
-import type {IInvoiceMail, IInvoiceMeta} from "./edit-struct";
+import type {InvoiceMail as InvoiceMailType, InvoiceMeta} from "../../types/model";
 import {ActionLink} from "../../shared/ActionButton";
 import { openModal, closeModal } from "../../shared/Modal";
 
@@ -10,19 +10,19 @@ interface InvoiceMailParent {
     year: string;
   };
   state: {
-    Mail?: IInvoiceMail;
-    Meta?: IInvoiceMeta;
+    Mail?: InvoiceMailType;
+    Meta?: InvoiceMeta;
     State: {
       currentBucket: string;
     };
   };
-  setState: (state: {Mail: IInvoiceMail}) => void;
+  setState: (state: {Mail: InvoiceMailType}) => void;
 }
 
 interface InvoiceMailProps {
   parent: InvoiceMailParent;
   hide: boolean;
-  onHide: (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void;
+  onHide: (e?: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void;
 }
 
 interface InvoiceMailState {
@@ -82,7 +82,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, InvoiceMailSt
 
   private handleKeyDown = (e: KeyboardEvent): void => {
     if (e.key === 'Escape' && this.props.hide) {
-      this.props.onHide({ preventDefault: () => {} } as React.MouseEvent<HTMLAnchorElement>);
+      this.props.onHide();
     }
   };
 
@@ -99,19 +99,21 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, InvoiceMailSt
       return;
     }
 
-    const req = JSON.parse(JSON.stringify(mail)) as IInvoiceMail;
+    const req = structuredClone(mail);
     console.log("Send!", req);
 
     await Axios.post('/api/v1/invoice/'+parent.props.entity+'/'+parent.props.year+'/'+parent.state.State.currentBucket+'/'+meta.Conceptid+'/email', req);
     parent.setState({Mail: mail});
-    // Close modal by simulating click event
-    this.props.onHide({} as React.MouseEvent<HTMLAnchorElement>);
+    // Close modal
+    this.props.onHide();
   }
 
   private update(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void {
-    const id = e.target.id as keyof IInvoiceMail;
+    const id = e.target.id;
     const currentMail = this.props.parent.state.Mail;
     if (!currentMail) return;
+    // Validate that id is a valid InvoiceMail key
+    if (id !== 'From' && id !== 'Subject' && id !== 'To' && id !== 'Body') return;
     const mail = {...currentMail};
     mail[id] = e.target.value;
     this.props.parent.setState({Mail: mail});

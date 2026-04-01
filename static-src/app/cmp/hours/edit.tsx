@@ -127,7 +127,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
       Stop: this.state.stop,
       Hours: sum,
       Description: this.state.description,
-      Day: formatDate(this.state.day) ?? this.state.day
+      Day: formatDate(this.state.day)
     });
     this.setState({
       Lines: this.state.Lines,
@@ -173,24 +173,24 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
       }
 
       console.log("diff", diff);
-      if (Object.keys(diff).length > 0) this.setState(diff as IHourState);
+      if (Object.keys(diff).length > 0) this.setState(prev => ({...prev, ...diff}));
     }
   }
 
   private selectProject(prj: {Name: string; HourRate?: number}): void {
     console.log("Change", prj);
-    const s: Partial<IHourState> = {
+    const diff: Partial<IHourState> = {
       Project: prj.Name,
       HourRate: prj.HourRate ?? 0,
     };
     if (this.state.Name === "") {
-      s.Name = prj.Name + "-" + prevMonth();
+      diff.Name = prj.Name + "-" + prevMonth();
     }
-    this.setState(s as IHourState);
+    this.setState(prev => ({...prev, ...diff}));
   }
 
   private pushUndo(): void {
-    const linesCopy = JSON.parse(JSON.stringify(this.state.Lines)) as IHourLineState[];
+    const linesCopy = structuredClone(this.state.Lines);
     this.undoStack.push(linesCopy);
     this.redoStack = [];
   }
@@ -201,7 +201,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     const previousLines = this.undoStack.pop();
     if (!previousLines) return;
 
-    const currentLines = JSON.parse(JSON.stringify(this.state.Lines)) as IHourLineState[];
+    const currentLines = structuredClone(this.state.Lines);
     this.redoStack.push(currentLines);
 
     this.setState({Lines: previousLines, Total: this.updateTotalFromLines(previousLines)});
@@ -213,7 +213,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     const nextLines = this.redoStack.pop();
     if (!nextLines) return;
 
-    const currentLines = JSON.parse(JSON.stringify(this.state.Lines)) as IHourLineState[];
+    const currentLines = structuredClone(this.state.Lines);
     this.undoStack.push(currentLines);
 
     this.setState({Lines: nextLines, Total: this.updateTotalFromLines(nextLines)});
@@ -261,8 +261,8 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
     return str;
   }
 
-  private toggleImport(e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>): void {
-    e.preventDefault();
+  private toggleImport(e?: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>): void {
+    e?.preventDefault();
     this.setState({import: !this.state.import});
   }
 

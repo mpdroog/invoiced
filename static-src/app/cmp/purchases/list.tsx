@@ -41,6 +41,8 @@ export default class PurchasesPage extends React.Component<PurchasesPageProps, P
       count: 0
     }, headers: {'Accept': 'application/x-msgpack'}, responseType: 'arraybuffer'})
     .then(res => {
+      // Server returns a known shape - runtime validation would be overkill for internal API
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
       const data = msgpackDecode(new Uint8Array(res.data)) as { Invoices: Record<string, IPurchaseInvoice[]> };
       const s: PurchasesPageState = {unpaid: {}, paid: {}};
 

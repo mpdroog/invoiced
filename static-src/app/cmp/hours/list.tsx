@@ -59,6 +59,8 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
     const year = this.props.year;
     Axios.get('/api/v1/hours/'+entity+'/'+year, {params: this.state.pagination, headers: {'Accept': 'application/x-msgpack'}, responseType: 'arraybuffer'})
     .then(res => {
+      // Server returns a known shape - runtime validation would be overkill for internal API
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
       const data = msgpackDecode(new Uint8Array(res.data)) as Record<string, HourListItem[]>;
       this.setState({hours: data});
     })

@@ -124,7 +124,8 @@ export class Autocomplete extends React.Component<AutocompleteProps, Autocomplet
 
   onSelect(e: React.MouseEvent<HTMLAnchorElement>): void {
   	e.preventDefault();
-  	const key = (e.target as HTMLAnchorElement).dataset["key"];
+  	const target = e.currentTarget;
+  	const key = target.dataset["key"];
   	if (key === undefined) return;
   	const data = this.state.suggestions[parseInt(key, 10)];
   	if (!data) return;

@@ -57,7 +57,7 @@ export interface IInvoiceState {
   Entity?: IInvoiceEntity
   Customer?: IInvoiceCustomer
   Meta?: IInvoiceMeta
-  Lines?: IInvoiceLine[]
+  Lines: IInvoiceLine[]
   Notes?: string
   Total?: IInvoiceTotal
   Bank?: IInvoiceBank

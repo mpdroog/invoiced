@@ -2,7 +2,7 @@ import * as React from "react";
 import Invoices from "./list-bucket";
 import Axios from "axios";
 import { decode as msgpackDecode } from '@msgpack/msgpack';
-import type {IInvoiceState} from "./edit-struct";
+import type {Invoice} from "../../types/model";
 
 interface InvoicesPageProps {
   entity: string;
@@ -10,9 +10,9 @@ interface InvoicesPageProps {
 }
 
 interface InvoicesPageState {
-  concepts: Record<string, IInvoiceState[]>;
-  pending: Record<string, IInvoiceState[]>;
-  paid: Record<string, IInvoiceState[]>;
+  concepts: Record<string, Invoice[]>;
+  pending: Record<string, Invoice[]>;
+  paid: Record<string, Invoice[]>;
 }
 
 export default class InvoicesPage extends React.Component<InvoicesPageProps, InvoicesPageState> {
@@ -31,7 +31,9 @@ export default class InvoicesPage extends React.Component<InvoicesPageProps, Inv
       count: 0
     }, headers: {'Accept': 'application/x-msgpack'}, responseType: 'arraybuffer'})
     .then(res => {
-      const data = msgpackDecode(new Uint8Array(res.data)) as { Invoices: Record<string, IInvoiceState[]> };
+      // Server returns a known shape - runtime validation would be overkill for internal API
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+      const data = msgpackDecode(new Uint8Array(res.data)) as { Invoices: Record<string, Invoice[]> };
       const s: InvoicesPageState = {concepts: {}, pending: {}, paid: {}};
 
       // invoices

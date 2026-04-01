@@ -160,7 +160,7 @@ function importText(lines: string[]): ImportResult {
 interface IImportProps {
   importFn: (lines: ImportedLine[]) => void;
   hide: boolean;
-  onHide: (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void;
+  onHide: (e?: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void;
 }
 
 interface IImportState {
@@ -194,7 +194,7 @@ export default class HourImport extends React.Component<IImportProps, IImportSta
 
   private handleKeyDown = (e: KeyboardEvent): void => {
     if (e.key === 'Escape' && this.props.hide) {
-      this.props.onHide({ preventDefault: () => {} } as React.MouseEvent<HTMLAnchorElement>);
+      this.props.onHide();
     }
   };
 
