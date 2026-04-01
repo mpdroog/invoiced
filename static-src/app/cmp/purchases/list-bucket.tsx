@@ -226,7 +226,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
       modal = <AddLineModal invoice={inv} onClose={() => this.closeModal()} {...this.props} />;
     }
 
-    return <div>
+    return <div className="mb-4">
       <div className="card">
         <div className="card-header">
           <div className="float-end">

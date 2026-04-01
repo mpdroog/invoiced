@@ -92,7 +92,7 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
       res.push(<tr key="empty"><td colSpan={5}>No hours yet :)</td></tr>);
     }
 
-    return <div>
+    return <div className="mb-4">
         <div className="card">
           <div className="card-header">
             <div className="float-end">

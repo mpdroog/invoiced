@@ -158,3 +158,8 @@ a:hover .fa-hover-shake {
     background-color: var(--bs-tertiary-bg);
 }
 
+/* Sticky card header */
+.card-header.position-sticky {
+    background-color: var(--bs-tertiary-bg);
+}
+

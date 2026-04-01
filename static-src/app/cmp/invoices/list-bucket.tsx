@@ -14,6 +14,7 @@ interface IInvoiceListState {
   isBalance: boolean;
   sortField: string;
   sortAsc: boolean;
+  selectedKeys: Set<string>;
 }
 
 interface IInvoiceListProps {
@@ -36,6 +37,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
         isBalance: false,
         sortField: "Invoice",
         sortAsc: true,
+        selectedKeys: new Set<string>(),
       };
   }
 
@@ -45,6 +47,42 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     } else {
       this.setState({sortField: field, sortAsc: true});
     }
+  }
+
+  private toggleSelect(key: string): void {
+    const selected = new Set(this.state.selectedKeys);
+    if (selected.has(key)) {
+      selected.delete(key);
+    } else {
+      selected.add(key);
+    }
+    this.setState({selectedKeys: selected});
+  }
+
+  private toggleSelectAll(keys: string[]): void {
+    const allSelected = keys.every(k => this.state.selectedKeys.has(k));
+    if (allSelected) {
+      this.setState({selectedKeys: new Set<string>()});
+    } else {
+      this.setState({selectedKeys: new Set(keys)});
+    }
+  }
+
+  private clearSelection(): void {
+    this.setState({selectedKeys: new Set<string>()});
+  }
+
+  private getSelectedSum(invoiceList: {key: string, inv: IInvoiceState}[]): number {
+    let sum = 0;
+    for (const {key, inv} of invoiceList) {
+      if (this.state.selectedKeys.has(key)) {
+        const val = parseFloat(inv.Total?.Total ?? "0");
+        if (!Number.isNaN(val)) {
+          sum += val;
+        }
+      }
+    }
+    return sum;
   }
 
   private getSortValue(inv: IInvoiceState, field: string): string | number {
@@ -111,31 +149,38 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     const total = inv.Total ?? { Ex: "0.00", Tax: "0.00", Total: "0.00" };
     const isDeleteDisabled = meta.Status === 'FINAL' || meta.Invoiceid.length > 0;
     const isPaidDisabled = bucket === 'concepts';
-    return <tr key={key}>
-      <td>{key}</td>
+    const isSelected = this.state.selectedKeys.has(key);
+    return <tr key={key} className={isSelected ? "table-active" : ""}>
+      <td><input type="checkbox" className="form-check-input" checked={isSelected} onChange={() => this.toggleSelect(key)} /></td>
+      <td className="d-none d-md-table-cell">{key}</td>
       <td>{meta.Invoiceid}</td>
       <td>{customer.Name}</td>
-      <td>&euro; {total.Total}</td>
+      <td className="text-end">&euro; {total.Total}</td>
       <td className={expiryClass}>{meta.Duedate}</td>
-      <td>
-        <a className="btn btn-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fas fa-pencil"></i></a>
-        <ActionLink className="btn btn-danger" disabled={isDeleteDisabled} data-target={key} data-bucket={bucket} onClick={this.delete.bind(this)}><i className="fas fa-trash"></i></ActionLink>
-        <ActionLink className="btn btn-danger" disabled={isPaidDisabled} data-id={key} data-bucket={bucket} onClick={this.setPaid.bind(this)}><i className="fas fa-check"></i></ActionLink>
+      <td className="text-end">
+        <div className="btn-group">
+          <a className="btn btn-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fas fa-pencil"></i></a>
+          <ActionLink className="btn btn-danger" disabled={isDeleteDisabled} data-target={key} data-bucket={bucket} onClick={this.delete.bind(this)}><i className="fas fa-trash"></i></ActionLink>
+          <ActionLink className="btn btn-success" disabled={isPaidDisabled} data-id={key} data-bucket={bucket} onClick={this.setPaid.bind(this)}><i className="fas fa-check"></i></ActionLink>
+        </div>
       </td>
     </tr>;
   }
 
   private finishedLine(key: string, inv: IInvoiceState, bucket: string): React.JSX.Element {
-    console.log(bucket);
-    return <tr key={key}>
-      <td>{key}</td>
+    const isSelected = this.state.selectedKeys.has(key);
+    return <tr key={key} className={isSelected ? "table-active" : ""}>
+      <td><input type="checkbox" className="form-check-input" checked={isSelected} onChange={() => this.toggleSelect(key)} /></td>
+      <td className="d-none d-md-table-cell">{key}</td>
       <td>{inv.Meta?.Invoiceid}</td>
       <td>{inv.Customer?.Name}</td>
-      <td>&euro; {inv.Total?.Total}</td>
+      <td className="text-end">&euro; {inv.Total?.Total}</td>
       <td>{inv.Meta?.Duedate}</td>
-      <td>
-        <a className="btn btn-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fas fa-pencil"></i></a>
-        <a className="btn btn-primary" href={"/api/v1/invoice/" + this.props.entity + "/" + this.props.year + "/" + bucket + "/" + key + "/pdf"}><i className="far fa-file-pdf"></i></a>
+      <td className="text-end">
+        <div className="btn-group">
+          <a className="btn btn-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fas fa-pencil"></i></a>
+          <a className="btn btn-primary" href={"/api/v1/invoice/" + this.props.entity + "/" + this.props.year + "/" + bucket + "/" + key + "/pdf"}><i className="far fa-file-pdf"></i></a>
+        </div>
       </td>
     </tr>;
   }
@@ -167,12 +212,13 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     });
   }
 
-  private sortHeader(field: string): React.JSX.Element {
+  private sortHeader(field: string, extraClass?: string): React.JSX.Element {
     let icon = "";
     if (this.state.sortField === field) {
       icon = this.state.sortAsc ? " ▲" : " ▼";
     }
-    return <th className="sortable" onClick={() => this.toggleSort(field)}>{field}{icon}</th>;
+    const className = extraClass != null && extraClass !== "" ? `sortable ${extraClass}` : "sortable";
+    return <th className={className} onClick={() => this.toggleSort(field)}>{field}{icon}</th>;
   }
 
 	render(): React.JSX.Element {
@@ -209,8 +255,14 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     });
 
     if (res.length === 0) {
-      res.push(<tr key="empty"><td colSpan={6}>No invoices yet :)</td></tr>);
+      res.push(<tr key="empty"><td colSpan={7}>No invoices yet :)</td></tr>);
     }
+
+    // Calculate selection info
+    const allKeys = invoiceList.map(i => i.key);
+    const selectedCount = this.state.selectedKeys.size;
+    const selectedSum = this.getSelectedSum(invoiceList);
+    const allSelected = allKeys.length > 0 && allKeys.every(k => this.state.selectedKeys.has(k));
 
     let headerButtons = <div/>;
     if (this.props.bucket === "concepts") {
@@ -227,27 +279,40 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       </div>;
     }
 
+    const selectionInfo = selectedCount > 0 ? (
+      <span className="ms-3 badge bg-success">
+        {selectedCount} selected: &euro;{selectedSum.toFixed(2)}
+        <button type="button" className="btn-close btn-close-white ms-2" style={{fontSize: '0.6em'}} onClick={() => this.clearSelection()} aria-label="Clear"></button>
+      </span>
+    ) : null;
+
     const url = `/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/balance`;
     const balanceUpload = <form className="d-none" method="post" encType="multipart/form-data" action={url}>
       <input id="js-balance-field" accept=".xml" name="file" type="file" onChange={this.uploadBalance.bind(this)} />
     </form>;
 
-		return <div>
+		return <div className="mb-4">
 		    <div className="card">
-          <div className="card-header">
-            <div className="float-end">
+          <div className="card-header d-flex align-items-center position-sticky" style={{top: '56px', zIndex: 1020}}>
+            <span>{this.props.title}</span>
+            {selectionInfo}
+            <div className="ms-auto">
               <div className="btn-group nm7">
                 {headerButtons}
               </div>
             </div>
-            {this.props.title}
           </div>
           <div className="card-body">
             {balanceUpload}
+            <div className="table-responsive">
             <table className="table table-striped">
-            	<thead><tr><th>#</th>{this.sortHeader("Invoice")}{this.sortHeader("Customer")}{this.sortHeader("Amount")}{this.sortHeader("Duedate")}<th>I/O</th></tr></thead>
+            	<thead><tr>
+                <th><input type="checkbox" className="form-check-input" checked={allSelected} onChange={() => this.toggleSelectAll(allKeys)} title="Select all" /></th>
+                <th className="d-none d-md-table-cell">#</th>{this.sortHeader("Invoice")}{this.sortHeader("Customer")}{this.sortHeader("Amount", "text-end")}{this.sortHeader("Duedate")}<th className="text-end">Actions</th>
+              </tr></thead>
             	<tbody>{res}</tbody>
             </table>
+            </div>
 	        </div>
 		    </div>
     </div>;
