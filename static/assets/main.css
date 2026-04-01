@@ -152,3 +152,9 @@ a:hover .fa-hover-shake {
 /* Fixed layout body classes */
 .fixed-navbar { padding-top: 62px; }
 
+/* Dark mode card visibility */
+[data-bs-theme="dark"] .card {
+    border: 1px solid var(--bs-border-color);
+    background-color: var(--bs-tertiary-bg);
+}
+
