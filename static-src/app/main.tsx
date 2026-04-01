@@ -132,7 +132,7 @@ function hashChange(): void {
                         break;
 
                   default:
-                        throw "Invalid path: " + location.hash;
+                        throw new Error("Invalid path: " + location.hash);
             }
       }
 
@@ -165,7 +165,7 @@ try {
       const splash = document.getElementById("js-splash");
       const rootEl = document.getElementById('root');
       if (rootEl === null) {
-            throw "document.getElementById(root) returned null?";
+            throw new Error("document.getElementById(root) returned null");
       }
 
       reactRoot = createRoot(rootEl);

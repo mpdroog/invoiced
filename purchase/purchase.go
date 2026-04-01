@@ -28,12 +28,12 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	from, e := strconv.Atoi(args.Get("from"))
 	if e != nil {
-		httputil.InternalError(w, "purchase.List from", e)
+		httputil.BadRequest(w, "purchase.List from", e)
 		return
 	}
 	count, e := strconv.Atoi(args.Get("count"))
 	if e != nil {
-		httputil.InternalError(w, "purchase.List count", e)
+		httputil.BadRequest(w, "purchase.List count", e)
 		return
 	}
 

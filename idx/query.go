@@ -91,7 +91,12 @@ func GetQuarterTaxSummary(entity string, year int, quarter int) (*model.TaxSumma
 			if customerVat.Valid && customerVat.String != "" {
 				existing := decimal.Zero
 				if v, ok := sum.EUCompany[customerVat.String]; ok {
-					existing, _ = decimal.NewFromString(v)
+					var err error
+					existing, err = decimal.NewFromString(v)
+					if err != nil {
+						log.Printf("idx.GetQuarterTaxSummary: invalid decimal %q for VAT %s: %v", v, customerVat.String, err)
+						existing = decimal.Zero
+					}
 				}
 				sum.EUCompany[customerVat.String] = existing.Add(inc).StringFixed(2)
 			}

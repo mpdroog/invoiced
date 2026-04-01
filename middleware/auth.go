@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -14,6 +15,14 @@ import (
 	"github.com/itshosted/webutils/encrypt"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
+)
+
+// Sentinel errors for authentication failures.
+var (
+	ErrUserNotFound    = errors.New("user not found")
+	ErrInvalidPassword = errors.New("invalid password")
+	ErrSessionExpired  = errors.New("session expired")
+	ErrUserNoCompany   = errors.New("user has no company assigned")
 )
 
 const (
@@ -123,7 +132,9 @@ func Login(email, pass string) (string, error) {
 	for _, user := range entities.User {
 		if user.Email == email {
 			// Found the user, validate pass!
-			// TODO: protect against crash?
+			if len(user.Company) == 0 {
+				return "", ErrUserNoCompany
+			}
 			salt := entities.Company[user.Company[0]].Salt
 
 			h := sha256.New()
@@ -135,7 +146,7 @@ func Login(email, pass string) (string, error) {
 				if config.Verbose {
 					log.Printf("Login(%s) invalid hash, expect=%s got=%s\n", email, user.Hash, hash)
 				}
-				return "", nil
+				return "", ErrInvalidPassword
 			}
 
 			// Create sess with unique IV per session
@@ -144,7 +155,7 @@ func Login(email, pass string) (string, error) {
 		}
 	}
 
-	return "", nil
+	return "", ErrUserNotFound
 }
 
 // Companies returns the companies a user has access to.
@@ -156,7 +167,7 @@ func Companies(sessCipher string) (map[string]Entity, error) {
 
 	// Check session expiration
 	if isSessionExpired(&sess) {
-		return nil, fmt.Errorf("session expired")
+		return nil, ErrSessionExpired
 	}
 
 	out := make(map[string]Entity)

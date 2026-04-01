@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"log"
 	"net/http"
@@ -51,12 +52,18 @@ func Login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	sess, e := middleware.Login(email, pass)
 	if e != nil {
-		log.Printf("Login: %s\n", strconv.Quote(e.Error()))
-		http.Error(w, "Login: Auth failed", http.StatusBadRequest)
-		return
-	}
-	if len(sess) == 0 {
-		http.Error(w, "Login: Invalid user/pass", http.StatusBadRequest)
+		// Log specific error internally, return generic message to client
+		switch {
+		case errors.Is(e, middleware.ErrUserNotFound):
+			log.Println("Login: user not found for", strconv.Quote(email))
+			http.Error(w, "Login: Invalid user/pass", http.StatusBadRequest)
+		case errors.Is(e, middleware.ErrInvalidPassword):
+			log.Println("Login: invalid password for", strconv.Quote(email))
+			http.Error(w, "Login: Invalid user/pass", http.StatusBadRequest)
+		default:
+			log.Println("Login error:", strconv.Quote(e.Error()))
+			http.Error(w, "Login: Auth failed", http.StatusBadRequest)
+		}
 		return
 	}
 

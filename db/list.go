@@ -15,9 +15,7 @@ import (
 )
 
 const maxFiles = 1000
-const listDeadline = "5s"
-
-var deadline time.Duration
+const deadline = 5 * time.Second
 
 // Pagination specifies offset and limit for list queries.
 type Pagination struct {
@@ -28,14 +26,6 @@ type Pagination struct {
 // PaginationHeader contains the total count for paginated results.
 type PaginationHeader struct {
 	Total int
-}
-
-func init() {
-	var e error
-	deadline, e = time.ParseDuration(listDeadline)
-	if e != nil {
-		panic(e)
-	}
 }
 
 // RawList returns directory entries for the given path.

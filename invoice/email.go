@@ -134,10 +134,12 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			return e
 		}
 
+		if len(config.C.Queues) == 0 {
+			return fmt.Errorf("no email queues configured")
+		}
 		var conf config.Queue
 		for _, conf = range config.C.Queues {
-			// TODO: Nasty hack to get first item...
-			break
+			break // Use first available queue
 		}
 
 		msg := gomail.NewMessage()

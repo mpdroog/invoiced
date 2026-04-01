@@ -93,6 +93,7 @@ export default [
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
       '@typescript-eslint/await-thenable': 'error',
       '@typescript-eslint/no-unnecessary-condition': 'error',
+      '@typescript-eslint/only-throw-error': 'error',
 
       // General rules
       'no-unused-vars': 'off',

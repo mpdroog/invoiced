@@ -4,6 +4,7 @@ import (
 	"html"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -64,16 +65,16 @@ func validateReferer(r *http.Request) bool {
 
 	// Check Origin header if present
 	if origin != "" {
-		// Origin should match our host
-		if !strings.Contains(origin, expectedHost) {
+		originURL, err := url.Parse(origin)
+		if err != nil || originURL.Host != expectedHost {
 			return false
 		}
 	}
 
 	// Check Referer header if present
 	if referer != "" {
-		// Referer should contain our host
-		if !strings.Contains(referer, expectedHost) {
+		refererURL, err := url.Parse(referer)
+		if err != nil || refererURL.Host != expectedHost {
 			return false
 		}
 	}
@@ -167,10 +168,10 @@ func HTTPAuth(next http.Handler) http.Handler {
 
 // LocalOnly is middleware that restricts access to localhost.
 func LocalOnly(next http.Handler) http.Handler {
-	localIPv4 := "127.0.0.1"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// TODO: localIPv6 = "::1" ?
-		if !strings.HasPrefix(r.RemoteAddr, localIPv4) {
+		isLocal := strings.HasPrefix(r.RemoteAddr, "127.0.0.1") ||
+			strings.HasPrefix(r.RemoteAddr, "[::1]")
+		if !isLocal {
 			w.WriteHeader(http.StatusForbidden)
 			if _, err := w.Write([]byte("Security exception")); err != nil {
 				log.Printf("LocalOnly write: %s", err)
