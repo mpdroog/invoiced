@@ -1,13 +1,7 @@
 import * as React from "react";
 import Axios from "axios";
 import {ActionButton} from "../../shared/ActionButton";
-
-interface TaxData {
-  Ex: string;
-  Tax: string;
-  EUEx: string;
-  EUCompany: Record<string, string>;
-}
+import type { TaxSummary } from "../../types/model";
 
 interface TaxesPageProps {
   entity: string;
@@ -16,7 +10,7 @@ interface TaxesPageProps {
 
 interface TaxesPageState {
   quarter: string;
-  data: TaxData | null;
+  data: TaxSummary | null;
 }
 
 export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPageState> {
@@ -30,7 +24,7 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
   }
 
   private async ajax(): Promise<void> {
-    const res = await Axios.post<TaxData>('/api/v1/taxes/'+this.props.entity+'/'+this.props.year+'/'+this.state.quarter);
+    const res = await Axios.post<TaxSummary>('/api/v1/taxes/'+this.props.entity+'/'+this.props.year+'/'+this.state.quarter);
     this.setState({data: res.data});
   }
 

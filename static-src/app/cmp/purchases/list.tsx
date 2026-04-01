@@ -2,18 +2,7 @@ import * as React from "react";
 import PurchaseInvoices from "./list-bucket";
 import Axios from "axios";
 import { decode as msgpackDecode } from '@msgpack/msgpack';
-
-interface IPurchaseInvoice {
-  ID: string;
-  Supplier: { Name: string; VAT: string };
-  Issuedate: string;
-  Duedate: string;
-  TotalEx: string;
-  TotalTax: string;
-  TotalInc: string;
-  Status: string;
-  Lines: { Description: string; Quantity: string; Price: string; Total: string; TaxPercent: string }[];
-}
+import type { PurchaseInvoice } from "../../types/purchase";
 
 interface PurchasesPageProps {
   entity: string;
@@ -21,8 +10,8 @@ interface PurchasesPageProps {
 }
 
 interface PurchasesPageState {
-  unpaid: Record<string, IPurchaseInvoice[]>;
-  paid: Record<string, IPurchaseInvoice[]>;
+  unpaid: Record<string, PurchaseInvoice[]>;
+  paid: Record<string, PurchaseInvoice[]>;
 }
 
 export default class PurchasesPage extends React.Component<PurchasesPageProps, PurchasesPageState> {
@@ -43,7 +32,7 @@ export default class PurchasesPage extends React.Component<PurchasesPageProps, P
     .then(res => {
       // Server returns a known shape - runtime validation would be overkill for internal API
       // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-      const data = msgpackDecode(new Uint8Array(res.data)) as { Invoices: Record<string, IPurchaseInvoice[]> };
+      const data = msgpackDecode(new Uint8Array(res.data)) as { Invoices: Record<string, PurchaseInvoice[]> };
       const s: PurchasesPageState = {unpaid: {}, paid: {}};
 
       for (const key in data.Invoices) {

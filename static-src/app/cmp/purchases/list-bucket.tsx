@@ -2,41 +2,20 @@ import * as React from "react";
 import Axios from "axios";
 import {ActionButton, ActionLink} from "../../shared/ActionButton";
 import { openModal, closeModal } from "../../shared/Modal";
-
-interface IPurchaseInvoice {
-  ID: string
-  Supplier: {
-    Name: string
-    VAT: string
-  }
-  Issuedate: string
-  Duedate: string
-  TotalEx: string
-  TotalTax: string
-  TotalInc: string
-  Status: string
-  Lines: IPurchaseLine[]
-}
-
-interface IPurchaseLine {
-  Description: string
-  Quantity: string
-  Price: string
-  Total: string
-  TaxPercent: string
-}
+import type { PurchaseInvoice } from "../../types/purchase";
+import type { Invoice } from "../../types/model";
 
 interface IState {
   sortField: string
   sortAsc: boolean
   showAddLine: boolean
-  selectedInvoice: IPurchaseInvoice | null
+  selectedInvoice: PurchaseInvoice | null
 }
 
 interface IProps {
   bucket: string
   title: string
-  items: Record<string, IPurchaseInvoice[]>
+  items: Record<string, PurchaseInvoice[]>
   entity: string
   year: string
 }
@@ -60,7 +39,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     }
   }
 
-  private getSortValue(inv: IPurchaseInvoice, field: string): string | number {
+  private getSortValue(inv: PurchaseInvoice, field: string): string | number {
     switch (field) {
       case "ID": return inv.ID !== '' ? inv.ID : "";
       case "Supplier": return inv.Supplier.Name !== '' ? inv.Supplier.Name : "";
@@ -73,7 +52,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     }
   }
 
-  private sortInvoices(invoices: {key: string, inv: IPurchaseInvoice, bucket: string}[]): {key: string, inv: IPurchaseInvoice, bucket: string}[] {
+  private sortInvoices(invoices: {key: string, inv: PurchaseInvoice, bucket: string}[]): {key: string, inv: PurchaseInvoice, bucket: string}[] {
     const field = this.state.sortField;
     const asc = this.state.sortAsc;
 
@@ -111,7 +90,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     location.reload();
   }
 
-  private showAddLineModal(inv: IPurchaseInvoice): void {
+  private showAddLineModal(inv: PurchaseInvoice): void {
     this.setState({showAddLine: true, selectedInvoice: inv});
   }
 
@@ -154,7 +133,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
 
   render(): React.JSX.Element {
     const res: React.JSX.Element[] = [];
-    let invoiceList: {key: string, inv: IPurchaseInvoice, bucket: string}[] = [];
+    let invoiceList: {key: string, inv: PurchaseInvoice, bucket: string}[] = [];
     const isUnpaid = this.props.bucket === "purchase-invoices-unpaid";
 
     for (const dir in this.props.items) {
@@ -166,7 +145,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
 
       const items = this.props.items[dir];
       if (items == null) continue;
-      items.forEach((inv: IPurchaseInvoice) => {
+      items.forEach((inv: PurchaseInvoice) => {
         // Use sanitized filename as key (from ID + Supplier.Name)
         const key = inv.ID !== '' ? (inv.Supplier.Name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + inv.ID.toLowerCase().replace(/[^a-z0-9]/g, '-')) : dir;
         invoiceList.push({key, inv, bucket});
@@ -250,22 +229,15 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
 }
 
 // Modal for adding line to existing invoice
-interface IConceptInvoice {
-  Meta: { Conceptid: string };
-  Customer: { Name: string };
-  Lines: { Description: string; Quantity: string; Price: string; Total: string }[];
-  Total: { Ex: string; Tax: string; Total: string };
-}
-
 interface IAddLineModalProps {
-  invoice: IPurchaseInvoice
+  invoice: PurchaseInvoice
   entity: string
   year: string
   onClose: () => void
 }
 
 interface IAddLineModalState {
-  concepts: IConceptInvoice[]
+  concepts: Invoice[]
   selectedConcept: string
   selectedLine: number
 }
@@ -284,14 +256,14 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
     openModal();
     // Fetch concept invoices to add lines to
     interface InvoicesResponse {
-      Invoices: Record<string, IConceptInvoice[]>;
+      Invoices: Record<string, Invoice[]>;
     }
     Axios.get<InvoicesResponse>('/api/v1/invoices/'+this.props.entity+'/'+this.props.year, {params: {from: 0, count: 0}})
     .then(res => {
-      const concepts: IConceptInvoice[] = [];
+      const concepts: Invoice[] = [];
       for (const key in res.data.Invoices) {
         if (key.endsWith("/concepts/sales-invoices/")) {
-          res.data.Invoices[key]?.forEach((inv: IConceptInvoice) => {
+          res.data.Invoices[key]?.forEach((inv: Invoice) => {
             concepts.push(inv);
           });
         }
