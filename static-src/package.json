@@ -4,7 +4,7 @@
   "description": "Invoice Daemon",
   "author": "MP Droog <rootdev@gmail.com>",
   "scripts": {
-    "build": "tsc --noEmit && eslint app/ && vite build",
+    "build": "prettier --write app/ && tsc --noEmit && eslint app/ && vite build",
     "lint": "eslint app/",
     "lint:fix": "eslint app/ --fix",
     "format": "prettier --write app/",
