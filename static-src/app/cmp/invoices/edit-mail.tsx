@@ -8,11 +8,13 @@ interface InvoiceMailParent {
   props: {
     entity: string;
     year: string;
-    bucket?: string;
   };
   state: {
     Mail?: IInvoiceMail;
     Meta?: IInvoiceMeta;
+    State: {
+      currentBucket: string;
+    };
   };
   setState: (state: {Mail: IInvoiceMail}) => void;
 }
@@ -49,7 +51,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
     const req = JSON.parse(JSON.stringify(mail)) as IInvoiceMail;
     console.log("Send!", req);
 
-    await Axios.post('/api/v1/invoice/'+parent.props.entity+'/'+parent.props.year+'/'+parent.props.bucket+'/'+meta.Conceptid+'/email', req);
+    await Axios.post('/api/v1/invoice/'+parent.props.entity+'/'+parent.props.year+'/'+parent.state.State.currentBucket+'/'+meta.Conceptid+'/email', req);
     parent.setState({Mail: mail});
     // Close modal by simulating click event
     this.props.onHide({} as React.MouseEvent<HTMLAnchorElement>);
@@ -76,8 +78,9 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
     }
     const s: React.CSSProperties = {display: "block"};
     let hourFile: React.JSX.Element = <div/>;
+    const bucket = parent.state.State.currentBucket;
     if (parentMeta.HourFile.length > 0) {
-      hourFile = <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/text"} target="_blank" rel="noreferrer"><i className="far fa-file" />&nbsp;hours.txt</a></p>;
+      hourFile = <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + bucket + "/" + parentMeta.Conceptid + "/text"} target="_blank" rel="noreferrer"><i className="far fa-file" />&nbsp;hours.txt</a></p>;
     }
 
   	return <div className="modal" style={s} tabIndex={-1} role="dialog">
@@ -111,8 +114,8 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
           </div>
           <div className="modal-footer">
             <div className="email-attachments">
-              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/pdf"} target="_blank" rel="noreferrer"><i className="far fa-file-pdf" />&nbsp;{parentMeta.Invoiceid}.pdf</a></p>
-              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/xml"} target="_blank" rel="noreferrer"><i className="fas fa-building-columns" />&nbsp;{parentMeta.Invoiceid}.xml</a></p>
+              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + bucket + "/" + parentMeta.Conceptid + "/pdf"} target="_blank" rel="noreferrer"><i className="far fa-file-pdf" />&nbsp;{parentMeta.Invoiceid}.pdf</a></p>
+              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + bucket + "/" + parentMeta.Conceptid + "/xml"} target="_blank" rel="noreferrer"><i className="fas fa-building-columns" />&nbsp;{parentMeta.Invoiceid}.xml</a></p>
               {hourFile}
             </div>
             <ActionLink onClick={this.send.bind(this)} className="btn btn-primary float-end"> Send</ActionLink>

@@ -25,11 +25,33 @@ function prettyErr(res) {
 }
 
 function handleErr(e) {
-  if (e.response && e.response.status === 401) {
-    location.href = '/static/auth.html';
+  var splash = document.getElementById("js-splash");
+  splash && splash.remove();
+
+  // No response = connection error
+  if (e.request && !e.response) {
+    document.getElementById("js-dialog-conn-error").classList.add('modal-open');
+    document.getElementById("js-dialog-conn-error").style.display = 'block';
+    document.getElementById("js-dialog-backdrop").classList.remove('d-none');
     return;
   }
 
+  if (e.response) {
+    // Redirect to auth on 401
+    if (e.response.status === 401) {
+      location.href = '/static/auth.html';
+      return;
+    }
+
+    // Validation errors (has Error + Fields structure)
+    var data = e.response.data;
+    if (data && data.Error && data.Fields) {
+      prettyErr(data);
+      return;
+    }
+  }
+
+  // Generic error fallback
   var errorData = {
     pageErrorType: e.name,
     pageMessage: e.message,
@@ -38,16 +60,6 @@ function handleErr(e) {
     serverResponse: e.response ? e.response.data : null,
     serverURL: e.request ? e.request.responseURL : null,
   };
-  var splash = document.getElementById("js-splash");
-  splash && splash.remove();
-
-  if (e.request && !e.response) {
-    document.getElementById("js-dialog-conn-error").classList.add('modal-open');
-    document.getElementById("js-dialog-conn-error").style.display = 'block';
-    document.getElementById("js-dialog-backdrop").classList.remove('d-none');
-    return;
-  }
-
   document.getElementById("js-error-title").innerText = "Oops! Something went wrong...";
   document.getElementById("js-error-body").value = JSON.stringify(errorData);
   document.getElementById("js-dialog-error").classList.add('modal-open');

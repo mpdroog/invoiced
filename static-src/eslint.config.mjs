@@ -98,10 +98,25 @@ export default [
       'no-undef': 'off',
       'prefer-const': 'error',
       'no-var': 'error',
-      'eqeqeq': ['error', 'always', { null: 'ignore' }]
+      'eqeqeq': ['error', 'always', { null: 'ignore' }],
+
+      // Restrict direct moment imports - use utils/date.ts helpers for formatting server dates
+      'no-restricted-imports': ['error', {
+        paths: [{
+          name: 'moment',
+          message: 'For formatting dates from the server, use formatDate() from utils/date.ts to avoid "Invalid date" issues. Direct Moment import is only allowed for date math (add/subtract) or current time.'
+        }]
+      }]
     }
   },
   {
     ignores: ['node_modules/**', 'dist/**', '*.js']
+  },
+  // Allow moment import in the date utility wrapper
+  {
+    files: ['**/utils/date.ts'],
+    rules: {
+      'no-restricted-imports': 'off'
+    }
   }
 ];

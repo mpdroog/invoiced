@@ -1,6 +1,6 @@
 import * as React from "react";
 import Axios from "axios";
-import Moment from "moment";
+import {formatDate, daysFromNow} from "../../utils/date";
 import {Autocomplete, LockedInput} from "../../shared/components";
 import {ActionButton} from "../../shared/ActionButton";
 import {InvoiceLineEdit} from "./edit-line";
@@ -18,6 +18,7 @@ interface InvoiceEditProps {
 interface InvoiceEditState extends Struct.IInvoiceState {
   State: {
     email: boolean;
+    currentBucket: string;
   };
 }
 
@@ -52,7 +53,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
         Invoiceid: "",
         Issuedate: null,
         Ponumber: "",
-        Duedate: Moment().add(14, 'days').format('YYYY-MM-DD'),
+        Duedate: daysFromNow(14),
         Paydate: null,
         HourFile: ""
       },
@@ -75,7 +76,8 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
         Bic: ""
       },
       State: {
-        email: false
+        email: false,
+        currentBucket: props.bucket ?? "concepts"
       },
       Mail: {
         From: "",
@@ -142,11 +144,14 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       // Update URL so refresh will keep the invoice open
       history.replaceState({}, "", url);
     }
-    meta.Issuedate = meta.Issuedate != null ? Moment(meta.Issuedate).format('YYYY-MM-DD') : null;
-    meta.Duedate = meta.Duedate != null ? Moment(meta.Duedate).format('YYYY-MM-DD') : null;
-    meta.Paydate = meta.Paydate != null ? Moment(meta.Paydate).format('YYYY-MM-DD') : null;
+    meta.Issuedate = formatDate(meta.Issuedate);
+    meta.Duedate = formatDate(meta.Duedate);
+    meta.Paydate = formatDate(meta.Paydate);
 
-    this.setState(data as InvoiceEditState);
+    // Update current bucket in state so it reflects the actual location after finalize/reset
+    const newData = data as InvoiceEditState;
+    newData.State = { ...this.state.State, currentBucket: bucket };
+    this.setState(newData);
   }
 
   private triggerChange(indices: string[], val: string): void {
@@ -308,7 +313,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
   }
 
   private email(): void {
-    this.setState({State: {email: !this.state.State.email}});
+    this.setState({State: {...this.state.State, email: !this.state.State.email}});
   }
 
   public pushUndo(): void {

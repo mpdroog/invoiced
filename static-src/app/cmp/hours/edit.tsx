@@ -1,7 +1,7 @@
 import * as React from "react";
 import Axios from "axios";
 import Big from "big.js";
-import Moment from "moment";
+import {today, prevMonth, timeDiffHours, formatDate} from "../../utils/date";
 import Import from "./edit-import";
 import {Autocomplete, LockedInput} from "../../shared/components";
 import {ActionButton} from "../../shared/ActionButton";
@@ -26,7 +26,7 @@ interface IHourState {
   start: string;
   stop: string;
   description: string;
-  day: Moment.Moment;
+  day: string;
   import: boolean;
   HourRate: number;
   Lines: IHourLineState[];
@@ -48,7 +48,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
       start: "",
       stop: "",
       description: "",
-      day: Moment(),
+      day: today(),
       import: false,
       HourRate: 0,
 
@@ -77,7 +77,6 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
   }
 
   private importLine(lines: Array<{day: string | null; text: string; fromTo: string[][]}>): void {
-    let total = new Big("0.00");
     const out = [...this.state.Lines];
     for (const lineItem of lines) {
       if (lineItem.day == null) continue;
@@ -86,16 +85,10 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
         const startTime = fromTo[0];
         const stopTime = fromTo[1];
         if (startTime == null || stopTime == null) continue;
-        const start = Moment(startTime, 'HH:mm')
-        const stop = Moment(stopTime, 'HH:mm');
-        if (! start.isValid()) {
-          throw new Error("Failed parsing start=" + startTime);
+        const diff = timeDiffHours(startTime, stopTime);
+        if (diff == null) {
+          throw new Error("Failed parsing time: start=" + startTime + " stop=" + stopTime);
         }
-        if (! stop.isValid()) {
-          throw new Error("Failed parsing stop=" + stopTime);
-        }
-        // Momentjs fails us, do the math ourselves..
-        const diff = stop.diff(start)/1000/60/60;
         console.log(diff);
 
         out.push({
@@ -105,13 +98,12 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
           Description: lineItem.text,
           Day: lineItem.day
         });
-        total = total.plus(diff);
       }
     }
 
     this.setState({
       Lines: out,
-      Total: total.toFixed(2).toString()
+      Total: this.updateTotalFromLines(out)
     });
   }
 
@@ -122,18 +114,12 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
       return;
     }
 
-    const start = Moment(this.state.start, 'HH:mm')
-    const stop = Moment(this.state.stop, 'HH:mm');
-    if (! start.isValid()) {
-      throw new Error("Failed parsing start=" + this.state.start);
+    const sum = timeDiffHours(this.state.start, this.state.stop);
+    if (sum == null) {
+      throw new Error("Failed parsing time: start=" + this.state.start + " stop=" + this.state.stop);
     }
-    if (! stop.isValid()) {
-      throw new Error("Failed parsing stop=" + this.state.stop);
-    }
-    // Momentjs fails us, do the math ourselves..
-    const sum = stop.diff(start)/1000/60/60;
 
-    console.log("Start=" + start + " Stop=" + stop + " to hours=" + sum);
+    console.log("Start=" + this.state.start + " Stop=" + this.state.stop + " to hours=" + sum);
 
     const total = new Big(this.state.Total);
     this.state.Lines.push({
@@ -141,7 +127,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
       Stop: this.state.stop,
       Hours: sum,
       Description: this.state.description,
-      Day: this.state.day.format("YYYY-MM-DD")
+      Day: formatDate(this.state.day) ?? this.state.day
     });
     this.setState({
       Lines: this.state.Lines,
@@ -173,17 +159,17 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
       this.setState({Name: elem.value});
     }
     if (elem.id === "hour-day") {
-      this.setState({day: Moment(elem.value)});
+      this.setState({day: elem.value});
     }
     if (elem.id === "hour-project") {
-      const prevMonth = Moment().subtract(1, 'months');
+      const prevMonthStr = prevMonth();
 
       const diff: Partial<IHourState> = {};
       if (elem.value !== this.state.Project) {
         diff.Project = elem.value;
       }
       if (this.state.Name === "") {
-        diff.Name = elem.value + "-" + prevMonth.format("YYYY-MM");
+        diff.Name = elem.value + "-" + prevMonthStr;
       }
 
       console.log("diff", diff);
@@ -193,13 +179,12 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
 
   private selectProject(prj: {Name: string; HourRate?: number}): void {
     console.log("Change", prj);
-    const prevMonth = Moment().subtract(1, 'months');
     const s: Partial<IHourState> = {
       Project: prj.Name,
       HourRate: prj.HourRate ?? 0,
     };
     if (this.state.Name === "") {
-      s.Name = prj.Name + "-" + prevMonth.format("YYYY-MM");
+      s.Name = prj.Name + "-" + prevMonth();
     }
     this.setState(s as IHourState);
   }
@@ -303,7 +288,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
           <div className="card-body">
             <div className="row g-2 align-items-center">
               <div className="col-auto">
-                <input type="date" id="hour-day" className="form-control" value={this.state.day.format("YYYY-MM-DD")} onChange={this.update.bind(this)}/>
+                <input type="date" id="hour-day" className="form-control" value={this.state.day} onChange={this.update.bind(this)}/>
               </div>
               <div className="col-auto">
                 <input type="text" id="hour-start" className="form-control" placeholder="HH:mm" value={this.state.start} onChange={this.update.bind(this)}/>

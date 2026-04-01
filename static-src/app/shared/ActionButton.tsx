@@ -17,9 +17,13 @@ export function ActionButton({ onClick, disabled, children, className, ...props 
     e.preventDefault();
     if (loading || disabled) return;
     setLoading(true);
-    void Promise.resolve(onClick(e)).finally(() => {
-      setLoading(false);
-    });
+    void Promise.resolve(onClick(e))
+      .catch((err: unknown) => {
+        handleErr(err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return (
@@ -52,9 +56,13 @@ export function ActionLink({ onClick, disabled, children, className, ...props }:
     e.preventDefault();
     if (loading || disabled) return;
     setLoading(true);
-    void Promise.resolve(onClick(e)).finally(() => {
-      setLoading(false);
-    });
+    void Promise.resolve(onClick(e))
+      .catch((err: unknown) => {
+        handleErr(err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const disabledClass = (disabled || loading) ? " disabled" : "";

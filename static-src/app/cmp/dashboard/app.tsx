@@ -1,7 +1,7 @@
 import * as React from "react";
 import Axios from "axios";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import Moment from "moment";
+import {formatDate, fromNow} from "../../utils/date";
 import './dashboard.css';
 
 // Types generated from Go structs (run: ~/go/bin/tygo generate)
@@ -352,7 +352,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 												<strong>{commit.message}</strong>
 												<br/>
 												<small className="text-muted">
-													{commit.author} &middot; {Moment(commit.date).fromNow()} &middot; {Moment(commit.date).format('YYYY-MM-DD HH:mm')}
+													{commit.author} &middot; {fromNow(commit.date)} &middot; {formatDate(commit.date, 'YYYY-MM-DD HH:mm')}
 												</small>
 											</div>
 										</li>
