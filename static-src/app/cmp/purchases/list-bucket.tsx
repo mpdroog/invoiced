@@ -183,7 +183,7 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
       res.push(<tr key={key}>
         <td>{inv.ID}</td>
         <td>{inv.Supplier.Name}</td>
-        <td>&euro; {inv.TotalInc}</td>
+        <td className="text-end text-nowrap">&euro; {inv.TotalInc}</td>
         <td className={expiryClass}>{inv.Duedate}</td>
         <td>
           <a className="btn btn-primary" href={`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}/pdf`} target="_blank" rel="noreferrer">
@@ -391,8 +391,8 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
                       </td>
                       <td>{line.Description}</td>
                       <td>{line.Quantity}</td>
-                      <td>&euro; {line.Price}</td>
-                      <td>&euro; {line.Total}</td>
+                      <td className="text-nowrap">&euro; {line.Price}</td>
+                      <td className="text-nowrap">&euro; {line.Total}</td>
                     </tr>
                   ))}
                 </tbody>

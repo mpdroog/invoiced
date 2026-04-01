@@ -77,14 +77,15 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
       );
     });
 
-    return <table className="table table-striped">
+    return <div className="table-responsive mb-3">
+    <table className="table table-striped table-sm">
     <thead>
       <tr>
-        <th>&nbsp;</th>
+        <th style={{width: '50px'}}></th>
         <th>Description</th>
-        <th>Quantity</th>
-        <th>Price</th>
-        <th>Line Total</th>
+        <th style={{width: '100px'}}>Qty</th>
+        <th style={{width: '100px'}}>Price</th>
+        <th style={{width: '120px'}}>Total</th>
       </tr>
     </thead>
     <tbody>{lines}</tbody>
@@ -108,5 +109,6 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
       </tr>
     </tfoot>
   </table>
+  </div>
   }
 }

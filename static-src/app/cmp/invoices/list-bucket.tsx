@@ -154,8 +154,8 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td><input type="checkbox" className="form-check-input" checked={isSelected} onChange={() => this.toggleSelect(key)} /></td>
       <td className="d-none d-md-table-cell">{key}</td>
       <td>{meta.Invoiceid}</td>
-      <td>{customer.Name}</td>
-      <td className="text-end">&euro; {total.Total}</td>
+      <td><span className="d-inline-block text-truncate-sm" title={customer.Name}>{customer.Name}</span></td>
+      <td className="text-end text-nowrap">&euro; {total.Total}</td>
       <td className={expiryClass}>{meta.Duedate}</td>
       <td className="text-end">
         <div className="btn-group">
@@ -173,8 +173,8 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td><input type="checkbox" className="form-check-input" checked={isSelected} onChange={() => this.toggleSelect(key)} /></td>
       <td className="d-none d-md-table-cell">{key}</td>
       <td>{inv.Meta?.Invoiceid}</td>
-      <td>{inv.Customer?.Name}</td>
-      <td className="text-end">&euro; {inv.Total?.Total}</td>
+      <td><span className="d-inline-block text-truncate-sm" title={inv.Customer?.Name}>{inv.Customer?.Name}</span></td>
+      <td className="text-end text-nowrap">&euro; {inv.Total?.Total}</td>
       <td>{inv.Meta?.Duedate}</td>
       <td className="text-end">
         <div className="btn-group">

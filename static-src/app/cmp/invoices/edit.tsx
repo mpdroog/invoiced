@@ -356,60 +356,59 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
 		return <form><div>
 		    <div className="card">
           <div className="card-header">
-            <div className="float-end">
-              <div className="btn-group nm7">
-                <button type="button" className="btn btn-warning" disabled={this.undoStack.length === 0 || meta.Status === "FINAL"} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i> Undo</button>
-                <button type="button" className="btn btn-warning" disabled={this.redoStack.length === 0 || meta.Status === "FINAL"} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i> Redo</button>
-                <ActionButton type="button" className="btn btn-success" disabled={meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i> Save</ActionButton>
-                <ActionButton type="button" className="btn btn-danger" disabled={meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fas fa-lock"></i> Finalize</ActionButton>
-                <button type="button" className={"btn btn-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.pdf.bind(this)}><i className="far fa-file-pdf"></i> PDF</button>
-                <button type="button" className={"btn btn-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.email.bind(this)}><i className="fas fa-paper-plane"></i> E-mail</button>
-
-                <ActionButton type="button" className="btn btn-danger" disabled={meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fas fa-unlock"></i> Reset</ActionButton>
-
+            <div className="d-flex flex-wrap gap-1 justify-content-between align-items-center">
+              <span>New Invoice</span>
+              <div className="btn-toolbar flex-wrap gap-1">
+                <div className="btn-group btn-group-sm">
+                  <button type="button" className="btn btn-warning" disabled={this.undoStack.length === 0 || meta.Status === "FINAL"} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i><span className="d-none d-md-inline"> Undo</span></button>
+                  <button type="button" className="btn btn-warning" disabled={this.redoStack.length === 0 || meta.Status === "FINAL"} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i><span className="d-none d-md-inline"> Redo</span></button>
+                </div>
+                <div className="btn-group btn-group-sm">
+                  <ActionButton type="button" className="btn btn-success" disabled={meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i><span className="d-none d-md-inline"> Save</span></ActionButton>
+                  <ActionButton type="button" className="btn btn-danger" disabled={meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fas fa-lock"></i><span className="d-none d-md-inline"> Finalize</span></ActionButton>
+                </div>
+                <div className="btn-group btn-group-sm">
+                  <button type="button" className={"btn btn-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.pdf.bind(this)}><i className="far fa-file-pdf"></i><span className="d-none d-md-inline"> PDF</span></button>
+                  <button type="button" className={"btn btn-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.email.bind(this)}><i className="fas fa-paper-plane"></i><span className="d-none d-md-inline"> E-mail</span></button>
+                  <ActionButton type="button" className="btn btn-danger" disabled={meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fas fa-unlock"></i><span className="d-none d-md-inline"> Reset</span></ActionButton>
+                </div>
               </div>
-
             </div>
-            New Invoice
           </div>
           <div className="card-body">
 
 <div className={"invoice group " + (meta.Status === 'FINAL' ? 'o50' : '')}>
-  <div className="row">
-    <div className="company col-sm-4">
+  <div className="row g-3 mb-3">
+    <div className="col-12 col-md-4">
+      <label className="form-label text-muted small">Company</label>
       <input className="form-control" type="text" data-key="Company" onChange={that.handleChange.bind(this)} value={inv.Company}/>
     </div>
-
-    <div className="offset-sm-3 col-sm-1">
-      From
-    </div>
-    <div className="entity col-sm-4">
+    <div className="col-12 col-md-4 offset-md-4">
+      <label className="form-label text-muted small">From</label>
       <input className="form-control" type="text" data-key="Entity.Name" onChange={that.handleChange.bind(this)} value={entity.Name}/>
-      <input className="form-control" type="text" data-key="Entity.Street1" onChange={that.handleChange.bind(this)} value={entity.Street1}/>
-      <input className="form-control" type="text" data-key="Entity.Street2" onChange={that.handleChange.bind(this)} value={entity.Street2}/>
+      <input className="form-control mt-1" type="text" data-key="Entity.Street1" onChange={that.handleChange.bind(this)} value={entity.Street1}/>
+      <input className="form-control mt-1" type="text" data-key="Entity.Street2" onChange={that.handleChange.bind(this)} value={entity.Street2}/>
     </div>
   </div>
 
-  <div className="row">
-    <div className="col-sm-1">
-      Invoice For
-    </div>
-    <div className="col-sm-3">
+  <div className="row g-3 mb-3">
+    <div className="col-12 col-md-4">
+      <label className="form-label text-muted small">Invoice For</label>
       <Autocomplete data-key="Customer.Name" onSelect={that.selectCustomer.bind(that)} onChange={that.handleChange.bind(that)} required={true} placeholder="Company Name" url={"/api/v1/debtors/"+that.props.entity+"/search"} value={customer.Name} />
-      <div className="pr"><input className="form-control" type="text" data-key="Customer.Street1" onChange={that.handleChange.bind(this)} value={customer.Street1} placeholder="Street1" /><i className="fas fa-asterisk text-danger fa-input"></i></div>
-      <div className="pr"><input className="form-control" type="text" data-key="Customer.Street2" onChange={that.handleChange.bind(this)} value={customer.Street2} placeholder="Street2" /><i className="fas fa-asterisk text-danger fa-input"></i></div>
+      <div className="pr mt-1"><input className="form-control" type="text" data-key="Customer.Street1" onChange={that.handleChange.bind(this)} value={customer.Street1} placeholder="Street1" /><i className="fas fa-asterisk text-danger fa-input"></i></div>
+      <div className="pr mt-1"><input className="form-control" type="text" data-key="Customer.Street2" onChange={that.handleChange.bind(this)} value={customer.Street2} placeholder="Street2" /><i className="fas fa-asterisk text-danger fa-input"></i></div>
 
-      <input className="form-control" type="text" data-key="Customer.Vat" onChange={that.handleChange.bind(this)} value={customer.Vat} placeholder="VAT-number"/>
-      <input className="form-control" type="text" data-key="Customer.Coc" onChange={that.handleChange.bind(this)} value={customer.Coc} placeholder="Chamber Of Commerce (CoC)"/>
-      <select className="form-control" data-key="Customer.Tax" onChange={that.handleChange.bind(this)} value={customer.Tax}>
+      <input className="form-control mt-1" type="text" data-key="Customer.Vat" onChange={that.handleChange.bind(this)} value={customer.Vat} placeholder="VAT-number"/>
+      <input className="form-control mt-1" type="text" data-key="Customer.Coc" onChange={that.handleChange.bind(this)} value={customer.Coc} placeholder="Chamber Of Commerce (CoC)"/>
+      <select className="form-control mt-1" data-key="Customer.Tax" onChange={that.handleChange.bind(this)} value={customer.Tax}>
         <option value="NL21">NL21 (Domestic)</option>
         <option value="EU0">EU (ICP)</option>
         <option value="WORLD0">Outside EU (export)</option>
       </select>
-
     </div>
-    <div className="meta offset-sm-3 col-sm-5">
-      <table className="table">
+    <div className="col-12 col-md-5 offset-md-3">
+      <label className="form-label text-muted small">Invoice Details</label>
+      <table className="table table-sm">
         <tbody>
           <tr>
             <td className="text">
@@ -442,15 +441,17 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
 
   <InvoiceLineEdit parent={this} />
 
-  <div className="row notes col-sm-12">
-    <p>Notes</p>
-    <small><i className="fas fa-info"></i> This text is added to the invoice</small>
-    <textarea className="form-control" data-key="Notes" onChange={this.handleChange.bind(this)} value={inv.Notes}/>
+  <div className="row g-3 mb-3">
+    <div className="col-12">
+      <label className="form-label text-muted small">Notes</label>
+      <small className="d-block text-muted mb-1"><i className="fas fa-info"></i> This text is added to the invoice</small>
+      <textarea className="form-control" data-key="Notes" onChange={this.handleChange.bind(this)} value={inv.Notes}/>
+    </div>
   </div>
-  <div className="row banking">
-    <div className="col-sm-4">
-      <p>Banking details</p>
-      <table className="table mb0"><tbody>
+  <div className="row g-3">
+    <div className="col-12 col-md-6 col-lg-4">
+      <label className="form-label text-muted small">Banking details</label>
+      <table className="table table-sm mb0"><tbody>
         <tr><td className="text">VAT</td><td className="pr">
           <LockedInput type="text" value={(inv.Bank ?? {Vat: "", Coc: "", Iban: "", Bic: ""}).Vat} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Vat" required={true} /></td></tr>
         <tr><td className="text">CoC</td><td className="pr"><LockedInput type="text" value={(inv.Bank ?? {Vat: "", Coc: "", Iban: "", Bic: ""}).Coc} onChange={this.handleChange.bind(this)} locked={true} data-key="Bank.Coc" required={true} /></td></tr>

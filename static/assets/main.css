@@ -163,3 +163,13 @@ a:hover .fa-hover-shake {
     background-color: var(--bs-tertiary-bg);
 }
 
+/* Truncate text only on small screens */
+@media (max-width: 767.98px) {
+    .text-truncate-sm {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
