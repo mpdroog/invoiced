@@ -1,7 +1,6 @@
 package invoice
 
 import (
-	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/model"
 )
 
@@ -32,5 +31,4 @@ type Invoice = model.Invoice //nolint:revive // backwards compatibility
 // ListReply contains the response for listing invoices.
 type ListReply struct {
 	Invoices map[string][]*Invoice
-	Commits  []*db.CommitMessage
 }

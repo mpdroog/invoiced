@@ -25,11 +25,10 @@ import (
 
 // CommitInfo contains details about a single Git commit.
 type CommitInfo struct {
-	Hash     string `json:"hash"`
-	FullHash string `json:"fullHash"`
-	Message  string `json:"message"`
-	Author   string `json:"author"`
-	Date     string `json:"date"`
+	Hash    string `json:"hash"`
+	Message string `json:"message"`
+	Author  string `json:"author"`
+	Date    string `json:"date"`
 }
 
 // StatusResponse contains unpushed commit information.
@@ -136,11 +135,10 @@ func Status(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		}
 
 		resp.Commits = append(resp.Commits, CommitInfo{
-			Hash:     commit.Hash.String()[:7],
-			FullHash: commit.Hash.String(),
-			Message:  commit.Message,
-			Author:   commit.Author.Name,
-			Date:     commit.Author.When.Format("2006-01-02 15:04"),
+			Hash:    commit.Hash.String(),
+			Message: commit.Message,
+			Author:  commit.Author.Name,
+			Date:    commit.Author.When.Format("2006-01-02 15:04"),
 		})
 		resp.Ahead++
 
@@ -255,11 +253,10 @@ func History(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 		if count < perPage {
 			resp.Commits = append(resp.Commits, CommitInfo{
-				Hash:     commit.Hash.String()[:7],
-				FullHash: commit.Hash.String(),
-				Message:  strings.TrimSpace(commit.Message),
-				Author:   commit.Author.Name,
-				Date:     commit.Author.When.Format("2006-01-02 15:04"),
+				Hash:    commit.Hash.String(),
+				Message: strings.TrimSpace(commit.Message),
+				Author:  commit.Author.Name,
+				Date:    commit.Author.When.Format("2006-01-02 15:04"),
 			})
 		} else {
 			resp.HasMore = true

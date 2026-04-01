@@ -78,13 +78,13 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
     }
   }
 
-  private async doResetTo(fullHash: string, shortHash: string): Promise<void> {
-    if (!confirm(`Reset to commit ${shortHash}? Commits after this will be discarded.`)) {
+  private async doResetTo(hash: string): Promise<void> {
+    if (!confirm(`Reset to commit ${hash.slice(0, 7)}? Commits after this will be discarded.`)) {
       return;
     }
 
     this.setState({actionResult: null, error: null});
-    const res = await Axios.post<PullPushResponse>('/api/v1/git/' + this.props.entity + '/reset/' + fullHash);
+    const res = await Axios.post<PullPushResponse>('/api/v1/git/' + this.props.entity + '/reset/' + hash);
     const result = res.data;
     this.setState({actionResult: result.message});
     if (result.success) {
@@ -117,14 +117,14 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
           <tbody>
             {status.commits.map((c, i) => (
               <tr key={i}>
-                <td><code>{c.hash}</code></td>
+                <td><code>{c.hash.slice(0, 7)}</code></td>
                 <td>{c.message}</td>
                 <td>{c.author}</td>
                 <td>{c.date}</td>
                 <td>
                   <ActionButton
                     className="btn btn-sm btn-secondary"
-                    onClick={() => this.doResetTo(c.fullHash, c.hash)}
+                    onClick={() => this.doResetTo(c.hash)}
                     title="Reset to this commit"
                   >
                     <i className="fas fa-rotate-left"></i>
@@ -198,7 +198,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
             <tbody>
               {hist.commits.map((c, i) => (
                 <tr key={i}>
-                  <td><code>{c.hash}</code></td>
+                  <td><code>{c.hash.slice(0, 7)}</code></td>
                   <td>{c.message}</td>
                   <td>{c.author}</td>
                   <td>{c.date}</td>

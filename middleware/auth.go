@@ -174,9 +174,12 @@ func Companies(sessCipher string) (map[string]Entity, error) {
 	for _, user := range entities.User {
 		if user.Email == sess.Email {
 			// Found user
-			for _, entity := range user.Company {
-				// TODO: not set exception?
-				out[entity] = entities.Company[entity]
+			for _, entityName := range user.Company {
+				entity := entities.Company[entityName]
+				if entity.Years == nil {
+					entity.Years = []string{}
+				}
+				out[entityName] = entity
 			}
 			return out, nil
 		}
@@ -198,6 +201,9 @@ func UserByEmail(email string) *User {
 func CompanyByName(name string) *Entity {
 	for cname, entity := range entities.Company {
 		if cname == name {
+			if entity.Years == nil {
+				entity.Years = []string{}
+			}
 			return &entity
 		}
 	}

@@ -11,7 +11,6 @@ Package git provides API endpoints for git status and push operations.
  */
 export interface CommitInfo {
   hash: string;
-  fullHash: string;
   message: string;
   author: string;
   date: string;
