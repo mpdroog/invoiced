@@ -82,8 +82,8 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
             <td>{bucket}</td>
             <td>{elem}</td>
             <td>
-              <a className="btn btn-default btn-hover-primary" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+bucket+"/"+elem}><i className="fas fa-pencil"></i></a>
-              <ActionLink className="btn btn-default btn-hover-danger" data-target={elem} data-bucket={bucket} onClick={that.delete.bind(that)}><i className="fas fa-trash"></i></ActionLink>
+              <a className="btn btn-primary" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+bucket+"/"+elem}><i className="fas fa-pencil"></i></a>
+              <ActionLink className="btn btn-danger" data-target={elem} data-bucket={bucket} onClick={that.delete.bind(that)}><i className="fas fa-trash"></i></ActionLink>
             </td></tr>);
         });
       }
@@ -93,16 +93,16 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
     }
 
     return <div>
-        <div className="panel panel-primary">
-          <div className="panel-heading">
-            <div className="pull-right">
+        <div className="card">
+          <div className="card-header">
+            <div className="float-end">
               <div className="btn-group nm7">
-                <a href={"#"+that.props.entity+"/"+that.props.year+"/hours/add"} id="js-new" className="btn btn-default btn-hover-primary showhide"><i className="fas fa-plus"></i> New</a>
+                <a href={"#"+that.props.entity+"/"+that.props.year+"/hours/add"} id="js-new" className="btn btn-primary showhide"><i className="fas fa-plus"></i> New</a>
               </div>
             </div>
             Hour registration
           </div>
-          <div className="panel-body">
+          <div className="card-body">
             <table className="table table-striped">
               <thead><tr><th>Bucket</th><th>Name</th><th>I/O</th></tr></thead>
               <tbody>{res}</tbody>

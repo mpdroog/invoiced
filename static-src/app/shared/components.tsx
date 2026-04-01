@@ -38,11 +38,11 @@ export class LockedInput extends React.Component<LockedInputProps, LockedInputSt
 	const icon = locked ? "fa-lock" : "fa-unlock";
 	return <div className="input-group">
 		<input className="form-control" data-key={this.props['data-key']} disabled={locked} type={this.props.type} onChange={this.props.onChange} value={this.props.value} placeholder={this.props.placeholder} id={this.props.id} />
-        <div className="input-group-addon">
-        	<a onClick={this.toggle.bind(this)}>
+        <span className="input-group-text">
+        	<a onClick={this.toggle.bind(this)} style={{cursor: 'pointer'}}>
         		<i className={"fas fa-hover-shake " + icon}></i>
         	</a>
-        </div>
+        </span>
     </div>;
    }
 }

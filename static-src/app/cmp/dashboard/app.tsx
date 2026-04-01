@@ -96,10 +96,10 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 
 		return <div className="">
 			{/* Quick Stats Row */}
-			<div className="row">
+			<div className="row mb-4">
 				<div className="col-md-3">
-					<div className="panel panel-default stats">
-						<div className="panel-body">
+					<div className="card stats">
+						<div className="card-body">
 							<div className="stats-title">
 								<span className="fas fa-money-bill"></span> Unpaid Invoices
 							</div>
@@ -111,8 +111,8 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 					</div>
 				</div>
 				<div className="col-md-3">
-					<div className="panel panel-default stats">
-						<div className="panel-body">
+					<div className="card stats">
+						<div className="card-body">
 							<div className="stats-title">
 								<span className="far fa-clock"></span> Unbilled Hours
 							</div>
@@ -124,8 +124,8 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 					</div>
 				</div>
 				<div className="col-md-3">
-					<div className="panel panel-default stats">
-						<div className="panel-body">
+					<div className="card stats">
+						<div className="card-body">
 							<div className="stats-title">
 								<span className="fas fa-chart-line"></span> Year Revenue
 							</div>
@@ -141,8 +141,8 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 					</div>
 				</div>
 				<div className="col-md-3">
-					<div className="panel panel-default stats">
-						<div className="panel-body">
+					<div className="card stats">
+						<div className="card-body">
 							<div className="stats-title">
 								<span className="fas fa-triangle-exclamation"></span> Overdue
 							</div>
@@ -157,13 +157,13 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 
 			{/* Overdue Alerts */}
 			{data.overdue.length > 0 && (
-				<div className="row">
+				<div className="row mb-4">
 					<div className="col-md-12">
-						<div className="panel panel-danger">
-							<div className="panel-heading">
+						<div className="card">
+							<div className="card-header">
 								<i className="fas fa-triangle-exclamation"></i> Overdue Invoices
 							</div>
-							<div className="panel-body">
+							<div className="card-body">
 								<table className="table table-striped">
 									<thead>
 										<tr>
@@ -183,17 +183,17 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 												<td>{inv.DueDate}</td>
 												<td>
 													<span className={
-														inv.DaysOverdue > 90 ? "label label-danger" :
-														inv.DaysOverdue > 60 ? "label label-warning" :
-														inv.DaysOverdue > 30 ? "label label-info" :
-														"label label-default"
+														inv.DaysOverdue > 90 ? "badge bg-danger" :
+														inv.DaysOverdue > 60 ? "badge bg-warning" :
+														inv.DaysOverdue > 30 ? "badge bg-info" :
+														"badge bg-secondary"
 													}>
 														{inv.DaysOverdue} days
 													</span>
 												</td>
 												<td>&euro; {inv.Amount}</td>
 												<td>
-													<a href={`#${entity}/${year}/invoices/edit/Q${inv.Quarter}/${inv.ID}`} className="btn btn-xs btn-default">
+													<a href={`#${entity}/${year}/invoices/edit/Q${inv.Quarter}/${inv.ID}`} className="btn btn-sm btn-secondary">
 														<i className="fas fa-eye"></i>
 													</a>
 												</td>
@@ -208,14 +208,14 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 			)}
 
 			{/* Main Content Row */}
-			<div className="row">
+			<div className="row mb-4">
 				{/* Quarterly Breakdown */}
 				<div className="col-md-6">
-					<div className="panel panel-default">
-						<div className="panel-heading">
+					<div className="card">
+						<div className="card-header">
 							<i className="fas fa-calendar"></i> Quarterly Breakdown
 						</div>
-						<div className="panel-body">
+						<div className="card-body">
 							<table className="table">
 								<thead>
 									<tr>
@@ -249,11 +249,11 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 
 				{/* Top Clients */}
 				<div className="col-md-6">
-					<div className="panel panel-default">
-						<div className="panel-heading">
+					<div className="card">
+						<div className="card-header">
 							<i className="fas fa-users"></i> Top Clients
 						</div>
-						<div className="panel-body">
+						<div className="card-body">
 							<table className="table">
 								<thead>
 									<tr>
@@ -281,17 +281,17 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 			</div>
 
 			{/* Charts Row */}
-			<div className="row">
+			<div className="row mb-4">
 				<div className="col-md-6">
-					<div className="panel panel-default">
-						<div className="panel-heading">
+					<div className="card">
+						<div className="card-header">
 							<i className="fas fa-chart-area"></i> Revenue Trend
-							<span className="chart-legend pull-right">
+							<span className="chart-legend float-end">
 								<span className="legend-current">{year}</span>
 								<span className="legend-prev">{prevYear}</span>
 							</span>
 						</div>
-						<div className="panel-body chart-container">
+						<div className="card-body chart-container">
 							<ResponsiveContainer width="100%" height="100%">
 								<LineChart data={revstats}>
 									<CartesianGrid strokeDasharray="3 3" />
@@ -307,15 +307,15 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 				</div>
 
 				<div className="col-md-6">
-					<div className="panel panel-default">
-						<div className="panel-heading">
+					<div className="card">
+						<div className="card-header">
 							<i className="fas fa-chart-area"></i> Hours Trend
-							<span className="chart-legend pull-right">
+							<span className="chart-legend float-end">
 								<span className="legend-current">{year}</span>
 								<span className="legend-prev">{prevYear}</span>
 							</span>
 						</div>
-						<div className="panel-body chart-container">
+						<div className="card-body chart-container">
 							<ResponsiveContainer width="100%" height="100%">
 								<LineChart data={hourstats}>
 									<CartesianGrid strokeDasharray="3 3" />
@@ -332,25 +332,23 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 			</div>
 
 			{/* Recent Activity */}
-			<div className="row">
+			<div className="row mb-4">
 				<div className="col-md-12">
-					<div className="panel panel-default">
-						<div className="panel-heading">
+					<div className="card">
+						<div className="card-header">
 							<i className="fas fa-history"></i> Recent Activity
 						</div>
-						<div className="panel-body">
+						<div className="card-body">
 							{commits.length === 0 ? (
 								<p className="text-muted">No recent commits</p>
 							) : (
-								<ul className="media-list">
+								<ul className="list-unstyled">
 									{commits.slice(0, 5).map((commit) => (
-										<li key={commit.hash} className="media">
-											<div className="media-left">
-												<span className="label label-primary">
-													<i className="fas fa-code-commit"></i>
-												</span>
-											</div>
-											<div className="media-body">
+										<li key={commit.hash} className="d-flex align-items-start mb-3">
+											<span className="badge bg-primary me-3">
+												<i className="fas fa-code-commit"></i>
+											</span>
+											<div>
 												<strong>{commit.message}</strong>
 												<br/>
 												<small className="text-muted">

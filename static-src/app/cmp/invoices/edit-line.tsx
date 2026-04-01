@@ -68,7 +68,7 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
 	invLines.forEach(function(line: IInvoiceLine, idx: number) {
       lines.push(
         <tr key={"line"+idx}>
-          <td><button type="button" disabled={invStatus === 'FINAL'} className={"btn btn-default " + (invStatus !== 'FINAL' ? 'btn-hover-danger ' : '')} onClick={that.lineRemove.bind(that)} data-idx={idx}><i className="fas fa-trash"></i></button></td>
+          <td><button type="button" disabled={invStatus === 'FINAL'} className={"btn " + (invStatus !== 'FINAL' ? 'btn-danger' : 'btn-secondary')} onClick={that.lineRemove.bind(that)} data-idx={idx}><i className="fas fa-trash"></i></button></td>
           <td className="pr"><input className="form-control" type="text" data-key={"Lines."+idx+".Description"} onChange={parent.handleChange.bind(parent)} value={line.Description}/><i className="fas fa-asterisk text-danger fa-input"></i></td>
           <td className="pr"><input className="form-control" type="text" data-key={"Lines."+idx+".Quantity"} onChange={parent.handleChange.bind(parent)} value={line.Quantity}/><i className="fas fa-asterisk text-danger fa-input"></i></td>
           <td className="pr"><input className="form-control" type="text" data-key={"Lines."+idx+".Price"} onChange={parent.handleChange.bind(parent)} value={line.Price}/><i className="fas fa-asterisk text-danger fa-input"></i></td>
@@ -91,7 +91,7 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
     <tfoot>
       <tr>
         <td colSpan={3} className="text">
-          <button type="button" disabled={invStatus === 'FINAL'} className={"btn btn-default " + (invStatus !== 'FINAL' ? 'btn-hover-success ' : '')} onClick={that.lineAdd.bind(that)}><i className="fas fa-plus"></i> Add row</button>
+          <button type="button" disabled={invStatus === 'FINAL'} className={"btn " + (invStatus !== 'FINAL' ? 'btn-success' : 'btn-secondary')} onClick={that.lineAdd.bind(that)}><i className="fas fa-plus"></i> Add row</button>
         </td>
         <td className="text">Total (ex tax)</td>
         <td><input className="form-control" disabled={true} type="text" data-key="Total.Ex" readOnly={true} value={invTotal.Ex}/></td>

@@ -49,29 +49,29 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
         icp.push(<tr key={"icp"+vat}>
           <td>3a. Intracommunautaire leveringen en diensten</td>
           <td><code>{vat}</code></td>
-          <td className="text-right">&euro; {this.state.data.EUCompany[vat]}</td>
+          <td className="text-end">&euro; {this.state.data.EUCompany[vat]}</td>
         </tr>);
       }
 
       sum = <div className="m-t-lg">
-        <div className="panel panel-success">
-          <div className="panel-heading">
+        <div className="card">
+          <div className="card-header">
             <i className="fas fa-file-invoice"></i> Aangifte omzetbelasting
           </div>
-          <div className="panel-body">
+          <div className="card-body">
             <table className="table table-striped">
               <thead>
-                <tr><th>Rubriek</th><th className="text-right">Omzet</th><th className="text-right">Omzetbelasting</th></tr>
+                <tr><th>Rubriek</th><th className="text-end">Omzet</th><th className="text-end">Omzetbelasting</th></tr>
               </thead>
               <tbody>
                 <tr>
                   <td>1a. Leveringen/diensten belast met hoog tarief</td>
-                  <td className="text-right">&euro; {this.state.data.Ex}</td>
-                  <td className="text-right">&euro; {this.state.data.Tax}</td>
+                  <td className="text-end">&euro; {this.state.data.Ex}</td>
+                  <td className="text-end">&euro; {this.state.data.Tax}</td>
                 </tr>
                 <tr>
                   <td>3b. Leveringen naar of diensten in landen binnen de EU</td>
-                  <td className="text-right">&euro; {this.state.data.EUEx}</td>
+                  <td className="text-end">&euro; {this.state.data.EUEx}</td>
                   <td></td>
                 </tr>
               </tbody>
@@ -79,14 +79,14 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
           </div>
         </div>
 
-        {icp.length > 0 && <div className="panel panel-warning m-t-md">
-          <div className="panel-heading">
+        {icp.length > 0 && <div className="card m-t-md">
+          <div className="card-header">
             <i className="fas fa-globe-europe"></i> Aangifte Intracommunautaire prestaties (ICP)
           </div>
-          <div className="panel-body">
+          <div className="card-body">
             <table className="table table-striped">
               <thead>
-                <tr><th>Rubriek</th><th>BTW-nummer</th><th className="text-right">Levering</th></tr>
+                <tr><th>Rubriek</th><th>BTW-nummer</th><th className="text-end">Levering</th></tr>
               </thead>
               <tbody>
                 {icp}
@@ -98,41 +98,45 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
     }
 
     return <div>
-      <div className="panel panel-primary">
-        <div className="panel-heading">
+      <div className="card">
+        <div className="card-header">
           <i className="fas fa-calculator"></i> Dutch TAX Summary Generator
-          <div className="pull-right">
+          <div className="float-end">
             <div className="btn-group nm7">
-              <a className="btn btn-default btn-hover-success" href={'/api/v1/summary/'+this.props.entity+'/'+this.props.year+'?excel=1'}>
+              <a className="btn btn-success" href={'/api/v1/summary/'+this.props.entity+'/'+this.props.year+'?excel=1'}>
                 <i className="fas fa-file-excel"></i> XLSX Accountant
               </a>
             </div>
           </div>
         </div>
-        <div className="panel-body">
+        <div className="card-body">
           <div className="row">
             <div className="col-md-8">
-              <div className="form-inline">
-                <div className="form-group m-r-sm">
-                  <label className="m-r-sm">Quarter</label>
-                  <select className="form-control" value={this.state.quarter} onChange={this.setQuarter.bind(this)}>
+              <div className="row g-2 align-items-center">
+                <div className="col-auto">
+                  <label className="col-form-label">Quarter</label>
+                </div>
+                <div className="col-auto">
+                  <select className="form-select" value={this.state.quarter} onChange={this.setQuarter.bind(this)}>
                     <option value="Q1">Q1 (Jan - Mar)</option>
                     <option value="Q2">Q2 (Apr - Jun)</option>
                     <option value="Q3">Q3 (Jul - Sep)</option>
                     <option value="Q4">Q4 (Oct - Dec)</option>
                   </select>
                 </div>
-                <ActionButton className="btn btn-primary" onClick={this.ajax.bind(this)}>
-                  <i className="fas fa-calculator"></i> Get numbers
-                </ActionButton>
+                <div className="col-auto">
+                  <ActionButton className="btn btn-primary" onClick={this.ajax.bind(this)}>
+                    <i className="fas fa-calculator"></i> Get numbers
+                  </ActionButton>
+                </div>
               </div>
             </div>
             <div className="col-md-4">
-              <div className="panel panel-default">
-                <div className="panel-heading">
+              <div className="card">
+                <div className="card-header">
                   <i className="fas fa-calendar"></i> Quarter Reference
                 </div>
-                <div className="panel-body">
+                <div className="card-body">
                   <table className="table table-bordered table-striped">
                     <thead>
                       <tr><th>Quarter</th><th>Months</th><th>Deadline</th></tr>

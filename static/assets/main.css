@@ -8,27 +8,6 @@
 	padding: 30px;
 }
 
-.btn-hover-danger:hover {
-    background-color: #e74c3c;
-    border-color: #e74c3c;
-    color: #FFFFFF;
-}
-.btn-hover-warning:hover {
-    background-color: #ffb606;
-    border-color: #ffb606;
-    color: #FFFFFF;
-}
-.btn-hover-success:hover {
-    background-color: #62cb31;
-    border-color: #62cb31;
-    color: #FFFFFF;
-}
-.btn-hover-primary:hover {
-    background-color: #34495e;
-    border-color: #34495e;
-    color: #FFFFFF;
-}
-
 .pa {
     position: absolute;
 }
@@ -57,26 +36,21 @@
     opacity: 0.1;
 }
 
-.nav-spacer {
-    margin-right: 15px;
-    float: left;
-}
-
-#js-git .label {
+#js-git .badge {
     font-size: 9px;
     padding: 2px 4px;
     vertical-align: top;
 }
 
 /* FontAwesome 6 hover animations */
-.btn-hover-danger:hover .fas,
-.btn-hover-danger:hover .far,
-.btn-hover-success:hover .fas,
-.btn-hover-success:hover .far {
+.btn-danger:hover .fas,
+.btn-danger:hover .far,
+.btn-success:hover .fas,
+.btn-success:hover .far {
     animation: fa-beat 0.5s ease infinite;
 }
 
-.btn-hover-info:hover .fas {
+.btn-info:hover .fas {
     animation: fa-bounce 0.5s ease infinite;
 }
 
@@ -122,8 +96,8 @@ a:hover .fa-hover-shake {
 .splash {
     position: fixed;
     z-index: 2000;
-    background: white;
-    color: gray;
+    background: var(--bs-body-bg);
+    color: var(--bs-secondary-color);
     top: 0;
     bottom: 0;
     left: 0;

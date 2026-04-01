@@ -354,25 +354,25 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     const customer = inv.Customer ?? { Name: "", Street1: "", Street2: "", Vat: "", Coc: "", Tax: "NL21" };
 
 		return <form><div>
-		    <div className="panel panel-primary">
-          <div className="panel-heading">
-            <div className="pull-right">
+		    <div className="card">
+          <div className="card-header">
+            <div className="float-end">
               <div className="btn-group nm7">
-                <button type="button" className="btn btn-default btn-hover-warning" disabled={this.undoStack.length === 0 || meta.Status === "FINAL"} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i> Undo</button>
-                <button type="button" className="btn btn-default btn-hover-warning" disabled={this.redoStack.length === 0 || meta.Status === "FINAL"} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i> Redo</button>
-                <ActionButton type="button" className="btn btn-default btn-hover-success" disabled={meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i> Save</ActionButton>
-                <ActionButton type="button" className="btn btn-default btn-hover-danger" disabled={meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fas fa-lock"></i> Finalize</ActionButton>
-                <button type="button" className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.pdf.bind(this)}><i className="far fa-file-pdf"></i> PDF</button>
-                <button type="button" className={"btn btn-default btn-hover-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.email.bind(this)}><i className="fas fa-paper-plane"></i> E-mail</button>
+                <button type="button" className="btn btn-warning" disabled={this.undoStack.length === 0 || meta.Status === "FINAL"} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i> Undo</button>
+                <button type="button" className="btn btn-warning" disabled={this.redoStack.length === 0 || meta.Status === "FINAL"} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i> Redo</button>
+                <ActionButton type="button" className="btn btn-success" disabled={meta.Status === "FINAL"} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i> Save</ActionButton>
+                <ActionButton type="button" className="btn btn-danger" disabled={meta.Status !== "CONCEPT"} onClick={this.finalize.bind(this)}><i className="fas fa-lock"></i> Finalize</ActionButton>
+                <button type="button" className={"btn btn-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.pdf.bind(this)}><i className="far fa-file-pdf"></i> PDF</button>
+                <button type="button" className={"btn btn-success" + (meta.Status !== "FINAL" ? " disabled" : "")} onClick={this.email.bind(this)}><i className="fas fa-paper-plane"></i> E-mail</button>
 
-                <ActionButton type="button" className="btn btn-default btn-hover-danger" disabled={meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fas fa-unlock"></i> Reset</ActionButton>
+                <ActionButton type="button" className="btn btn-danger" disabled={meta.Status !== "FINAL"} onClick={this.reset.bind(this)}><i className="fas fa-unlock"></i> Reset</ActionButton>
 
               </div>
 
             </div>
             New Invoice
           </div>
-          <div className="panel-body">
+          <div className="card-body">
 
 <div className={"invoice group " + (meta.Status === 'FINAL' ? 'o50' : '')}>
   <div className="row">
@@ -380,7 +380,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       <input className="form-control" type="text" data-key="Company" onChange={that.handleChange.bind(this)} value={inv.Company}/>
     </div>
 
-    <div className="col-sm-offset-3 col-sm-1">
+    <div className="offset-sm-3 col-sm-1">
       From
     </div>
     <div className="entity col-sm-4">
@@ -408,7 +408,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       </select>
 
     </div>
-    <div className="meta col-sm-offset-3 col-sm-5">
+    <div className="meta offset-sm-3 col-sm-5">
       <table className="table">
         <tbody>
           <tr>

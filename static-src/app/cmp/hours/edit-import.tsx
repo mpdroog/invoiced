@@ -218,13 +218,11 @@ export default class HourImport extends React.Component<IImportProps, IImportSta
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <button onClick={this.props.onHide} className="close" type="button" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true"> &times;</span>
-              </button>
               <h4 className="modal-title">
                 <i className="fas fa-arrow-up"></i>
                 &nbsp;Import
               </h4>
+              <button onClick={this.props.onHide} className="btn-close" type="button" aria-label="Close"></button>
             </div>
             <div className="modal-body">
               <p className="text-muted"><small>Format: Start with a date (e.g. "27Mar"), then time ranges (e.g. "07:30 - 07:51"), then description text.</small></p>
@@ -239,7 +237,7 @@ export default class HourImport extends React.Component<IImportProps, IImportSta
               )}
             </div>
             <div className="modal-footer">
-              <a onClick={this.save.bind(this)} className="btn btn-primary pull-right"> Parse</a>
+              <a onClick={this.save.bind(this)} className="btn btn-primary float-end"> Parse</a>
             </div>
           </div>
         </div>

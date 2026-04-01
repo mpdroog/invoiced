@@ -4,27 +4,27 @@
 }
 
 /* Stats panels */
-.panel.stats .panel-body {
+.card.stats .card-body {
     text-align: center;
     padding: 20px;
 }
 
-.panel.stats .stats-title {
+.card.stats .stats-title {
     font-size: 12px;
-    color: #888;
+    color: var(--bs-secondary-color);
     text-transform: uppercase;
     margin-bottom: 5px;
 }
 
-.panel.stats h1 {
+.card.stats h1 {
     font-size: 32px;
     margin: 10px 0;
     font-weight: 300;
 }
 
-.panel.stats .stats-info {
+.card.stats .stats-info {
     font-size: 12px;
-    color: #666;
+    color: var(--bs-secondary-color);
 }
 
 /* Chart legend */

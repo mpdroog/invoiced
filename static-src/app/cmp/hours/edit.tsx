@@ -288,7 +288,7 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
 
     this.state.Lines.forEach(function(item:IHourLineState, idx:number) {
       lines.push(<tr key={idx}>
-        <td><button type="button" className="btn btn-default btn-hover-danger" onClick={that.lineRemove.bind(that, idx)}><i className="fas fa-trash"></i></button></td>
+        <td><button type="button" className="btn btn-danger" onClick={that.lineRemove.bind(that, idx)}><i className="fas fa-trash"></i></button></td>
         <td>{item.Day}</td>
         <td>{item.Start}</td><td>{item.Stop}</td><td>{that.shortHand(item.Hours)}</td><td>{item.Description}</td>
       </tr>);
@@ -296,49 +296,51 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
 
 		return <form>
       <div>
-		    <div className="panel panel-primary">
-          <div className="panel-heading">
+		    <div className="card">
+          <div className="card-header">
             Project Hour Calc
           </div>
-          <div className="panel-body">
-            <div className="col-sm-2">
-              <input type="date" id="hour-day" className="form-control" value={this.state.day.format("YYYY-MM-DD")} onChange={this.update.bind(this)}/>
+          <div className="card-body">
+            <div className="row g-2 align-items-center">
+              <div className="col-auto">
+                <input type="date" id="hour-day" className="form-control" value={this.state.day.format("YYYY-MM-DD")} onChange={this.update.bind(this)}/>
+              </div>
+              <div className="col-auto">
+                <input type="text" id="hour-start" className="form-control" placeholder="HH:mm" value={this.state.start} onChange={this.update.bind(this)}/>
+              </div>
+              <div className="col-auto">
+                <input type="text" id="hour-stop" className="form-control" placeholder="HH:mm" value={this.state.stop} onChange={this.update.bind(this)}/>
+              </div>
+              <div className="col">
+                <input type="text" id="hour-description" className="form-control" placeholder="Description" value={this.state.description} onChange={this.update.bind(this)}/>
+              </div>
+              <div className="col-auto">
+                <button type="button" onClick={this.recalc.bind(this)} className="btn btn-success">
+                  <i className="fas fa-plus"></i>
+                  &nbsp;Add
+                </button>
+	            </div>
             </div>
-            <div className="col-sm-2">
-              <input type="text" id="hour-start" className="form-control" placeholder="HH:mm" value={this.state.start} onChange={this.update.bind(this)}/>
-            </div>
-            <div className="col-sm-2">
-              <input type="text" id="hour-stop" className="form-control" placeholder="HH:mm" value={this.state.stop} onChange={this.update.bind(this)}/>
-            </div>
-            <div className="col-sm-5">
-              <input type="text" id="hour-description" className="form-control" placeholder="Description" value={this.state.description} onChange={this.update.bind(this)}/>
-            </div>
-            <div className="col-sm-1">            
-              <button type="button" onClick={this.recalc.bind(this)} className="btn btn-default btn-hover-success">
-                <i className="fas fa-plus"></i>
-                &nbsp;Add
-              </button>
-	          </div>
           </div>
 		    </div>
     </div>
     <Import hide={this.state.import} onHide={this.toggleImport.bind(this)} importFn={this.importLine.bind(this)} />
 
     <div>
-      <div className="panel panel-primary">
-        <div className="panel-heading">
-          <div className="pull-right">
+      <div className="card">
+        <div className="card-header">
+          <div className="float-end">
             <div className="btn-group nm7">
-              <button type="button" className="btn btn-default btn-hover-warning" disabled={this.undoStack.length === 0 || !isEditable} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i>&nbsp;Undo</button>
-              <button type="button" className="btn btn-default btn-hover-warning" disabled={this.redoStack.length === 0 || !isEditable} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i>&nbsp;Redo</button>
-              <button type="button" className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.toggleImport.bind(this)}><i className="fas fa-arrow-up"></i>&nbsp;Import</button>
-              <ActionButton className="btn btn-default btn-hover-success" disabled={!isEditable} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i>&nbsp;Save</ActionButton>
-              <ActionButton className="btn btn-default btn-hover-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fas fa-share"></i>&nbsp;Bill</ActionButton>
+              <button type="button" className="btn btn-warning" disabled={this.undoStack.length === 0 || !isEditable} onClick={this.undo.bind(this)}><i className="fas fa-rotate-left"></i>&nbsp;Undo</button>
+              <button type="button" className="btn btn-warning" disabled={this.redoStack.length === 0 || !isEditable} onClick={this.redo.bind(this)}><i className="fas fa-rotate-right"></i>&nbsp;Redo</button>
+              <button type="button" className="btn btn-success" disabled={!isEditable} onClick={this.toggleImport.bind(this)}><i className="fas fa-arrow-up"></i>&nbsp;Import</button>
+              <ActionButton className="btn btn-success" disabled={!isEditable} onClick={this.save.bind(this)}><i className="fas fa-floppy-disk"></i>&nbsp;Save</ActionButton>
+              <ActionButton className="btn btn-danger" disabled={this.state.Status !== "CONCEPT"} onClick={this.bill.bind(this)}><i className="fas fa-share"></i>&nbsp;Bill</ActionButton>
             </div>
           </div>
           Sum ({this.state.Total} hours/{parseFloat(this.state.Total) * this.state.HourRate} EUR)
         </div>
-        <div className="panel-body">
+        <div className="card-body">
           <div className="row">
             <div className="col-sm-6">
               <Autocomplete id="hour-project" onSelect={this.selectProject.bind(this)} onChange={this.update.bind(this)} placeholder="Project name" url={"/api/v1/projects/"+that.props.entity+"/search"} value={this.state.Project} />

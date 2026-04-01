@@ -118,9 +118,9 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td>&euro; {total.Total}</td>
       <td className={expiryClass}>{meta.Duedate}</td>
       <td>
-        <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fas fa-pencil"></i></a>
-        <ActionLink className="btn btn-default btn-hover-danger" disabled={isDeleteDisabled} data-target={key} data-bucket={bucket} onClick={this.delete.bind(this)}><i className="fas fa-trash"></i></ActionLink>
-        <ActionLink className="btn btn-default btn-hover-danger" disabled={isPaidDisabled} data-id={key} data-bucket={bucket} onClick={this.setPaid.bind(this)}><i className="fas fa-check"></i></ActionLink>
+        <a className="btn btn-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fas fa-pencil"></i></a>
+        <ActionLink className="btn btn-danger" disabled={isDeleteDisabled} data-target={key} data-bucket={bucket} onClick={this.delete.bind(this)}><i className="fas fa-trash"></i></ActionLink>
+        <ActionLink className="btn btn-danger" disabled={isPaidDisabled} data-id={key} data-bucket={bucket} onClick={this.setPaid.bind(this)}><i className="fas fa-check"></i></ActionLink>
       </td>
     </tr>;
   }
@@ -134,8 +134,8 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
       <td>&euro; {inv.Total?.Total}</td>
       <td>{inv.Meta?.Duedate}</td>
       <td>
-        <a className="btn btn-default btn-hover-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fas fa-pencil"></i></a>
-        <a className="btn btn-default btn-hover-primary" href={"/api/v1/invoice/" + this.props.entity + "/" + this.props.year + "/" + bucket + "/" + key + "/pdf"}><i className="far fa-file-pdf"></i></a>
+        <a className="btn btn-primary" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/edit/"+bucket+"/"+key}><i className="fas fa-pencil"></i></a>
+        <a className="btn btn-primary" href={"/api/v1/invoice/" + this.props.entity + "/" + this.props.year + "/" + bucket + "/" + key + "/pdf"}><i className="far fa-file-pdf"></i></a>
       </td>
     </tr>;
   }
@@ -215,37 +215,34 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     let headerButtons = <div/>;
     if (this.props.bucket === "concepts") {
       headerButtons = <div>
-        <a id="js-new" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/add"} className="btn btn-default btn-hover-primary showhide">
+        <a id="js-new" href={"#"+this.props.entity+"/"+this.props.year+"/"+"invoices/add"} className="btn btn-primary showhide">
           <i className="fas fa-plus"></i> New
         </a>
       </div>;
     }
     if (this.props.bucket === "sales-invoices-unpaid") {
-      headerButtons = <div><a id="js-balance" onClick={this.openUpload.bind(this)} className="btn btn-default btn-hover-primary showhide">
+      headerButtons = <div><a id="js-balance" onClick={this.openUpload.bind(this)} className="btn btn-primary showhide">
           <i className="fas fa-upload"></i> Bankbalance
         </a>
       </div>;
     }
 
     const url = `/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/balance`;
-    const balanceUpload = <div>
-      <form className="form-inline hidden" method="post" encType="multipart/form-data" action={url}>
-        <input id="js-balance-field" accept=".xml" className="form-control" name="file" type="file" onChange={this.uploadBalance.bind(this)} />
-        <button className="btn btn-default btn-hover-primary" type="submit"><i className="fas fa-arrow-up"></i> Upload</button>
-      </form>
-    </div>;
+    const balanceUpload = <form className="d-none" method="post" encType="multipart/form-data" action={url}>
+      <input id="js-balance-field" accept=".xml" name="file" type="file" onChange={this.uploadBalance.bind(this)} />
+    </form>;
 
 		return <div>
-		    <div className="panel panel-primary">
-          <div className="panel-heading">
-            <div className="pull-right">
+		    <div className="card">
+          <div className="card-header">
+            <div className="float-end">
               <div className="btn-group nm7">
                 {headerButtons}
               </div>
             </div>
             {this.props.title}
           </div>
-          <div className="panel-body">
+          <div className="card-body">
             {balanceUpload}
             <table className="table table-striped">
             	<thead><tr><th>#</th>{this.sortHeader("Invoice")}{this.sortHeader("Customer")}{this.sortHeader("Amount")}{this.sortHeader("Duedate")}<th>I/O</th></tr></thead>

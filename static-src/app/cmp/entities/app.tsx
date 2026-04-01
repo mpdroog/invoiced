@@ -72,7 +72,7 @@ export default class Entities extends React.Component<Record<string, never>, IEn
 					const delta = revenue - prevRevenue;
 					const pct = ((delta / prevRevenue) * 100).toFixed(0);
 					const sign = delta >= 0 ? "+" : "";
-					const badgeClass = delta >= 0 ? "m-l-sm label label-success" : "m-l-sm label label-danger";
+					const badgeClass = delta >= 0 ? "m-l-sm badge bg-success" : "m-l-sm badge bg-danger";
 					deltaEl = <span className={badgeClass}>
 						{sign}&euro; {formatCurrency(Math.abs(delta))} ({sign}{pct}%)
 					</span>;
@@ -96,9 +96,9 @@ export default class Entities extends React.Component<Record<string, never>, IEn
 
 		return <div className="container">
 			<div className="row">
-				<div className="col-md-6 col-md-offset-3">
-				    <div className="panel panel-default">
-				        <div className="panel-body">
+				<div className="col-md-6 offset-md-3">
+				    <div className="card">
+				        <div className="card-body">
 				            <h2 className="font-light m-b-xs">
 				                <i className="fas fa-building"></i>
 				                &nbsp;Your Companies

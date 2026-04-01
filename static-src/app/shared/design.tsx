@@ -26,6 +26,7 @@ interface MenuState {
     searchResults: SearchResult[];
     showResults: boolean;
     searching: boolean;
+    menuOpen: boolean;
 }
 
 interface MenuProps {
@@ -44,7 +45,8 @@ class Menu extends React.Component<MenuProps, MenuState> {
             searchQuery: '',
             searchResults: [],
             showResults: false,
-            searching: false
+            searching: false,
+            menuOpen: false
         };
         this.boundRefresh = this.fetchGitStatus.bind(this);
     }
@@ -126,92 +128,108 @@ class Menu extends React.Component<MenuProps, MenuState> {
 
     render(): React.JSX.Element {
         const {company, year} = this.props;
-        const {ahead, searchQuery, searchResults, showResults, searching} = this.state;
+        const {ahead, searchQuery, searchResults, showResults, searching, menuOpen} = this.state;
 
         return (
-            <nav className="navbar navbar-default navbar-fixed-top">
+            <nav className="navbar navbar-expand-md bg-body-tertiary fixed-top">
                 <div className="container">
-                    <div className="navbar-header">
-                        <a href="/" className="navbar-brand" id="js-entities">
-                            <img src={"/api/v1/entities/" + company + "/logo"} alt="logo" style={{height: "20px"}}/>
-                        </a>
-                    </div>
+                    <a href="/" className="navbar-brand" id="js-entities">
+                        <i className="fas fa-calculator me-2"></i>
+                        <span className="fw-bold">Boekhoud</span><span className="text-success">.cloud</span>
+                    </a>
 
-                    <div id="search-container" className="navbar-form navbar-left search-container">
-                        <div className="form-group">
-                            <input
-                                type="text"
-                                placeholder="Search invoices, hours..."
-                                className="form-control"
-                                id="js-search"
-                                value={searchQuery}
-                                onChange={this.handleSearchChange.bind(this)}
-                                onFocus={() => this.setState({showResults: true})}
-                            />
-                        </div>
-                        {showResults && searchQuery.length >= 2 && (
-                            <div className="search-dropdown">
-                                {searching ? (
-                                    <div className="search-loading">
-                                        <i className="fas fa-spinner fa-spin"></i> Searching...
-                                    </div>
-                                ) : searchResults.length > 0 ? (
-                                    searchResults.map((r, i) => (
-                                        <div
-                                            key={i}
-                                            className="search-result-item"
-                                            onClick={() => this.handleResultClick(r)}
-                                        >
-                                            <i className={'fas ' + this.getResultIcon(r.type) + ' search-result-icon'}></i>
-                                            <strong>{r.title}</strong>
-                                            <span className="search-result-subtitle">{r.subtitle}</span>
-                                            <div className="search-result-meta">
-                                                {r.type} &middot; {r.year} Q{r.quarter}
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="search-no-results">
-                                        No results found
-                                    </div>
-                                )}
+                    <button
+                        className="navbar-toggler"
+                        type="button"
+                        aria-label="Toggle navigation"
+                        onClick={() => this.setState({menuOpen: !menuOpen})}
+                    >
+                        <span className="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div className={"collapse navbar-collapse" + (menuOpen ? " show" : "")}>
+                        <div id="search-container" className="me-auto search-container">
+                            <div className="form-group">
+                                <input
+                                    type="text"
+                                    placeholder="Search invoices, hours..."
+                                    className="form-control"
+                                    id="js-search"
+                                    value={searchQuery}
+                                    onChange={this.handleSearchChange.bind(this)}
+                                    onFocus={() => this.setState({showResults: true})}
+                                />
                             </div>
-                        )}
-                    </div>
+                            {showResults && searchQuery.length >= 2 && (
+                                <div className="search-dropdown">
+                                    {searching ? (
+                                        <div className="search-loading">
+                                            <i className="fas fa-spinner fa-spin"></i> Searching...
+                                        </div>
+                                    ) : searchResults.length > 0 ? (
+                                        searchResults.map((r, i) => (
+                                            <div
+                                                key={i}
+                                                className="search-result-item"
+                                                onClick={() => this.handleResultClick(r)}
+                                            >
+                                                <i className={'fas ' + this.getResultIcon(r.type) + ' search-result-icon'}></i>
+                                                <strong>{r.title}</strong>
+                                                <span className="search-result-subtitle">{r.subtitle}</span>
+                                                <div className="search-result-meta">
+                                                    {r.type} &middot; {r.year} Q{r.quarter}
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="search-no-results">
+                                            No results found
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
-                    <ul className="nav navbar-nav navbar-right">
-                        <li>
-                            <a href={"#"+company+"/"+year} id="js-dashboard" title="Dashboard">
-                                <i className="fas fa-gauge"></i>
-                            </a>
-                        </li>
-                        <li>
-                            <a href={"#"+company+"/"+year+"/hours"} id="js-hours" title="Hours">
-                                <i className="far fa-clock"></i>
-                            </a>
-                        </li>
-                        <li>
-                            <a href={"#"+company+"/"+year+"/invoices"} id="js-invoices" title="Invoices">
-                                <i className="fas fa-money-bill"></i>
-                            </a>
-                        </li>
-                        <li>
-                            <a href={"#"+company+"/"+year+"/purchases"} id="js-purchases" title="Purchases">
-                                <i className="fas fa-shopping-cart"></i>
-                            </a>
-                        </li>
-                        <li>
-                            <a href={"#"+company+"/"+year+"/taxes"} id="js-taxes" title="Taxes">
-                                <i className="fas fa-building-columns"></i>
-                            </a>
-                        </li>
-                        <li>
-                            <a href={"#"+company+"/"+year+"/git"} id="js-git" title="Git">
-                                <i className="fas fa-cloud-arrow-up"></i>
-                                {ahead > 0 && <span className="label label-danger">{ahead}</span>}
-                            </a>
-                        </li>
-                    </ul>
+                        <ul className="navbar-nav ms-auto">
+                            <li className="nav-item">
+                                <a href={"#"+company+"/"+year} className="nav-link" id="js-dashboard" title="Dashboard">
+                                    <i className="fas fa-gauge fa-lg"></i>
+                                    <span className="d-md-none ms-2">Dashboard</span>
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a href={"#"+company+"/"+year+"/hours"} className="nav-link" id="js-hours" title="Hours">
+                                    <i className="far fa-clock fa-lg"></i>
+                                    <span className="d-md-none ms-2">Hours</span>
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a href={"#"+company+"/"+year+"/invoices"} className="nav-link" id="js-invoices" title="Invoices">
+                                    <i className="fas fa-money-bill fa-lg"></i>
+                                    <span className="d-md-none ms-2">Invoices</span>
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a href={"#"+company+"/"+year+"/purchases"} className="nav-link" id="js-purchases" title="Purchases">
+                                    <i className="fas fa-shopping-cart fa-lg"></i>
+                                    <span className="d-md-none ms-2">Purchases</span>
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a href={"#"+company+"/"+year+"/taxes"} className="nav-link" id="js-taxes" title="Taxes">
+                                    <i className="fas fa-building-columns fa-lg"></i>
+                                    <span className="d-md-none ms-2">Taxes</span>
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a href={"#"+company+"/"+year+"/git"} className="nav-link" id="js-git" title="Git">
+                                    <i className="fas fa-cloud-arrow-up fa-lg"></i>
+                                    <span className="d-md-none ms-2">Sync</span>
+                                    {ahead > 0 && <span className="badge bg-danger">{ahead}</span>}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </nav>
         );

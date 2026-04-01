@@ -84,9 +84,6 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
       <div className="modal-dialog">
         <div className="modal-content">
           <div className="modal-header">
-            <button onClick={this.props.onHide} className="close" type="button" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true"> &times;</span>
-            </button>
             <h4 className="modal-title">
             	<div className="row">
           		<div className="col-sm-1">
@@ -98,6 +95,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
 	            </div>
 	            </div>
             </h4>
+            <button onClick={this.props.onHide} className="btn-close" type="button" aria-label="Close"></button>
           </div>
           <div className="modal-body">
 		    <div className="row">
@@ -117,7 +115,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
               <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + parent.props.bucket + "/" + parentMeta.Conceptid + "/xml"} target="_blank" rel="noreferrer"><i className="fas fa-building-columns" />&nbsp;{parentMeta.Invoiceid}.xml</a></p>
               {hourFile}
             </div>
-            <ActionLink onClick={this.send.bind(this)} className="btn btn-primary pull-right"> Send</ActionLink>
+            <ActionLink onClick={this.send.bind(this)} className="btn btn-primary float-end"> Send</ActionLink>
           </div>
         </div>
       </div>

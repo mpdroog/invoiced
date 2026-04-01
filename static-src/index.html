@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html data-bs-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,12 +32,10 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" data-dismiss="modal" aria-label="Close" class="close">
-          <span class="js-modal-hide" aria-hidden="true">&times;</span>
-        </button>
         <h4 class="modal-title">
           😵 Oops! Internet down?
         </h4>
+        <button type="button" class="btn-close js-modal-hide" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <p>Failed contacting the server, please check if:</p>
@@ -53,12 +51,10 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" data-dismiss="modal" aria-label="Close" class="close">
-          <span class="js-modal-hide" aria-hidden="true">&times;</span>
-        </button>
         <h4 class="modal-title" id="js-error-title">
           😱 Oops! Something went wrong...
         </h4>
+        <button type="button" class="btn-close js-modal-hide" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <p>Sorry to bother you, but I got an error that needs to be corrected:</p>
@@ -69,7 +65,7 @@
     </div>
   </div>
 </div>
-<div id="js-dialog-backdrop" class="hidden modal-backdrop fade in"></div>
+<div id="js-dialog-backdrop" class="d-none modal-backdrop fade in"></div>
 <script src="/static/assets/error-handler.js"></script>
 <script src="/static/assets/shortcuts.js"></script>
 <script src="/static/assets/prototype.js"></script>

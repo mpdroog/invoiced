@@ -186,16 +186,16 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
         <td>&euro; {inv.TotalInc}</td>
         <td className={expiryClass}>{inv.Duedate}</td>
         <td>
-          <a className="btn btn-default btn-hover-primary" href={`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}/pdf`} target="_blank" rel="noreferrer">
+          <a className="btn btn-primary" href={`/api/v1/purchase/${this.props.entity}/${this.props.year}/${bucket}/${key}/pdf`} target="_blank" rel="noreferrer">
             <i className="far fa-file-pdf"></i>
           </a>
-          {isUnpaid && <ActionLink className="btn btn-default btn-hover-success" onClick={() => this.setPaid(key, bucket)}>
+          {isUnpaid && <ActionLink className="btn btn-success" onClick={() => this.setPaid(key, bucket)}>
             <i className="fas fa-check"></i>
           </ActionLink>}
-          <a className="btn btn-default btn-hover-info" onClick={() => this.showAddLineModal(inv)}>
+          <a className="btn btn-info" onClick={() => this.showAddLineModal(inv)}>
             <i className="fas fa-plus"></i> Add to Invoice
           </a>
-          <ActionLink className="btn btn-default btn-hover-danger" onClick={() => this.delete(key, bucket)}>
+          <ActionLink className="btn btn-danger" onClick={() => this.delete(key, bucket)}>
             <i className="fas fa-trash"></i>
           </ActionLink>
         </td>
@@ -209,13 +209,13 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     let headerButtons = <div/>;
     if (isUnpaid) {
       headerButtons = <div>
-        <a id="js-upload-btn" onClick={this.openUpload.bind(this)} className="btn btn-default btn-hover-primary showhide">
+        <a id="js-upload-btn" onClick={this.openUpload.bind(this)} className="btn btn-primary showhide">
           <i className="fas fa-upload"></i> Upload XML
         </a>
       </div>;
     }
 
-    const uploadForm = <form className="hidden">
+    const uploadForm = <form className="d-none">
       <input id="js-purchase-upload" accept=".xml" type="file" onChange={this.uploadXML.bind(this)} />
     </form>;
 
@@ -227,16 +227,16 @@ export default class PurchaseInvoices extends React.Component<IProps, IState> {
     }
 
     return <div>
-      <div className="panel panel-primary">
-        <div className="panel-heading">
-          <div className="pull-right">
+      <div className="card">
+        <div className="card-header">
+          <div className="float-end">
             <div className="btn-group nm7">
               {headerButtons}
             </div>
           </div>
           {this.props.title}
         </div>
-        <div className="panel-body">
+        <div className="card-body">
           {uploadForm}
           <table className="table table-striped">
             <thead><tr>{this.sortHeader("ID")}{this.sortHeader("Supplier")}{this.sortHeader("Amount")}{this.sortHeader("Duedate")}<th>Actions</th></tr></thead>
@@ -359,12 +359,10 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
       <div className="modal-dialog modal-lg">
         <div className="modal-content">
           <div className="modal-header">
-            <button onClick={this.props.onClose} className="close" type="button">
-              <span>&times;</span>
-            </button>
             <h4 className="modal-title">
               <i className="fas fa-plus"></i> Add Line from Purchase Invoice {inv.ID}
             </h4>
+            <button onClick={this.props.onClose} className="btn-close" type="button" aria-label="Close"></button>
           </div>
           <div className="modal-body">
             <div className="form-group">
@@ -402,7 +400,7 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
             </div>
           </div>
           <div className="modal-footer">
-            <button type="button" onClick={this.props.onClose} className="btn btn-default">Cancel</button>
+            <button type="button" onClick={this.props.onClose} className="btn btn-secondary">Cancel</button>
             <ActionButton onClick={() => this.addLine()} className="btn btn-primary">Add Line</ActionButton>
           </div>
         </div>

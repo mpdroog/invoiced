@@ -123,7 +123,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
                 <td>{c.date}</td>
                 <td>
                   <ActionButton
-                    className="btn btn-xs btn-default"
+                    className="btn btn-sm btn-secondary"
                     onClick={() => this.doResetTo(c.fullHash, c.hash)}
                     title="Reset to this commit"
                   >
@@ -144,9 +144,9 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
             <p><strong>Remote:</strong> {status.remote !== '' ? status.remote : 'Not configured'}</p>
             <p><strong>Commits ahead:</strong> {status.ahead}</p>
           </div>
-          <div className="col-md-6 text-right">
+          <div className="col-md-6 text-end">
             <ActionButton
-              className="btn btn-default m-r-sm"
+              className="btn btn-secondary m-r-sm"
               onClick={this.doPull.bind(this)}
             >
               <i className="fas fa-cloud-arrow-down"></i> Pull from Remote
@@ -181,11 +181,11 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
     let historyPanel = null;
     if (this.state.history) {
       const hist = this.state.history;
-      historyPanel = <div className="panel panel-success m-t-md">
-        <div className="panel-heading">
+      historyPanel = <div className="card m-t-md">
+        <div className="card-header">
           <i className="fas fa-history"></i> Previous Commits
         </div>
-        <div className="panel-body">
+        <div className="card-body">
           <table className="table table-striped">
             <thead>
               <tr>
@@ -208,7 +208,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
           </table>
           <div className="text-center">
             <ActionButton
-              className="btn btn-default m-r-sm"
+              className="btn btn-secondary m-r-sm"
               onClick={() => this.loadHistory(hist.page - 1)}
               disabled={hist.page === 0}
             >
@@ -216,7 +216,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
             </ActionButton>
             <span className="text-muted">Page {hist.page + 1}</span>
             <ActionButton
-              className="btn btn-default m-l-sm"
+              className="btn btn-secondary m-l-sm"
               onClick={() => this.loadHistory(hist.page + 1)}
               disabled={!hist.hasMore}
             >
@@ -228,16 +228,16 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
     }
 
     return <div>
-      <div className="panel panel-primary">
-        <div className="panel-heading">
+      <div className="card">
+        <div className="card-header">
           <i className="fab fa-git"></i> Git Status
-          <div className="pull-right">
-            <ActionButton className="btn btn-default btn-xs" onClick={this.loadStatus.bind(this)}>
+          <div className="float-end">
+            <ActionButton className="btn btn-secondary btn-sm" onClick={this.loadStatus.bind(this)}>
               <i className="fas fa-rotate"></i> Refresh
             </ActionButton>
           </div>
         </div>
-        <div className="panel-body">
+        <div className="card-body">
           {content}
         </div>
       </div>

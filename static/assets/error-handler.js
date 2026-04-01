@@ -21,7 +21,7 @@ function prettyErr(res) {
   document.getElementById("js-error-body").value = msg;
   document.getElementById("js-dialog-error").classList.add('modal-open');
   document.getElementById("js-dialog-error").style.display = 'block';
-  document.getElementById("js-dialog-backdrop").classList.remove('hidden');
+  document.getElementById("js-dialog-backdrop").classList.remove('d-none');
 }
 
 function handleErr(e) {
@@ -44,7 +44,7 @@ function handleErr(e) {
   if (e.request && !e.response) {
     document.getElementById("js-dialog-conn-error").classList.add('modal-open');
     document.getElementById("js-dialog-conn-error").style.display = 'block';
-    document.getElementById("js-dialog-backdrop").classList.remove('hidden');
+    document.getElementById("js-dialog-backdrop").classList.remove('d-none');
     return;
   }
 
@@ -52,7 +52,7 @@ function handleErr(e) {
   document.getElementById("js-error-body").value = JSON.stringify(errorData);
   document.getElementById("js-dialog-error").classList.add('modal-open');
   document.getElementById("js-dialog-error").style.display = 'block';
-  document.getElementById("js-dialog-backdrop").classList.remove('hidden');
+  document.getElementById("js-dialog-backdrop").classList.remove('d-none');
 }
 
 (function() {
@@ -63,7 +63,7 @@ function handleErr(e) {
       document.getElementById("js-dialog-error").style.display = 'none';
       document.getElementById("js-dialog-conn-error").classList.remove("modal-open");
       document.getElementById("js-dialog-conn-error").style.display = 'none';
-      document.getElementById("js-dialog-backdrop").classList.add('hidden');
+      document.getElementById("js-dialog-backdrop").classList.add('d-none');
     };
   });
 
