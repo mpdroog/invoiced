@@ -192,6 +192,25 @@ func handler(w http.ResponseWriter, _ *http.Request) {
 }
 ```
 
+### JSON API Conventions
+
+**Always initialize slices for JSON responses.** A nil slice encodes as `null`, not `[]`. The `writer.Encode()` function will error if it detects a nil slice.
+
+```go
+// Bad - encodes as null
+var items []Item
+return writer.Encode(w, r, Response{Items: items})
+
+// Good - encodes as []
+items := []Item{}
+return writer.Encode(w, r, Response{Items: items})
+```
+
+This applies to:
+- Direct slices passed to `writer.Encode()`
+- Slice fields in response structs
+- Slices returned from functions that end up in API responses
+
 ### Suppressing Lint Warnings
 
 Use `//nolint` directives sparingly and with justification:

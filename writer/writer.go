@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -56,6 +57,47 @@ func Decode(r *http.Request, d interface{}) error {
 	}
 }
 
+// checkNilSlices recursively checks for nil slices in structs that would encode as JSON null.
+func checkNilSlices(v reflect.Value, path string) error {
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface:
+		if !v.IsNil() {
+			return checkNilSlices(v.Elem(), path)
+		}
+	case reflect.Slice:
+		if v.IsNil() {
+			return fmt.Errorf("nil slice at %s would encode as null, initialize with []T{}", path)
+		}
+		for i := range v.Len() {
+			if err := checkNilSlices(v.Index(i), fmt.Sprintf("%s[%d]", path, i)); err != nil {
+				return err
+			}
+		}
+	case reflect.Struct:
+		t := v.Type()
+		for i := range v.NumField() {
+			field := t.Field(i)
+			if !field.IsExported() {
+				continue
+			}
+			fieldPath := path + "." + field.Name
+			if path == "" {
+				fieldPath = field.Name
+			}
+			if err := checkNilSlices(v.Field(i), fieldPath); err != nil {
+				return err
+			}
+		}
+	case reflect.Map:
+		for _, key := range v.MapKeys() {
+			if err := checkNilSlices(v.MapIndex(key), fmt.Sprintf("%s[%v]", path, key)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // Encode writes the response body based on Accept header.
 func Encode(w http.ResponseWriter, r *http.Request, d interface{}) error {
 	accept := getType(r.Header.Get("Accept"), []string{contentTypeJSON, contentTypeMsgpack})
@@ -67,6 +109,11 @@ func Encode(w http.ResponseWriter, r *http.Request, d interface{}) error {
 		// Default to json with error
 		d = fmt.Sprintf("Invalid ?accept=%s", accept)
 		accept = contentTypeJSON
+	}
+
+	// Check for nil slices that would encode as null instead of []
+	if err := checkNilSlices(reflect.ValueOf(d), ""); err != nil {
+		return err
 	}
 
 	var (

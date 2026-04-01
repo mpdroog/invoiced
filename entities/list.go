@@ -34,7 +34,7 @@ func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Collect years we have
 	for entity, v := range res {
 		base := db.Path + entity
-		var years []string
+		years := []string{}
 
 		e = db.View(func(t *db.Txn) error {
 			files, e := t.RawList(base)

@@ -282,7 +282,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
     const selectionInfo = selectedCount > 0 ? (
       <span className="ms-3 badge bg-success">
         {selectedCount} selected: &euro;{selectedSum.toFixed(2)}
-        <button type="button" className="btn-close btn-close-white ms-2" style={{fontSize: '0.6em'}} onClick={() => this.clearSelection()} aria-label="Clear"></button>
+        <button type="button" className="btn-close btn-close-white btn-close-sm ms-2" onClick={() => this.clearSelection()} aria-label="Clear"></button>
       </span>
     ) : null;
 
@@ -293,7 +293,7 @@ export default class Invoices extends React.Component<IInvoiceListProps, IInvoic
 
 		return <div className="mb-4">
 		    <div className="card">
-          <div className="card-header d-flex align-items-center position-sticky" style={{top: '56px', zIndex: 1020}}>
+          <div className="card-header d-flex align-items-center position-sticky sticky-card-header">
             <span>{this.props.title}</span>
             {selectionInfo}
             <div className="ms-auto">

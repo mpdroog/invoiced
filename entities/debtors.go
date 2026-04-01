@@ -38,7 +38,7 @@ func Search(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	var out []Debtor
+	out := []Debtor{}
 	for name, debtor := range debtorList {
 		name = strings.ToLower(name)
 		if strings.Contains(name, query) {

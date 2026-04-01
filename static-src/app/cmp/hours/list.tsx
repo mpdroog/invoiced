@@ -164,13 +164,13 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
             <table className="table table-striped">
               <thead>
                 <tr>
-                  <th style={{cursor: "pointer"}} onClick={() => this.toggleSort("bucket")}>
+                  <th className="sortable" onClick={() => this.toggleSort("bucket")}>
                     Bucket <i className={"fas " + this.getSortIcon("bucket")}></i>
                   </th>
-                  <th style={{cursor: "pointer"}} onClick={() => this.toggleSort("name")}>
+                  <th className="sortable" onClick={() => this.toggleSort("name")}>
                     Name <i className={"fas " + this.getSortIcon("name")}></i>
                   </th>
-                  <th style={{cursor: "pointer"}} onClick={() => this.toggleSort("hours")}>
+                  <th className="sortable" onClick={() => this.toggleSort("hours")}>
                     Hours <i className={"fas " + this.getSortIcon("hours")}></i>
                   </th>
                   <th className="text-end">I/O</th>

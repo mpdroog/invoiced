@@ -353,9 +353,8 @@ class AddLineModal extends React.Component<IAddLineModalProps, IAddLineModalStat
 
   render(): React.JSX.Element {
     const inv = this.props.invoice;
-    const s = {display: "block"};
 
-    return <div className="modal" style={s} tabIndex={-1} role="dialog">
+    return <div className="modal modal-show" tabIndex={-1} role="dialog">
       <div className="modal-dialog modal-lg">
         <div className="modal-content">
           <div className="modal-header">

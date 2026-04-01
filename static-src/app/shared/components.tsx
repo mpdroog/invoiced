@@ -39,7 +39,7 @@ export class LockedInput extends React.Component<LockedInputProps, LockedInputSt
 	return <div className="input-group">
 		<input className="form-control" data-key={this.props['data-key']} disabled={locked} type={this.props.type} onChange={this.props.onChange} value={this.props.value} placeholder={this.props.placeholder} id={this.props.id} />
         <span className="input-group-text">
-        	<a onClick={this.toggle.bind(this)} style={{cursor: 'pointer'}}>
+        	<a onClick={this.toggle.bind(this)} className="lock-toggle">
         		<i className={"fas fa-hover-shake " + icon}></i>
         	</a>
         </span>
@@ -133,28 +133,13 @@ export class Autocomplete extends React.Component<AutocompleteProps, Autocomplet
   }
 
   render(): React.JSX.Element {
-	const p: React.CSSProperties = {
-		position: "relative"
-	};
-	const s: React.CSSProperties = {
-		position: "absolute",
-		top: "30px",
-		left: "0",
-		right: "0",
-		backgroundColor: "gray",
-    zIndex: 2
-	};
-	const i: React.CSSProperties = {
-		padding: "10px",
-		backgroundColor: "#f9f9f9"
-	}
 	let suggest: React.JSX.Element | null = null;
 	if (this.state.show && this.state.suggestions.length > 0) {
 		const items: React.JSX.Element[] = [];
 		this.state.suggestions.forEach((item, idx) => {
-			items.push(<div key={"suggest-"+idx} style={i}><a data-key={idx} onClick={this.onSelect.bind(this)}>{item.Name}</a></div>);
+			items.push(<div key={"suggest-"+String(idx)} className="autocomplete-item"><a data-key={idx} onClick={this.onSelect.bind(this)}>{item.Name}</a></div>);
 		})
-		suggest = <div style={s}>
+		suggest = <div className="autocomplete-dropdown">
 			{items}
 		</div>;
 	}
@@ -163,7 +148,7 @@ export class Autocomplete extends React.Component<AutocompleteProps, Autocomplet
   if (this.props.required) {
     req = <i className="fas fa-asterisk text-danger fa-input"></i>;
   }
-	return <div style={p} tabIndex={1} onBlur={this.onBlur.bind(this)}>
+	return <div className="autocomplete-container" tabIndex={1} onBlur={this.onBlur.bind(this)}>
 		<input type="text" className="form-control" onFocus={this.onFocus.bind(this)} onChange={this.lookup.bind(this)} value={this.props.value} disabled={this.props.disabled} placeholder={this.props.placeholder} data-key={this.props['data-key']} id={this.props.id} autoComplete="off" />
     {req}
 		{suggest}

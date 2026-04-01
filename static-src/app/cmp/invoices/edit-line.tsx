@@ -81,11 +81,11 @@ export class InvoiceLineEdit extends React.Component<InvoiceLineEditProps, Recor
     <table className="table table-striped table-sm">
     <thead>
       <tr>
-        <th style={{width: '50px'}}></th>
+        <th className="col-actions"></th>
         <th>Description</th>
-        <th style={{width: '100px'}}>Qty</th>
-        <th style={{width: '100px'}}>Price</th>
-        <th style={{width: '120px'}}>Total</th>
+        <th className="col-qty">Qty</th>
+        <th className="col-price">Price</th>
+        <th className="col-total">Total</th>
       </tr>
     </thead>
     <tbody>{lines}</tbody>

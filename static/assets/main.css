@@ -173,3 +173,49 @@ a:hover .fa-hover-shake {
     }
 }
 
+/* Modal display block */
+.modal-show { display: block; }
+
+/* Table column widths */
+.col-actions { width: 50px; }
+.col-qty { width: 100px; }
+.col-price { width: 100px; }
+.col-total { width: 120px; }
+
+/* Small close button */
+.btn-close-sm { font-size: 0.6em; }
+
+/* Sticky card header positioning */
+.sticky-card-header {
+    top: 56px;
+    z-index: 1020;
+}
+
+/* Calendar year display */
+.calendar-year { font-size: 18px; }
+
+/* Autocomplete component */
+.autocomplete-container { position: relative; }
+.autocomplete-dropdown {
+    position: absolute;
+    top: 38px;
+    left: 0;
+    right: 0;
+    z-index: 2;
+}
+.autocomplete-item {
+    padding: 10px;
+    background-color: var(--bs-tertiary-bg);
+    border-bottom: 1px solid var(--bs-border-color);
+    cursor: pointer;
+}
+.autocomplete-item:hover {
+    background-color: var(--bs-secondary-bg);
+}
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+/* Lock icon pointer */
+.lock-toggle { cursor: pointer; }
+

@@ -87,6 +87,7 @@ export default [
       'react/no-direct-mutation-state': 'error',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+      'react/forbid-dom-props': ['error', { forbid: ['style'] }],
 
       // TypeScript advanced checks
       '@typescript-eslint/switch-exhaustiveness-check': 'error',

@@ -76,14 +76,13 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
     if (!parentMail || !parentMeta) {
       return <div/>;
     }
-    const s: React.CSSProperties = {display: "block"};
     let hourFile: React.JSX.Element = <div/>;
     const bucket = parent.state.State.currentBucket;
     if (parentMeta.HourFile.length > 0) {
       hourFile = <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + bucket + "/" + parentMeta.Conceptid + "/text"} target="_blank" rel="noreferrer"><i className="far fa-file" />&nbsp;hours.txt</a></p>;
     }
 
-  	return <div className="modal" style={s} tabIndex={-1} role="dialog">
+  	return <div className="modal modal-show" tabIndex={-1} role="dialog">
       <div className="modal-dialog">
         <div className="modal-content">
           <div className="modal-header">

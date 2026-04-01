@@ -381,7 +381,7 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	var inv []*db.CommitMessage
+	inv := []*db.CommitMessage{}
 	list := make(map[string][]*Invoice)
 	mem := new(Invoice)
 

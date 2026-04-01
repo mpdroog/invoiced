@@ -209,12 +209,11 @@ export default class HourImport extends React.Component<IImportProps, IImportSta
 	}
 
 	render(): React.JSX.Element {
-		const s: React.CSSProperties = {display: "block"};
 		if (! this.props.hide) {
 			return <div/>;
 		}
 
-  	return <div className="modal in" style={s} tabIndex={-1} role="dialog">
+  	return <div className="modal in modal-show" tabIndex={-1} role="dialog">
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">

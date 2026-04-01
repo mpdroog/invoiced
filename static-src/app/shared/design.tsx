@@ -237,15 +237,14 @@ class Menu extends React.Component<MenuProps, MenuState> {
 }
 
 export function calendar({ year }: { year: string }): React.JSX.Element {
-    const selected = {fontSize:"18px"};
     return (<div>
-        <div className="month"> 
+        <div className="month">
           <ul>
             <li className="prev">&#10094;</li>
             <li className="next">&#10095;</li>
             <li>
               August<br/>
-              <span style={selected}>{year}</span>
+              <span className="calendar-year">{year}</span>
             </li>
           </ul>
         </div>
@@ -333,7 +332,7 @@ class LoginModal extends React.Component<Record<string, never>, LoginModalState>
         if (!this.state.visible) return null;
 
         return (
-            <div className="modal in" style={{display: 'block'}} role="dialog">
+            <div className="modal in modal-show" role="dialog">
                     <div className="modal-dialog">
                         <div className="modal-content">
                             <div className="modal-header">
