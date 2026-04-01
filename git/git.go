@@ -448,3 +448,24 @@ func Pull(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		log.Printf("git.Pull encode: %s", strconv.Quote(err.Error()))
 	}
 }
+
+// RebuildIndex manually triggers a full index rebuild
+func RebuildIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	if err := idx.Rebuild(appconfig.DbPath); err != nil {
+		log.Printf("git.RebuildIndex: %s", strconv.Quote(err.Error()))
+		if err := writer.Encode(w, r, PullPushResponse{
+			Success: false,
+			Message: fmt.Sprintf("Rebuild failed: %s", strconv.Quote(err.Error())),
+		}); err != nil {
+			log.Printf("git.RebuildIndex encode: %s", strconv.Quote(err.Error()))
+		}
+		return
+	}
+
+	if err := writer.Encode(w, r, PullPushResponse{
+		Success: true,
+		Message: "Index rebuilt successfully",
+	}); err != nil {
+		log.Printf("git.RebuildIndex encode: %s", strconv.Quote(err.Error()))
+	}
+}

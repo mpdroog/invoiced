@@ -23,3 +23,11 @@ packages:
     output_path: "static-src/app/types/git.ts"
     include_files:
       - "git.go"
+
+  # Entity types (debtors, projects)
+  - path: "github.com/mpdroog/invoiced/entities"
+    output_path: "static-src/app/types/entities.ts"
+    include_files:
+      - "debtors.go"
+      - "projects.go"
+      - "crud.go"

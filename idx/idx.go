@@ -143,6 +143,38 @@ func createTables() error {
 	CREATE INDEX IF NOT EXISTS idx_purchases_entity_year ON purchase_invoices(entity, year);
 	CREATE INDEX IF NOT EXISTS idx_purchases_quarter ON purchase_invoices(entity, year, quarter, status);
 	CREATE INDEX IF NOT EXISTS idx_purchases_supplier ON purchase_invoices(entity, supplier_name);
+
+	CREATE TABLE IF NOT EXISTS debtors (
+		id            TEXT PRIMARY KEY,  -- key (slug) from TOML
+		entity        TEXT NOT NULL,
+		name          TEXT,
+		street1       TEXT,
+		street2       TEXT,
+		vat           TEXT,
+		coc           TEXT,
+		tax           TEXT,              -- NL21, EU0, WORLD0
+		note_add      TEXT,
+		updated_at    TEXT
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_debtors_entity ON debtors(entity);
+	CREATE INDEX IF NOT EXISTS idx_debtors_name ON debtors(entity, name);
+
+	CREATE TABLE IF NOT EXISTS projects (
+		id            TEXT PRIMARY KEY,  -- key (slug) from TOML
+		entity        TEXT NOT NULL,
+		name          TEXT,
+		debtor        TEXT,              -- references debtor key
+		hour_rate     REAL,
+		due_days      INTEGER,
+		po            TEXT,
+		street1       TEXT,
+		note_add      TEXT,
+		updated_at    TEXT
+	);
+
+	CREATE INDEX IF NOT EXISTS idx_projects_entity ON projects(entity);
+	CREATE INDEX IF NOT EXISTS idx_projects_debtor ON projects(entity, debtor);
 	`
 
 	_, err := DB.ExecContext(context.Background(), schema)

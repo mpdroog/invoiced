@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"strings"
 
 	"github.com/mpdroog/invoiced/model"
 	"github.com/shopspring/decimal"
@@ -405,6 +406,41 @@ func GetUnbilledHours(entity string, year int) (*model.UnbilledHoursSummary, err
 		Count:      count,
 		TotalHours: decimal.NewFromFloat(total.Float64).StringFixed(2),
 	}, nil
+}
+
+// GetLastInvoiceDates returns the most recent invoice issuedate per customer name (case-insensitive)
+func GetLastInvoiceDates(entity string) (map[string]string, error) {
+	if DB == nil {
+		return nil, nil
+	}
+
+	rows, err := DB.QueryContext(ctx(), `
+		SELECT customer_name, MAX(issuedate) as last_invoice
+		FROM invoices
+		WHERE entity = ? AND status IN ('PAID', 'UNPAID') AND issuedate != ''
+		GROUP BY LOWER(customer_name)`,
+		entity,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
+
+	// Use lowercase keys for case-insensitive matching
+	results := make(map[string]string)
+	for rows.Next() {
+		var name, lastInvoice string
+		if err := rows.Scan(&name, &lastInvoice); err != nil {
+			return nil, err
+		}
+		results[strings.ToLower(name)] = lastInvoice
+	}
+
+	return results, rows.Err()
 }
 
 // GetYearComparison compares revenue between current and previous year

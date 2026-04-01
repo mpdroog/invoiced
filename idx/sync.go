@@ -18,6 +18,30 @@ import (
 	"github.com/mpdroog/invoiced/purchase"
 )
 
+// debtorTOML is a local struct for decoding debtors.toml (avoids import cycle with entities)
+type debtorTOML struct {
+	Name         string
+	Street1      string
+	Street2      string
+	VAT          string
+	COC          string
+	TAX          string
+	NoteAdd      string
+	BillingEmail []string
+}
+
+// projectTOML is a local struct for decoding projects.toml (avoids import cycle with entities)
+type projectTOML struct {
+	Name         string
+	Debtor       string
+	BillingEmail []string
+	NoteAdd      string
+	HourRate     float64
+	DueDays      int
+	PO           string
+	Street1      string
+}
+
 // Status constants
 const (
 	statusConcept = "CONCEPT"
@@ -37,12 +61,14 @@ type PathParts struct {
 	Type     string // "invoice" or "hour"
 }
 
-// Patterns for matching invoice, hour, and purchase paths
+// Patterns for matching invoice, hour, purchase, debtor, and project paths
 // e.g., "rootdev/2024/Q1/sales-invoices-paid/abc123.toml"
 var (
 	invoicePathRe  = regexp.MustCompile(`^([^/]+)/(\d{4})/(Q[1-4]|concepts)/(sales-invoices[^/]*)/([^/]+)\.toml$`)
 	hourPathRe     = regexp.MustCompile(`^([^/]+)/(\d{4})/(Q[1-4]|concepts)/hours/([^/]+)\.toml$`)
 	purchasePathRe = regexp.MustCompile(`^([^/]+)/(\d{4})/(Q[1-4])/(purchase-invoices[^/]*)/([^/]+)\.toml$`)
+	debtorPathRe   = regexp.MustCompile(`^([^/]+)/debtors\.toml$`)
+	projectPathRe  = regexp.MustCompile(`^([^/]+)/projects\.toml$`)
 )
 
 // parseInvoicePath extracts components from an invoice path
@@ -132,6 +158,24 @@ func parsePurchasePath(relPath string) *PathParts {
 	}
 }
 
+// parseDebtorPath extracts entity from a debtors.toml path
+func parseDebtorPath(relPath string) string {
+	matches := debtorPathRe.FindStringSubmatch(relPath)
+	if matches == nil {
+		return ""
+	}
+	return matches[1]
+}
+
+// parseProjectPath extracts entity from a projects.toml path
+func parseProjectPath(relPath string) string {
+	matches := projectPathRe.FindStringSubmatch(relPath)
+	if matches == nil {
+		return ""
+	}
+	return matches[1]
+}
+
 // SyncPath syncs a single file to the SQLite index
 // relPath should be relative to the db root (e.g., "rootdev/2024/Q1/sales-invoices-paid/abc.toml")
 func SyncPath(dbPath, relPath string) error {
@@ -159,6 +203,16 @@ func SyncPath(dbPath, relPath string) error {
 		return syncPurchase(parts)
 	}
 
+	// Try debtors
+	if entity := parseDebtorPath(relPath); entity != "" {
+		return syncDebtors(fullPath, entity)
+	}
+
+	// Try projects
+	if entity := parseProjectPath(relPath); entity != "" {
+		return syncProjects(fullPath, entity)
+	}
+
 	// Not an indexed file type
 	return nil
 }
@@ -181,6 +235,16 @@ func DeletePath(relPath string) error {
 
 	if parts := parsePurchasePath(relPath); parts != nil {
 		_, err := DB.ExecContext(context.Background(), "DELETE FROM purchase_invoices WHERE id = ?", parts.ID)
+		return err
+	}
+
+	if entity := parseDebtorPath(relPath); entity != "" {
+		_, err := DB.ExecContext(context.Background(), "DELETE FROM debtors WHERE entity = ?", entity)
+		return err
+	}
+
+	if entity := parseProjectPath(relPath); entity != "" {
+		_, err := DB.ExecContext(context.Background(), "DELETE FROM projects WHERE entity = ?", entity)
 		return err
 	}
 
@@ -348,4 +412,98 @@ func deriveTaxCategory(inv *model.Invoice) string {
 		return "EU0"
 	}
 	return "NL"
+}
+
+// syncDebtors syncs all debtors from a debtors.toml file
+func syncDebtors(fullPath, entity string) error {
+	file, err := os.Open(fullPath) //nolint:gosec // path from internal db, not user input
+	if err != nil {
+		if os.IsNotExist(err) {
+			// File deleted, remove all debtors for this entity
+			_, err := DB.ExecContext(context.Background(), "DELETE FROM debtors WHERE entity = ?", entity)
+			return err
+		}
+		return err
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
+
+	var debtorList map[string]debtorTOML
+	buf := bufio.NewReader(file)
+	if _, err := toml.NewDecoder(buf).Decode(&debtorList); err != nil {
+		return fmt.Errorf("idx: decode debtors %s: %w", fullPath, err)
+	}
+
+	// Delete existing debtors for this entity and insert fresh
+	if _, err := DB.ExecContext(context.Background(), "DELETE FROM debtors WHERE entity = ?", entity); err != nil {
+		return err
+	}
+
+	now := time.Now().Format(time.RFC3339)
+	for key, d := range debtorList {
+		_, err = DB.ExecContext(context.Background(), `
+			INSERT INTO debtors (id, entity, name, street1, street2, vat, coc, tax, note_add, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			entity+"/"+key, entity, d.Name, d.Street1, d.Street2, d.VAT, d.COC, d.TAX, d.NoteAdd, now,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	if config.Verbose {
+		fmt.Printf("idx: synced %d debtors for entity %s\n", len(debtorList), entity)
+	}
+
+	return nil
+}
+
+// syncProjects syncs all projects from a projects.toml file
+func syncProjects(fullPath, entity string) error {
+	file, err := os.Open(fullPath) //nolint:gosec // path from internal db, not user input
+	if err != nil {
+		if os.IsNotExist(err) {
+			// File deleted, remove all projects for this entity
+			_, err := DB.ExecContext(context.Background(), "DELETE FROM projects WHERE entity = ?", entity)
+			return err
+		}
+		return err
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
+
+	var projectList map[string]projectTOML
+	buf := bufio.NewReader(file)
+	if _, err := toml.NewDecoder(buf).Decode(&projectList); err != nil {
+		return fmt.Errorf("idx: decode projects %s: %w", fullPath, err)
+	}
+
+	// Delete existing projects for this entity and insert fresh
+	if _, err := DB.ExecContext(context.Background(), "DELETE FROM projects WHERE entity = ?", entity); err != nil {
+		return err
+	}
+
+	now := time.Now().Format(time.RFC3339)
+	for key, p := range projectList {
+		_, err = DB.ExecContext(context.Background(), `
+			INSERT INTO projects (id, entity, name, debtor, hour_rate, due_days, po, street1, note_add, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			entity+"/"+key, entity, p.Name, p.Debtor, p.HourRate, p.DueDays, p.PO, p.Street1, p.NoteAdd, now,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	if config.Verbose {
+		fmt.Printf("idx: synced %d projects for entity %s\n", len(projectList), entity)
+	}
+
+	return nil
 }

@@ -175,6 +175,18 @@ func main() {
 	router.GET("/api/v1/debtors/:entity/search", entities.Search)
 	router.GET("/api/v1/projects/:entity/search", entities.ProjectSearch)
 
+	router.GET("/api/v1/debtors/:entity", entities.DebtorList)
+	router.GET("/api/v1/debtor/:entity/:id", entities.DebtorLoad)
+	router.POST("/api/v1/debtor/:entity/:id", entities.DebtorSave)
+	router.POST("/api/v1/debtor/:entity", entities.DebtorSave)
+	router.DELETE("/api/v1/debtor/:entity/:id", entities.DebtorDelete)
+
+	router.GET("/api/v1/projects/:entity", entities.ProjectList)
+	router.GET("/api/v1/project/:entity/:id", entities.ProjectLoad)
+	router.POST("/api/v1/project/:entity/:id", entities.ProjectSave)
+	router.POST("/api/v1/project/:entity", entities.ProjectSave)
+	router.DELETE("/api/v1/project/:entity/:id", entities.ProjectDelete)
+
 	router.GET("/api/v1/search/:entity", search.Search)
 
 	router.GET("/api/v1/metrics/:entity/:year", metrics.Dashboard)
@@ -216,6 +228,7 @@ func main() {
 	router.POST("/api/v1/git/:entity/pull", gitpkg.Pull)
 	router.POST("/api/v1/git/:entity/discard", gitpkg.DiscardAll)
 	router.POST("/api/v1/git/:entity/reset/:hash", gitpkg.ResetTo)
+	router.POST("/api/v1/reindex", gitpkg.RebuildIndex)
 
 	router.ServeFiles("/static/*filepath", http.Dir(config.CurDir+"/static"))
 

@@ -29,8 +29,14 @@ func Rebuild(dbPath string) error {
 	if _, err := DB.ExecContext(ctx, "DELETE FROM purchase_invoices"); err != nil {
 		return err
 	}
+	if _, err := DB.ExecContext(ctx, "DELETE FROM debtors"); err != nil {
+		return err
+	}
+	if _, err := DB.ExecContext(ctx, "DELETE FROM projects"); err != nil {
+		return err
+	}
 
-	var invoiceCount, hourCount, purchaseCount int
+	var invoiceCount, hourCount, purchaseCount, debtorCount, projectCount int
 
 	// Walk all TOML files
 	err := filepath.Walk(dbPath, func(path string, info os.FileInfo, err error) error {
@@ -46,11 +52,9 @@ func Rebuild(dbPath string) error {
 			return nil
 		}
 
-		// Skip system files
+		// Skip system files (debtors.toml and projects.toml are now indexed)
 		name := info.Name()
-		if name == ".DS_Store" || name == "entities.toml" ||
-			name == "debtors.toml" || name == "projects.toml" ||
-			name == "counters.toml" {
+		if name == ".DS_Store" || name == "entities.toml" || name == "counters.toml" {
 			return nil
 		}
 
@@ -83,6 +87,18 @@ func Rebuild(dbPath string) error {
 			} else {
 				purchaseCount++
 			}
+		} else if entity := parseDebtorPath(relPath); entity != "" {
+			if err := syncDebtors(path, entity); err != nil {
+				log.Printf("idx: error syncing debtors %s: %v", relPath, err)
+			} else {
+				debtorCount++
+			}
+		} else if entity := parseProjectPath(relPath); entity != "" {
+			if err := syncProjects(path, entity); err != nil {
+				log.Printf("idx: error syncing projects %s: %v", relPath, err)
+			} else {
+				projectCount++
+			}
 		} else if config.Verbose {
 			// Only log unprocessed files in verbose mode
 			if strings.Contains(relPath, "/sales-invoices") || strings.Contains(relPath, "/hours/") || strings.Contains(relPath, "/purchase-invoices") {
@@ -97,6 +113,6 @@ func Rebuild(dbPath string) error {
 		return err
 	}
 
-	log.Printf("idx: rebuilt index with %d invoices, %d hours, %d purchases", invoiceCount, hourCount, purchaseCount)
+	log.Printf("idx: rebuilt index with %d invoices, %d hours, %d purchases, %d debtor files, %d project files", invoiceCount, hourCount, purchaseCount, debtorCount, projectCount)
 	return nil
 }

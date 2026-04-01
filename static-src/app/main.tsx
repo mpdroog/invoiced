@@ -46,6 +46,9 @@ import InvoicesEdit from "./cmp/invoices/edit";
 import PurchasesList from "./cmp/purchases/list";
 import TaxesList from "./cmp/taxes/list";
 import GitPage from "./cmp/git/app";
+import ProjectsList from "./cmp/projects/list";
+import DebtorEdit from "./cmp/projects/edit-debtor";
+import ProjectEdit from "./cmp/projects/edit-project";
 
 declare function handleErr(e: unknown): void;
 
@@ -121,6 +124,50 @@ function hashChange(): void {
       case "taxes":
         inject = TaxesList;
         pageName = "Taxes";
+        break;
+
+      case "projects":
+        switch (url.shift()) {
+          case "debtor":
+            switch (url.shift()) {
+              case "add":
+                inject = DebtorEdit;
+                pageName = "New Debtor";
+                break;
+              case "edit":
+                inject = DebtorEdit;
+                pageName = "Edit Debtor";
+                break;
+              case undefined:
+              default:
+                inject = ProjectsList;
+                pageName = "Projects";
+                break;
+            }
+            break;
+          case "project":
+            switch (url.shift()) {
+              case "add":
+                inject = ProjectEdit;
+                pageName = "New Project";
+                break;
+              case "edit":
+                inject = ProjectEdit;
+                pageName = "Edit Project";
+                break;
+              case undefined:
+              default:
+                inject = ProjectsList;
+                pageName = "Projects";
+                break;
+            }
+            break;
+          case undefined:
+          default:
+            inject = ProjectsList;
+            pageName = "Projects";
+            break;
+        }
         break;
 
       case "git":

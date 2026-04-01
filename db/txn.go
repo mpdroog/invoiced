@@ -54,7 +54,7 @@ func (t *Txn) Save(file string, isNew bool, in interface{}) error {
 		}
 		f, e = tree.Filesystem.OpenFile(file, os.O_RDWR|os.O_CREATE, 0755)
 	} else {
-		f, e = tree.Filesystem.OpenFile(file, os.O_RDWR, 0755)
+		f, e = tree.Filesystem.OpenFile(file, os.O_RDWR|os.O_TRUNC, 0755)
 	}
 	if e != nil {
 		return e

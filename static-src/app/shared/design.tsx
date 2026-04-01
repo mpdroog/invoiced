@@ -237,6 +237,17 @@ class Menu extends React.Component<MenuProps, MenuState> {
                 </a>
               </li>
               <li className="nav-item">
+                <a
+                  href={"#" + company + "/" + year + "/projects"}
+                  className="nav-link"
+                  id="js-projects"
+                  title="Projects"
+                >
+                  <i className="fas fa-address-book fa-lg"></i>
+                  <span className="d-md-none ms-2">Projects</span>
+                </a>
+              </li>
+              <li className="nav-item">
                 <a href={"#" + company + "/" + year + "/git"} className="nav-link" id="js-git" title="Git">
                   <i className="fas fa-cloud-arrow-up fa-lg"></i>
                   <span className="d-md-none ms-2">Sync</span>
