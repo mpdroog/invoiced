@@ -126,6 +126,11 @@ class Menu extends React.Component<MenuProps, MenuState> {
         }
     }
 
+    private async handleLogout(): Promise<void> {
+        await Axios.post('/logout');
+        window.location.href = '/';
+    }
+
     render(): React.JSX.Element {
         const {company, year} = this.props;
         const {ahead, searchQuery, searchResults, showResults, searching, menuOpen} = this.state;
@@ -227,6 +232,16 @@ class Menu extends React.Component<MenuProps, MenuState> {
                                     <span className="d-md-none ms-2">Sync</span>
                                     {ahead > 0 && <span className="badge bg-danger">{ahead}</span>}
                                 </a>
+                            </li>
+                            <li className="nav-item">
+                                <ActionButton
+                                    className="nav-link btn btn-link"
+                                    onClick={() => this.handleLogout()}
+                                    title="Logout"
+                                >
+                                    <i className="fas fa-sign-out-alt fa-lg"></i>
+                                    <span className="d-md-none ms-2">Logout</span>
+                                </ActionButton>
                             </li>
                         </ul>
                     </div>

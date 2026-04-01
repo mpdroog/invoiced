@@ -76,6 +76,11 @@ func Login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	http.Redirect(w, r, url.String(), http.StatusSeeOther)
 }
 
+func Logout(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	middleware.ClearSessionCookie(w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 func main() {
 	var (
 		wg   sync.WaitGroup
@@ -153,6 +158,7 @@ func main() {
 	router := httprouter.New()
 	router.GET("/", Index)
 	router.POST("/", Login)
+	router.POST("/logout", Logout)
 
 	router.GET("/api/v1/entities", entities.List)
 	router.GET("/api/v1/entities/:entity/logo", entities.Logo)

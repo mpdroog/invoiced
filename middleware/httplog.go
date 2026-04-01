@@ -23,8 +23,8 @@ func HTTPLog(next http.Handler) http.Handler {
 	})
 }
 
-// clearSessionCookie sends an expired cookie to clear the session
-func clearSessionCookie(w http.ResponseWriter, _ *http.Request) {
+// ClearSessionCookie sends an expired cookie to clear the session.
+func ClearSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "sess",
 		Value:    "",
@@ -101,7 +101,7 @@ func HTTPAuth(next http.Handler) http.Handler {
 				log.Printf("HTTPAuth decrypt error: %s", strconv.Quote(e.Error()))
 			} else if isSessionExpired(sess) {
 				log.Printf("HTTPAuth session expired for %s", sess.Email)
-				clearSessionCookie(w, r)
+				ClearSessionCookie(w)
 				sess = &Sess{} // Clear session data
 			} else {
 				sessionValid = true
