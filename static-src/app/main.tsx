@@ -61,6 +61,7 @@ function hashChange(): void {
       const url = location.hash.substr(1).split("/");
       let inject: PageComponent | null = null;
       let props: RouteProps | null = null;
+      let pageName = "Entities";
 
       if (url[0] === '') {
             url.shift();
@@ -81,11 +82,13 @@ function hashChange(): void {
                               case "edit":
                                     props.bucket = url.shift() ?? "";
                                     inject = HoursEdit;
+                                    pageName = "Hours Edit";
                                     break;
 
                               case undefined:
                               default:
                                     inject = HoursList;
+                                    pageName = "Hours";
                                     break;
                         }
                         break;
@@ -96,35 +99,48 @@ function hashChange(): void {
                               case "edit":
                                     props.bucket = url.shift() ?? "";
                                     inject = InvoicesEdit;
+                                    pageName = "Invoice Edit";
                                     break;
 
                               case undefined:
                               default:
                                     inject = InvoicesList;
+                                    pageName = "Invoices";
                                     break;
                         }
                         break;
 
                   case "purchases":
                         inject = PurchasesList;
+                        pageName = "Purchases";
                         break;
 
                   case "taxes":
                         inject = TaxesList;
+                        pageName = "Taxes";
                         break;
 
                   case "git":
                         inject = GitPage;
+                        pageName = "Git Sync";
                         break;
 
                   case "":
                   case undefined:
                         inject = DashboardApp;
+                        pageName = "Dashboard";
                         break;
 
                   default:
                         throw "Invalid path: " + location.hash;
             }
+      }
+
+      // Update document title
+      if (props?.entity !== undefined && props.entity !== "" && props.year !== "") {
+            document.title = `${pageName} - ${props.year} - ${props.entity} | Boekhoud.cloud`;
+      } else {
+            document.title = `${pageName} | Boekhoud.cloud`;
       }
 
       let page = null;

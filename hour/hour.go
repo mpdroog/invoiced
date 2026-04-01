@@ -159,6 +159,12 @@ func Load(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 }
 
+// ListItem represents a single hour entry in the list view.
+type ListItem struct {
+	Name  string
+	Total string
+}
+
 // List returns all hour registrations for a year.
 func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
@@ -166,12 +172,15 @@ func List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	dirs := db.HourListPaths(entity, year)
 
 	mem := new(Hour)
-	list := make(map[string][]string)
+	list := make(map[string][]ListItem)
 
 	e := db.View(func(t *db.Txn) error {
 		_, e := t.List(dirs, db.Pagination{From: 0, Count: 30}, mem, func(filename, _, fpath string) error {
 			k := utils.BucketDir(fpath)
-			list[k] = append(list[k], filename)
+			list[k] = append(list[k], ListItem{
+				Name:  filename,
+				Total: mem.Total,
+			})
 			return nil
 		})
 		return e

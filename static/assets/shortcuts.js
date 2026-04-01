@@ -10,39 +10,48 @@ document.addEventListener("keyup", function(e) {
 
   if (key === 'KeyD') {
     console.log("D Dashboard");
-    document.getElementById("js-dashboard").click();
+    var el = document.getElementById("js-dashboard");
+    if (el) el.click();
   }
   if (key === 'KeyI') {
     console.log("I Invoices");
-    document.getElementById("js-invoices").click();
+    var el = document.getElementById("js-invoices");
+    if (el) el.click();
   }
   if (key === 'KeyH') {
     console.log("H Hours");
-    document.getElementById("js-hours").click();
+    var el = document.getElementById("js-hours");
+    if (el) el.click();
   }
   if (key === 'KeyE') {
     console.log("E Entities");
-    document.getElementById("js-entities").click();
+    var el = document.getElementById("js-entities");
+    if (el) el.click();
   }
   if (key === 'Slash') {
     console.log("/ search");
-    document.getElementById("js-search").focus()
+    var el = document.getElementById("js-search");
+    if (el) el.focus();
   }
 
   if (page === "hours" && key === "KeyN") {
     console.log("Hours New");
-    document.getElementById("js-new").click();
+    var el = document.getElementById("js-new");
+    if (el) el.click();
   }
   if (page === "hour-add" && key === "KeyN") {
     console.log("Hour-add New Entry");
-    document.getElementById("hour-day").focus();
+    var el = document.getElementById("hour-day");
+    if (el) el.focus();
   }
   if (page === "invoices" && key === "KeyN") {
     console.log("Invoices New");
-    document.getElementById("js-new").click();
+    var el = document.getElementById("js-new");
+    if (el) el.click();
   }
   if (page === "invoices" && key === "KeyB") {
     console.log("Invoices Balance");
-    document.getElementById("js-balance").click();
+    var el = document.getElementById("js-balance");
+    if (el) el.click();
   }
 }, false);

@@ -9,15 +9,31 @@ interface IHourPagination {
   count?: number;
 }
 
+interface HourListItem {
+  Name: string;
+  Total: string;
+}
+
 interface HoursListProps {
   entity: string;
   year: string;
   bucket?: string;
 }
 
+type SortField = "name" | "bucket" | "hours";
+type SortDirection = "asc" | "desc";
+
 interface IHourState {
   pagination: IHourPagination;
-  hours: Record<string, string[]> | null;
+  hours: Record<string, HourListItem[]> | null;
+  sortField: SortField;
+  sortDirection: SortDirection;
+}
+
+interface FlattenedHour {
+  bucket: string;
+  name: string;
+  total: string;
 }
 
 export default class Hours extends React.Component<HoursListProps, IHourState> {
@@ -28,7 +44,9 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
         from: 0,
         count: 50
       },
-      hours: null
+      hours: null,
+      sortField: "name",
+      sortDirection: "asc"
     };
   }
 
@@ -41,7 +59,7 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
     const year = this.props.year;
     Axios.get('/api/v1/hours/'+entity+'/'+year, {params: this.state.pagination, headers: {'Accept': 'application/x-msgpack'}, responseType: 'arraybuffer'})
     .then(res => {
-      const data = msgpackDecode(new Uint8Array(res.data)) as Record<string, string[]>;
+      const data = msgpackDecode(new Uint8Array(res.data)) as Record<string, HourListItem[]>;
       this.setState({hours: data});
       (window as Window & { rootdev?: { invoiced?: unknown } }).rootdev = {
         invoiced: data
@@ -63,33 +81,73 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
     location.reload();
   }
 
-  render(): React.JSX.Element {
-    const res:React.JSX.Element[] = [];
-    const that = this;
-    let items = 0;
-    console.log("hours=",this.state.hours);
+  private toggleSort(field: SortField): void {
+    if (this.state.sortField === field) {
+      this.setState({sortDirection: this.state.sortDirection === "asc" ? "desc" : "asc"});
+    } else {
+      this.setState({sortField: field, sortDirection: "asc"});
+    }
+  }
 
-    if (this.state.hours) {
-      for (const bucket in this.state.hours) {
-        if (!Object.prototype.hasOwnProperty.call(this.state.hours, bucket)) {
-          continue;
-        }
-        const bucketItems = this.state.hours[bucket];
-        if (!bucketItems) continue;
-        items++;
-        bucketItems.forEach(function(elem) {
-          res.push(<tr key={bucket+elem}>
-            <td>{bucket}</td>
-            <td>{elem}</td>
-            <td>
-              <a className="btn btn-primary" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+bucket+"/"+elem}><i className="fas fa-pencil"></i></a>
-              <ActionLink className="btn btn-danger" data-target={elem} data-bucket={bucket} onClick={that.delete.bind(that)}><i className="fas fa-trash"></i></ActionLink>
-            </td></tr>);
-        });
+  private getSortIcon(field: SortField): string {
+    if (this.state.sortField !== field) return "fa-sort";
+    return this.state.sortDirection === "asc" ? "fa-sort-up" : "fa-sort-down";
+  }
+
+  private flattenAndSort(): FlattenedHour[] {
+    const hours = this.state.hours;
+    if (hours === null) return [];
+
+    const flattened: FlattenedHour[] = [];
+    for (const bucket in hours) {
+      if (!Object.prototype.hasOwnProperty.call(hours, bucket)) continue;
+      const items = hours[bucket];
+      if (items === undefined) continue;
+      for (const item of items) {
+        flattened.push({bucket, name: item.Name, total: item.Total});
       }
     }
-    if (items === 0) {
-      res.push(<tr key="empty"><td colSpan={5}>No hours yet :)</td></tr>);
+
+    const {sortField, sortDirection} = this.state;
+    flattened.sort((a, b) => {
+      let cmp: number;
+      switch (sortField) {
+        case "name":
+          cmp = a.name.localeCompare(b.name);
+          break;
+        case "bucket":
+          cmp = a.bucket.localeCompare(b.bucket);
+          break;
+        case "hours":
+          cmp = parseFloat(a.total) - parseFloat(b.total);
+          break;
+      }
+      return sortDirection === "asc" ? cmp : -cmp;
+    });
+
+    return flattened;
+  }
+
+  render(): React.JSX.Element {
+    const that = this;
+    const sorted = this.flattenAndSort();
+
+    const rows = sorted.map((item) => (
+      <tr key={item.bucket + item.name}>
+        <td>{item.bucket}</td>
+        <td>{item.name}</td>
+        <td>{item.total}h</td>
+        <td className="text-end">
+          <div className="btn-group">
+            <a className="btn btn-primary btn-sm" href={"#"+that.props.entity+"/"+that.props.year+"/hours/edit/"+item.bucket+"/"+item.name}><i className="fas fa-pencil"></i></a>
+            <ActionLink className="btn btn-danger btn-sm" data-target={item.name} data-bucket={item.bucket} onClick={that.delete.bind(that)}><i className="fas fa-trash"></i></ActionLink>
+          </div>
+        </td>
+      </tr>
+    ));
+
+    if (rows.length === 0 && this.state.hours !== null) {
+      rows.push(<tr key="empty"><td colSpan={4}>No hours yet :)</td></tr>);
     }
 
     return <div className="mb-4">
@@ -104,8 +162,21 @@ export default class Hours extends React.Component<HoursListProps, IHourState> {
           </div>
           <div className="card-body">
             <table className="table table-striped">
-              <thead><tr><th>Bucket</th><th>Name</th><th>I/O</th></tr></thead>
-              <tbody>{res}</tbody>
+              <thead>
+                <tr>
+                  <th style={{cursor: "pointer"}} onClick={() => this.toggleSort("bucket")}>
+                    Bucket <i className={"fas " + this.getSortIcon("bucket")}></i>
+                  </th>
+                  <th style={{cursor: "pointer"}} onClick={() => this.toggleSort("name")}>
+                    Name <i className={"fas " + this.getSortIcon("name")}></i>
+                  </th>
+                  <th style={{cursor: "pointer"}} onClick={() => this.toggleSort("hours")}>
+                    Hours <i className={"fas " + this.getSortIcon("hours")}></i>
+                  </th>
+                  <th className="text-end">I/O</th>
+                </tr>
+              </thead>
+              <tbody>{rows}</tbody>
             </table>
           </div>
         </div>
