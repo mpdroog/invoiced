@@ -179,6 +179,7 @@ export default class HourImport extends React.Component<IImportProps, IImportSta
 
   componentDidMount(): void {
     if (this.props.hide) openModal();
+    document.addEventListener('keydown', this.handleKeyDown);
   }
 
   componentDidUpdate(prevProps: IImportProps): void {
@@ -188,7 +189,14 @@ export default class HourImport extends React.Component<IImportProps, IImportSta
 
   componentWillUnmount(): void {
     if (this.props.hide) closeModal();
+    document.removeEventListener('keydown', this.handleKeyDown);
   }
+
+  private handleKeyDown = (e: KeyboardEvent): void => {
+    if (e.key === 'Escape' && this.props.hide) {
+      this.props.onHide({ preventDefault: () => {} } as React.MouseEvent<HTMLAnchorElement>);
+    }
+  };
 
   private update(e: React.ChangeEvent<HTMLTextAreaElement>): void {
     if (e.target.id === "import") {

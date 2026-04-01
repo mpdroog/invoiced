@@ -25,13 +25,49 @@ interface InvoiceMailProps {
   onHide: (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void;
 }
 
-export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string, never>> {
+interface InvoiceMailState {
+  toError: string | null;
+}
+
+// Validate email format (simple check)
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+// Validate comma-separated email list
+function validateEmails(input: string): string | null {
+  const trimmed = input.trim();
+  if (trimmed === '') {
+    return 'At least one email address is required';
+  }
+  // Split by comma, reject semicolons
+  if (trimmed.includes(';')) {
+    return 'Use commas to separate emails, not semicolons';
+  }
+  const parts = trimmed.split(',');
+  for (const part of parts) {
+    const email = part.trim();
+    if (email === '') {
+      return 'Empty email address (check for extra commas)';
+    }
+    if (!isValidEmail(email)) {
+      return `Invalid email: ${email}`;
+    }
+  }
+  return null;
+}
+
+export class InvoiceMail extends React.Component<InvoiceMailProps, InvoiceMailState> {
   constructor(props: InvoiceMailProps) {
     super(props);
+    this.state = {
+      toError: null
+    };
   }
 
   componentDidMount(): void {
     if (this.props.hide) openModal();
+    document.addEventListener('keydown', this.handleKeyDown);
   }
 
   componentDidUpdate(prevProps: InvoiceMailProps): void {
@@ -41,13 +77,28 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
 
   componentWillUnmount(): void {
     if (this.props.hide) closeModal();
+    document.removeEventListener('keydown', this.handleKeyDown);
   }
+
+  private handleKeyDown = (e: KeyboardEvent): void => {
+    if (e.key === 'Escape' && this.props.hide) {
+      this.props.onHide({ preventDefault: () => {} } as React.MouseEvent<HTMLAnchorElement>);
+    }
+  };
 
   async send(): Promise<void> {
     const parent = this.props.parent;
     const mail = parent.state.Mail;
     const meta = parent.state.Meta;
     if (!mail || !meta) return;
+
+    // Validate emails before sending
+    const toError = validateEmails(mail.To);
+    if (toError !== null) {
+      this.setState({toError});
+      return;
+    }
+
     const req = JSON.parse(JSON.stringify(mail)) as IInvoiceMail;
     console.log("Send!", req);
 
@@ -64,6 +115,10 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
     const mail = {...currentMail};
     mail[id] = e.target.value;
     this.props.parent.setState({Mail: mail});
+    // Validate To field on every change
+    if (id === 'To') {
+      this.setState({toError: validateEmails(e.target.value)});
+    }
   }
 
   render(): React.JSX.Element {
@@ -76,48 +131,63 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, Record<string
     if (!parentMail || !parentMeta) {
       return <div/>;
     }
-    let hourFile: React.JSX.Element = <div/>;
     const bucket = parent.state.State.currentBucket;
-    if (parentMeta.HourFile.length > 0) {
-      hourFile = <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + bucket + "/" + parentMeta.Conceptid + "/text"} target="_blank" rel="noreferrer"><i className="far fa-file" />&nbsp;hours.txt</a></p>;
-    }
 
-  	return <div className="modal modal-show" tabIndex={-1} role="dialog">
-      <div className="modal-dialog">
+    return <div className="modal modal-show" tabIndex={-1} role="dialog">
+      <div className="modal-dialog modal-lg">
         <div className="modal-content">
           <div className="modal-header">
-            <h4 className="modal-title">
-            	<div className="row">
-          		<div className="col-sm-1">
-	              <i className="fas fa-paper-plane"></i>
-          		</div>
-	          	<div className="col-sm-10">
-	              <input type="text" className="form-control" onChange={this.update.bind(this)} id="Subject" value={parentMail.Subject}/>
-  	          	  <input type="text" className="form-control" onChange={this.update.bind(this)} id="From" value={"Reply-To: " + parentMail.From} disabled={true}/>
-	            </div>
-	            </div>
-            </h4>
+            <h5 className="modal-title">
+              <i className="fas fa-paper-plane me-2"></i>Send Invoice
+            </h5>
             <button onClick={this.props.onHide} className="btn-close" type="button" aria-label="Close"></button>
           </div>
           <div className="modal-body">
-		    <div className="row">
-          		<div className="col-sm-1 pt8">
-          			To
-          		</div>
-	          	<div className="col-sm-11">
-		          	<input type="text" className="form-control" onChange={this.update.bind(this)} id="To" value={parentMail.To}/>
-		        </div>
-		    </div>
-
-            <textarea onChange={this.update.bind(this)} id="Body" className="form-control h140">{parentMail.Body}</textarea>
+            <div className="mb-3">
+              <label htmlFor="To" className="form-label">To</label>
+              <input
+                type="text"
+                className={`form-control ${this.state.toError !== null ? 'is-invalid' : ''}`}
+                onChange={this.update.bind(this)}
+                id="To"
+                value={parentMail.To}
+                placeholder="email@example.com, another@example.com"
+              />
+              {this.state.toError !== null && (
+                <div className="invalid-feedback">{this.state.toError}</div>
+              )}
+              <div className="form-text">Separate multiple addresses with commas</div>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="Subject" className="form-label">Subject</label>
+              <input type="text" className="form-control" onChange={this.update.bind(this)} id="Subject" value={parentMail.Subject}/>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="Body" className="form-label">Message</label>
+              <textarea onChange={this.update.bind(this)} id="Body" className="form-control" rows={8}>{parentMail.Body}</textarea>
+            </div>
+            <div className="mb-0">
+              <label className="form-label">Attachments</label>
+              <div className="d-flex flex-wrap gap-3">
+                <a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + bucket + "/" + parentMeta.Conceptid + "/pdf"} target="_blank" rel="noreferrer" className="btn btn-outline-secondary btn-sm">
+                  <i className="far fa-file-pdf me-1"></i>{parentMeta.Invoiceid}.pdf
+                </a>
+                <a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + bucket + "/" + parentMeta.Conceptid + "/xml"} target="_blank" rel="noreferrer" className="btn btn-outline-secondary btn-sm">
+                  <i className="fas fa-building-columns me-1"></i>{parentMeta.Invoiceid}.xml
+                </a>
+                {parentMeta.HourFile.length > 0 && (
+                  <a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + bucket + "/" + parentMeta.Conceptid + "/text"} target="_blank" rel="noreferrer" className="btn btn-outline-secondary btn-sm">
+                    <i className="far fa-file me-1"></i>hours.txt
+                  </a>
+                )}
+              </div>
+            </div>
           </div>
           <div className="modal-footer">
-            <div className="email-attachments">
-              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + bucket + "/" + parentMeta.Conceptid + "/pdf"} target="_blank" rel="noreferrer"><i className="far fa-file-pdf" />&nbsp;{parentMeta.Invoiceid}.pdf</a></p>
-              <p><a href={"/api/v1/invoice/" + parent.props.entity + "/" + parent.props.year + "/" + bucket + "/" + parentMeta.Conceptid + "/xml"} target="_blank" rel="noreferrer"><i className="fas fa-building-columns" />&nbsp;{parentMeta.Invoiceid}.xml</a></p>
-              {hourFile}
-            </div>
-            <ActionLink onClick={this.send.bind(this)} className="btn btn-primary float-end"> Send</ActionLink>
+            <button onClick={this.props.onHide} className="btn btn-secondary" type="button">Cancel</button>
+            <ActionLink onClick={this.send.bind(this)} className="btn btn-primary">
+              <i className="fas fa-paper-plane me-1"></i>Send
+            </ActionLink>
           </div>
         </div>
       </div>
