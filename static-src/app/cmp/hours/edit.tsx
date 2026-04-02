@@ -162,18 +162,10 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
       this.setState({ day: elem.value });
     }
     if (elem.id === "hour-project") {
-      const prevMonthStr = prevMonth();
-
-      const diff: Partial<IHourState> = {};
+      // Only update Project here - Name is auto-generated in selectProject when user selects from dropdown
       if (elem.value !== this.state.Project) {
-        diff.Project = elem.value;
+        this.setState({ Project: elem.value });
       }
-      if (this.state.Name === "") {
-        diff.Name = elem.value + "-" + prevMonthStr;
-      }
-
-      console.log("diff", diff);
-      if (Object.keys(diff).length > 0) this.setState((prev) => ({ ...prev, ...diff }));
     }
   }
 
@@ -184,7 +176,9 @@ export default class HourEdit extends React.Component<HourEditProps, IHourState>
       HourRate: prj.HourRate ?? 0,
     };
     if (this.state.Name === "") {
-      diff.Name = prj.Name + "-" + prevMonth();
+      // Add random suffix to avoid filename conflicts
+      const suffix = Math.random().toString(36).substring(2, 6);
+      diff.Name = prj.Name + "-" + prevMonth() + "-" + suffix;
     }
     this.setState((prev) => ({ ...prev, ...diff }));
   }
