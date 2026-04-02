@@ -264,7 +264,8 @@ func syncInvoice(p *PathParts) error {
 	if err != nil {
 		if os.IsNotExist(err) {
 			// File deleted, remove from index
-			_, err := DB.ExecContext(context.Background(), "DELETE FROM invoices WHERE id = ?", p.ID)
+			// Use id AND status to avoid deleting a moved invoice (e.g., CONCEPT -> UNPAID)
+			_, err := DB.ExecContext(context.Background(), "DELETE FROM invoices WHERE id = ? AND status = ?", p.ID, p.Status)
 			return err
 		}
 		return err
@@ -320,7 +321,8 @@ func syncHour(p *PathParts) error {
 	file, err := os.Open(p.FullPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			_, err := DB.ExecContext(context.Background(), "DELETE FROM hours WHERE id = ?", p.ID)
+			// Use id AND status to avoid deleting a moved hour (e.g., CONCEPT -> FINAL)
+			_, err := DB.ExecContext(context.Background(), "DELETE FROM hours WHERE id = ? AND status = ?", p.ID, p.Status)
 			return err
 		}
 		return err
@@ -364,7 +366,8 @@ func syncPurchase(p *PathParts) error {
 	file, err := os.Open(p.FullPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			_, err := DB.ExecContext(context.Background(), "DELETE FROM purchase_invoices WHERE id = ?", p.ID)
+			// Use id AND status to avoid deleting a moved purchase (e.g., UNPAID -> PAID)
+			_, err := DB.ExecContext(context.Background(), "DELETE FROM purchase_invoices WHERE id = ? AND status = ?", p.ID, p.Status)
 			return err
 		}
 		return err

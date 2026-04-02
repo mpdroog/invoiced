@@ -44,7 +44,13 @@ yarn lint:fix                      # Auto-fix ESLint errors
 ```bash
 cd contrib/gen && go build && ./gen   # Generate auth credentials (IV, Salt, Hash)
 cd contrib/desktop && go build        # Build desktop wrapper with systray
-cd contrib/reindex && go build        # Rebuild search index
+```
+
+### Rebuilding the Search Index
+The SQLite search index is stored at `{dbPath}/index.db` (default: `acct/index.db`). To rebuild:
+```bash
+rm acct/index.db                      # Delete the index file
+# Restart the server - it rebuilds automatically when empty
 ```
 
 ## Architecture Overview
