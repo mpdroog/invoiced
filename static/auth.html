@@ -15,6 +15,142 @@
     <link rel="stylesheet" href="/static/assets/fontawesome/css/all.min.css">
     <link rel="stylesheet" href="/static/assets/app.css">
     <link rel="stylesheet" href="/static/assets/main.css">
+    <style>
+        .login-container {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #62cb31 0%, #4cae1b 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 30px rgba(98, 203, 49, 0.3);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 10px 30px rgba(98, 203, 49, 0.3); }
+            50% { box-shadow: 0 10px 40px rgba(98, 203, 49, 0.5); }
+        }
+        .login-logo i {
+            font-size: 36px;
+            color: white;
+        }
+        .login-title {
+            font-size: 28px;
+            font-weight: 300;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        .login-subtitle {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+        .login-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-card .card-body {
+            padding: 40px;
+        }
+        .input-group-icon {
+            position: relative;
+        }
+        .input-group-icon i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.4);
+            z-index: 10;
+            transition: color 0.3s ease;
+        }
+        .input-group-icon input {
+            padding-left: 48px;
+            height: 50px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        .input-group-icon input::placeholder {
+            color: rgba(255,255,255,0.4);
+        }
+        .input-group-icon input:focus {
+            background: rgba(255,255,255,0.08);
+            border-color: #62cb31;
+            box-shadow: 0 0 0 3px rgba(98, 203, 49, 0.15);
+            outline: none;
+        }
+        .input-group-icon input:focus + i,
+        .input-group-icon:focus-within i {
+            color: #62cb31;
+        }
+        .btn-login {
+            height: 50px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            background: linear-gradient(135deg, #62cb31 0%, #4cae1b 100%);
+            border: none;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(98, 203, 49, 0.4);
+            background: linear-gradient(135deg, #6fd83a 0%, #56c020 100%);
+        }
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .login-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.4);
+            font-size: 13px;
+        }
+        .login-footer a {
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .login-footer a:hover {
+            color: #62cb31;
+        }
+        .color-line {
+            background: linear-gradient(90deg, #62cb31 0%, #4cae1b 50%, #3d9916 100%);
+            height: 4px;
+        }
+        .btn-block {
+            width: 100%;
+            display: block;
+        }
+    </style>
 </head>
 <body class="blank">
 <div class="login-bg"></div>
@@ -24,28 +160,34 @@
     <div class="row">
         <div class="col-md-12">
             <div class="text-center m-b-md">
-                <h3><i class="fas fa-calculator"></i> Boekhoud.cloud</h3>
-                <small>Free and distributed accounting</small>
+                <div class="login-logo">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <h3 class="login-title">Boekhoud.cloud</h3>
+                <p class="login-subtitle">Free and distributed accounting</p>
             </div>
-            <div class="card">
+            <div class="card login-card">
                 <div class="card-body">
-                        <form action="/" method="POST">
-                            <div class="form-group">
-                                <input type="email" pattern="[^ @]*@[^ @]*" placeholder="you@domain.com" title="Please enter you username (e-mail)" required="" value="" name="email" id="email" class="form-control" autocomplete="email">
-                            </div>
-                            <div class="form-group">
-                                <input type="password" title="Please enter your password" placeholder="******" required="" value="" name="pass" id="pass" class="form-control">
-                            </div>
-                            <button class="btn btn-success btn-block">Login</button>
-                            <a class="btn btn-secondary btn-block" href="https://boekhoud.cloud">Home</a>
-                        </form>
+                    <form action="/" method="POST">
+                        <div class="form-group input-group-icon">
+                            <input type="email" pattern="[^ @]*@[^ @]*" placeholder="Email address" title="Please enter you username (e-mail)" required="" value="" name="email" id="email" class="form-control" autocomplete="email">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="form-group input-group-icon">
+                            <input type="password" title="Please enter your password" placeholder="Password" required="" value="" name="pass" id="pass" class="form-control">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <button class="btn btn-success btn-login btn-block">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
     <div class="row">
-        <div class="col-md-12 text-center">
-            &copy; 2017 Copyright <a href="https://rootdev.nl">RootDev</a>
+        <div class="col-md-12 text-center login-footer">
+            &copy; 2017 - 2026 <a href="https://rootdev.nl">RootDev</a>
         </div>
     </div>
 </div>

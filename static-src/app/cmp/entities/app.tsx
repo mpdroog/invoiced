@@ -102,19 +102,19 @@ export default class Entities extends React.Component<Record<string, never>, IEn
       }
       items.push(
         <tr key={ukey + "company"}>
-          <td>
-            {entity.Name} - {entity.VAT}
+          <td colSpan={2}>
+            <strong>{entity.Name}</strong> - {entity.VAT}
+            {link && <span className="float-end">{link}</span>}
           </td>
-          <td>{link}</td>
         </tr>
       );
       items = items.concat(accountingYears);
     }
 
     return (
-      <div className="container">
+      <div className="container-fluid">
         <div className="row">
-          <div className="col-md-6 offset-md-3">
+          <div className="col-lg-6 offset-lg-3">
             <div className="card">
               <div className="card-body">
                 <h2 className="font-light m-b-xs">
@@ -124,7 +124,7 @@ export default class Entities extends React.Component<Record<string, never>, IEn
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Company</th>
+                      <th className="col-2">Year</th>
                       <th>Revenue</th>
                     </tr>
                   </thead>

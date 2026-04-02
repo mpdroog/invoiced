@@ -142,7 +142,7 @@ class Menu extends React.Component<MenuProps, MenuState> {
 
     return (
       <nav className="navbar navbar-expand-md bg-body-tertiary fixed-top">
-        <div className="container">
+        <div className="container-fluid">
           <a href="/" className="navbar-brand" id="js-entities">
             <i className="fas fa-calculator me-2"></i>
             <span className="fw-bold">Boekhoud</span>
