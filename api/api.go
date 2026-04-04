@@ -141,6 +141,11 @@ a { color: #007bff; text-decoration: none; }
 a:hover { text-decoration: underline; }
 .header { display: flex; justify-content: space-between; align-items: center; }
 .json-link { font-size: 14px; }
+.auth-section { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.auth-section h3 { margin-top: 0; color: #333; }
+.auth-section code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+.auth-section pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 13px; }
+.auth-section pre .comment { color: #6272a4; }
 </style>
 </head>
 <body>
@@ -150,6 +155,29 @@ a:hover { text-decoration: underline; }
 <a class="json-link" href="/api/v1?format=json" onclick="fetchJSON(event)">View as JSON</a>
 </div>
 <p>Base URL: <code>/api/v1</code></p>
+
+<div class="auth-section">
+<h3>Authentication</h3>
+<p>All API endpoints require authentication. Two methods are supported:</p>
+
+<p><strong>1. Session Cookie</strong> (browser usage)<br>
+Login via POST to <code>/</code> with <code>email</code> and <code>pass</code> form fields. A session cookie is set automatically.</p>
+
+<p><strong>2. API Key</strong> (programmatic access)<br>
+Add your API key to the <code>X-API-Key</code> header. Generate a key with <code>contrib/gen</code> and add it to your user in <code>entities.toml</code>.</p>
+
+<pre><span class="comment"># List entities</span>
+curl -H "X-API-Key: YOUR_API_KEY" http://localhost:9999/api/v1/entities
+
+<span class="comment"># Get invoices for a company/year</span>
+curl -H "X-API-Key: YOUR_API_KEY" http://localhost:9999/api/v1/invoices/mycompany/2024
+
+<span class="comment"># Create an invoice (POST)</span>
+curl -X POST -H "X-API-Key: YOUR_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"customer":"Acme Corp",...}' \
+     http://localhost:9999/api/v1/invoice/mycompany/2024</pre>
+</div>
 `)
 
 	for _, group := range groups {

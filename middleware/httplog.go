@@ -82,9 +82,51 @@ func validateReferer(r *http.Request) bool {
 	return true
 }
 
-// HTTPAuth is middleware that validates session authentication.
+// HTTPAuth is middleware that validates session or API key authentication.
 func HTTPAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requireAuth := strings.HasPrefix(r.URL.Path, "/api/v1/")
+
+		// Check for API key authentication first
+		apiKey := r.Header.Get("X-API-Key")
+		if apiKey != "" && requireAuth {
+			user, err := ValidateAPIKey(apiKey)
+			if err != nil {
+				log.Printf("HTTPAuth invalid API key from %s", strconv.Quote(r.RemoteAddr))
+				w.WriteHeader(http.StatusUnauthorized)
+				if _, err := w.Write([]byte("Invalid API key")); err != nil {
+					log.Printf("HTTPAuth write: %s", err)
+				}
+				return
+			}
+
+			// API key valid - check company access (skip CSRF for API clients)
+			segments := strings.Split(r.URL.Path, "/")
+			if len(segments) >= 5 {
+				ok, err := CompanyAllowed(segments[4], user.Email)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					if _, err := w.Write([]byte("Permission check fail")); err != nil {
+						log.Printf("HTTPAuth write: %s", err)
+					}
+					return
+				}
+				if !ok {
+					w.WriteHeader(http.StatusForbidden)
+					if _, err := w.Write([]byte("Permission denied: You cannot view company " + html.EscapeString(segments[4]))); err != nil {
+						log.Printf("HTTPAuth write: %s", err)
+					}
+					return
+				}
+			}
+
+			r.Header.Add("X-User-Email", user.Email)
+			r.Header.Add("X-User-Name", user.Name)
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Fall back to session-based authentication
 		sess := &Sess{}
 		cookie, e := r.Cookie("sess")
 		if e != nil && e.Error() != "http: named cookie not present" {
@@ -109,7 +151,6 @@ func HTTPAuth(next http.Handler) http.Handler {
 			}
 		}
 
-		requireAuth := strings.HasPrefix(r.URL.Path, "/api/v1/")
 		if requireAuth {
 			// Validate Referer/Origin for state-changing requests (CSRF protection)
 			if !validateReferer(r) {

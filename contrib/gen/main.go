@@ -1,9 +1,10 @@
-// Package main generates authentication credentials (IV, Salt, Hash) for entities.toml.
+// Package main generates authentication credentials (IV, Salt, Hash, APIKey) for entities.toml.
 package main
 
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"strings"
@@ -22,6 +23,16 @@ func NewEncryptionKey() *[32]byte {
 		panic(err)
 	}
 	return &key
+}
+
+// NewAPIKey generates a random 32-byte API key encoded in base64.
+func NewAPIKey() string {
+	key := make([]byte, 32)
+	_, err := io.ReadFull(rand.Reader, key)
+	if err != nil {
+		panic(err)
+	}
+	return base64.StdEncoding.EncodeToString(key)
 }
 
 func creds() (string, error) {
@@ -49,8 +60,11 @@ func main() {
 	h.Write([]byte(pass))
 	hash := fmt.Sprintf("%x", h.Sum(nil))
 
+	apiKey := NewAPIKey()
+
 	fmt.Printf("\nentities.toml input\n")
-	fmt.Printf("IV:   %s\n", key)
-	fmt.Printf("Salt: %s\n", salt)
-	fmt.Printf("Hash: %s\n", hash)
+	fmt.Printf("IV:     %s\n", key)
+	fmt.Printf("Salt:   %s\n", salt)
+	fmt.Printf("Hash:   %s\n", hash)
+	fmt.Printf("APIKey: %s\n", apiKey)
 }

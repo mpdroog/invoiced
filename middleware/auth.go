@@ -23,6 +23,7 @@ var (
 	ErrInvalidPassword = errors.New("invalid password")
 	ErrSessionExpired  = errors.New("session expired")
 	ErrUserNoCompany   = errors.New("user has no company assigned")
+	ErrInvalidAPIKey   = errors.New("invalid API key")
 )
 
 const (
@@ -72,6 +73,7 @@ type User struct {
 	Name     string
 	Address1 string
 	Address2 string
+	APIKey   string `json:"-"` // Optional API key for programmatic access
 }
 
 var entities Entities
@@ -233,4 +235,18 @@ func CompanyAllowed(company, email string) (bool, error) {
 	}
 	// User not found
 	return false, nil
+}
+
+// ValidateAPIKey validates an API key and returns the associated user.
+// Uses constant-time comparison to prevent timing attacks.
+func ValidateAPIKey(key string) (*User, error) {
+	if key == "" {
+		return nil, ErrInvalidAPIKey
+	}
+	for _, user := range entities.User {
+		if user.APIKey != "" && subtle.ConstantTimeCompare([]byte(user.APIKey), []byte(key)) == 1 {
+			return &user, nil
+		}
+	}
+	return nil, ErrInvalidAPIKey
 }
