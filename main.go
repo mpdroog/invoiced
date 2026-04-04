@@ -167,6 +167,9 @@ func main() {
 	router.GET("/", Index)
 	router.POST("/", Login)
 	router.POST("/logout", Logout)
+	router.GET("/api", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		http.Redirect(w, r, "/api/v1", http.StatusTemporaryRedirect)
+	})
 
 	// API route registry (self-documenting)
 	reg := api.NewRegistry()
