@@ -113,6 +113,43 @@ export interface DashboardResponse {
   yearComparison: YearComparison;
   topClients: CustomerTotal[];
 }
+/**
+ * AccountingInvoice contains invoice data for accounting export
+ */
+export interface AccountingInvoice {
+  InvoiceID: string;
+  Issuedate: string;
+  CustomerName: string;
+  CustomerVAT: string;
+  TaxCategory: string; // NL, EU0, WORLD0
+  Status: string; // PAID, UNPAID
+  Quarter: number /* int */;
+  TotalEx: number /* float64 */;
+  TotalTax: number /* float64 */;
+  TotalInc: number /* float64 */;
+  AccountingCode: string; // From debtor record
+}
+/**
+ * AccountingCompany contains company totals for accounting export
+ */
+export interface AccountingCompany {
+  Name: string;
+  VAT: string;
+  TaxCategory: string; // NL, EU0, WORLD0
+  TotalRevenue: number /* float64 */;
+  AccountingCode: string;
+}
+/**
+ * AccountingExport contains all data for the accounting Excel export
+ */
+export interface AccountingExport {
+  Invoices: AccountingInvoice[];
+  Companies: AccountingCompany[];
+  TotalRevenue: number /* float64 */;
+  TotalEx: number /* float64 */;
+  TotalTax: number /* float64 */;
+  TotalHours: number /* float64 */;
+}
 
 //////////
 // source: hour.go

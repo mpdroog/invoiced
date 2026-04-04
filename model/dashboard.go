@@ -96,3 +96,37 @@ type DashboardResponse struct {
 	YearComparison  YearComparison            `json:"yearComparison"`
 	TopClients      []CustomerTotal           `json:"topClients"`
 }
+
+// AccountingInvoice contains invoice data for accounting export
+type AccountingInvoice struct {
+	InvoiceID      string
+	Issuedate      string
+	CustomerName   string
+	CustomerVAT    string
+	TaxCategory    string // NL, EU0, WORLD0
+	Status         string // PAID, UNPAID
+	Quarter        int
+	TotalEx        float64
+	TotalTax       float64
+	TotalInc       float64
+	AccountingCode string // From debtor record
+}
+
+// AccountingCompany contains company totals for accounting export
+type AccountingCompany struct {
+	Name           string
+	VAT            string
+	TaxCategory    string // NL, EU0, WORLD0
+	TotalRevenue   float64
+	AccountingCode string
+}
+
+// AccountingExport contains all data for the accounting Excel export
+type AccountingExport struct {
+	Invoices     []AccountingInvoice
+	Companies    []AccountingCompany
+	TotalRevenue float64
+	TotalEx      float64
+	TotalTax     float64
+	TotalHours   float64
+}

@@ -443,6 +443,138 @@ func GetLastInvoiceDates(entity string) (map[string]string, error) {
 	return results, rows.Err()
 }
 
+// GetAccountingExport returns all data needed for the accounting Excel export
+func GetAccountingExport(entity string, year int, quarter int) (*model.AccountingExport, error) {
+	if DB == nil {
+		return nil, nil
+	}
+
+	export := &model.AccountingExport{
+		Invoices:  []model.AccountingInvoice{},
+		Companies: []model.AccountingCompany{},
+	}
+
+	// Build accounting code lookup from debtors
+	acctCodes := make(map[string]string) // customer_name (lowercase) -> accounting_code
+	debtorRows, err := DB.QueryContext(ctx(), `
+		SELECT LOWER(name), accounting_code FROM debtors WHERE entity = ? AND accounting_code != ''`,
+		entity,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if closeErr := debtorRows.Close(); closeErr != nil {
+			log.Printf("close: %s", closeErr)
+		}
+	}()
+	for debtorRows.Next() {
+		var name, code string
+		if err := debtorRows.Scan(&name, &code); err != nil {
+			return nil, err
+		}
+		acctCodes[name] = code
+	}
+	if err := debtorRows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Build quarter filter
+	quarterFilter := ""
+	if quarter > 0 {
+		quarterFilter = " AND quarter = ?"
+	}
+
+	// Get all invoices sorted by issuedate
+	query := `
+		SELECT invoiceid, issuedate, customer_name, customer_vat, tax_category, status, quarter,
+		       CAST(total_ex AS REAL), CAST(total_tax AS REAL), CAST(total_inc AS REAL)
+		FROM invoices
+		WHERE entity = ? AND year = ? AND status IN ('PAID', 'UNPAID')` + quarterFilter + `
+		ORDER BY issuedate, invoiceid`
+
+	var rows *sql.Rows
+	if quarter > 0 {
+		rows, err = DB.QueryContext(ctx(), query, entity, year, quarter)
+	} else {
+		rows, err = DB.QueryContext(ctx(), query, entity, year)
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
+
+	// Track totals per company
+	companyTotals := make(map[string]*model.AccountingCompany) // key = name-vat
+
+	for rows.Next() {
+		var inv model.AccountingInvoice
+		var customerVat sql.NullString
+
+		if err := rows.Scan(&inv.InvoiceID, &inv.Issuedate, &inv.CustomerName, &customerVat,
+			&inv.TaxCategory, &inv.Status, &inv.Quarter,
+			&inv.TotalEx, &inv.TotalTax, &inv.TotalInc); err != nil {
+			return nil, err
+		}
+
+		if customerVat.Valid {
+			inv.CustomerVAT = customerVat.String
+		}
+
+		// Look up accounting code
+		inv.AccountingCode = acctCodes[strings.ToLower(inv.CustomerName)]
+
+		export.Invoices = append(export.Invoices, inv)
+
+		// Accumulate totals
+		export.TotalEx += inv.TotalEx
+		export.TotalTax += inv.TotalTax
+		export.TotalRevenue += inv.TotalInc
+
+		// Accumulate company totals
+		key := inv.CustomerName + "-" + inv.CustomerVAT
+		if _, ok := companyTotals[key]; !ok {
+			companyTotals[key] = &model.AccountingCompany{
+				Name:           inv.CustomerName,
+				VAT:            inv.CustomerVAT,
+				TaxCategory:    inv.TaxCategory,
+				AccountingCode: inv.AccountingCode,
+			}
+		}
+		companyTotals[key].TotalRevenue += inv.TotalInc
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Convert company map to slice (sorted by name)
+	for _, c := range companyTotals {
+		export.Companies = append(export.Companies, *c)
+	}
+
+	// Get total hours
+	hoursQuery := `
+		SELECT COALESCE(SUM(CAST(total_hours AS REAL)), 0)
+		FROM hours
+		WHERE entity = ? AND year = ?`
+	if quarter > 0 {
+		hoursQuery += " AND quarter = ?"
+		err = DB.QueryRowContext(ctx(), hoursQuery, entity, year, quarter).Scan(&export.TotalHours)
+	} else {
+		err = DB.QueryRowContext(ctx(), hoursQuery, entity, year).Scan(&export.TotalHours)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return export, nil
+}
+
 // GetYearComparison compares revenue between current and previous year
 func GetYearComparison(entity string, currentYear int) (*model.YearComparison, error) {
 	if DB == nil {

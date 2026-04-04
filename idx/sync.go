@@ -20,14 +20,15 @@ import (
 
 // debtorTOML is a local struct for decoding debtors.toml (avoids import cycle with entities)
 type debtorTOML struct {
-	Name         string
-	Street1      string
-	Street2      string
-	VAT          string
-	COC          string
-	TAX          string
-	NoteAdd      string
-	BillingEmail []string
+	Name           string
+	Street1        string
+	Street2        string
+	VAT            string
+	COC            string
+	TAX            string
+	NoteAdd        string
+	BillingEmail   []string
+	AccountingCode string
 }
 
 // projectTOML is a local struct for decoding projects.toml (avoids import cycle with entities)
@@ -448,9 +449,9 @@ func syncDebtors(fullPath, entity string) error {
 	now := time.Now().Format(time.RFC3339)
 	for key, d := range debtorList {
 		_, err = DB.ExecContext(context.Background(), `
-			INSERT INTO debtors (id, entity, name, street1, street2, vat, coc, tax, note_add, updated_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			entity+"/"+key, entity, d.Name, d.Street1, d.Street2, d.VAT, d.COC, d.TAX, d.NoteAdd, now,
+			INSERT INTO debtors (id, entity, name, street1, street2, vat, coc, tax, note_add, accounting_code, updated_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			entity+"/"+key, entity, d.Name, d.Street1, d.Street2, d.VAT, d.COC, d.TAX, d.NoteAdd, d.AccountingCode, now,
 		)
 		if err != nil {
 			return err

@@ -89,6 +89,7 @@ func createTables() error {
 	CREATE INDEX IF NOT EXISTS idx_invoices_quarter ON invoices(entity, year, quarter, status);
 	CREATE INDEX IF NOT EXISTS idx_invoices_tax ON invoices(entity, year, quarter, tax_category);
 	CREATE INDEX IF NOT EXISTS idx_invoices_customer ON invoices(entity, customer_name);
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_invoices_invoiceid ON invoices(entity, invoiceid);
 
 	CREATE TABLE IF NOT EXISTS hours (
 		id            TEXT PRIMARY KEY,
@@ -145,16 +146,17 @@ func createTables() error {
 	CREATE INDEX IF NOT EXISTS idx_purchases_supplier ON purchase_invoices(entity, supplier_name);
 
 	CREATE TABLE IF NOT EXISTS debtors (
-		id            TEXT PRIMARY KEY,  -- key (slug) from TOML
-		entity        TEXT NOT NULL,
-		name          TEXT,
-		street1       TEXT,
-		street2       TEXT,
-		vat           TEXT,
-		coc           TEXT,
-		tax           TEXT,              -- NL21, EU0, WORLD0
-		note_add      TEXT,
-		updated_at    TEXT
+		id              TEXT PRIMARY KEY,  -- key (slug) from TOML
+		entity          TEXT NOT NULL,
+		name            TEXT,
+		street1         TEXT,
+		street2         TEXT,
+		vat             TEXT,
+		coc             TEXT,
+		tax             TEXT,              -- NL21, EU0, WORLD0
+		note_add        TEXT,
+		accounting_code TEXT,              -- Relation code for accounting software
+		updated_at      TEXT
 	);
 
 	CREATE INDEX IF NOT EXISTS idx_debtors_entity ON debtors(entity);

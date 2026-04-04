@@ -24,6 +24,7 @@ const emptyDebtor: Debtor = {
   TAX: "NL21",
   NoteAdd: "",
   BillingEmail: [],
+  AccountingCode: "",
 };
 
 export default class DebtorEdit extends React.Component<DebtorEditProps, DebtorEditState> {
@@ -210,6 +211,19 @@ export default class DebtorEdit extends React.Component<DebtorEditProps, DebtorE
                 placeholder="Additional notes to appear on invoices"
                 rows={3}
               />
+            </div>
+          </div>
+          <div className="row mb-3">
+            <label className="col-sm-2 col-form-label">Accounting Code</label>
+            <div className="col-sm-10">
+              <input
+                type="text"
+                className="form-control"
+                value={debtor.AccountingCode}
+                onChange={(e) => this.updateField("AccountingCode", e.target.value)}
+                placeholder="e.g., 3, 4, 5..."
+              />
+              <small className="text-muted">Relation code used in accounting software export (XLSX)</small>
             </div>
           </div>
         </div>

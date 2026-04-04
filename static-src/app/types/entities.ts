@@ -37,6 +37,7 @@ export interface Debtor {
   TAX: string; // TODO: validate?
   NoteAdd: string;
   BillingEmail: string[];
+  AccountingCode: string; // Relation code for accounting software export
 }
 
 //////////

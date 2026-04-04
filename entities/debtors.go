@@ -13,14 +13,15 @@ import (
 
 // Debtor represents a customer or billing entity.
 type Debtor struct {
-	Name         string
-	Street1      string
-	Street2      string
-	VAT          string
-	COC          string
-	TAX          string // TODO: validate?
-	NoteAdd      string
-	BillingEmail []string
+	Name           string
+	Street1        string
+	Street2        string
+	VAT            string
+	COC            string
+	TAX            string // TODO: validate?
+	NoteAdd        string
+	BillingEmail   []string
+	AccountingCode string // Relation code for accounting software export
 }
 
 // Search searches for debtors by name.
