@@ -59,9 +59,9 @@ func Balance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: "Read CAMT053 bankbalance",
+		Message: db.FormatCommitMsg(entity, db.ActionImport, db.ResourceBank, "CAMT053"),
 	}
-	e = db.Update(change, func(t *db.Txn) error {
+	e = db.Update(&change, func(t *db.Txn) error {
 		for _, payment := range p {
 			if config.Verbose {
 				log.Printf(

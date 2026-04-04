@@ -68,9 +68,9 @@ func Email(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Email invoice %s to %s", name, m.To),
+		Message: db.FormatCommitMsg(entity, db.ActionEmail, db.ResourceInvoice, name, "to", m.To),
 	}
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		e := t.OpenFirst(paths, u)
 		if e != nil {
 			return e

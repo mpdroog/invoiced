@@ -30,9 +30,9 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Delete concept hour %s", name),
+		Message: db.FormatCommitMsg(entity, db.ActionDelete, db.ResourceHour, name),
 	}
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		return t.Remove(db.ConceptHourPath(entity, year, name))
 	})
 	if e != nil {
@@ -59,15 +59,18 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	entity := ps.ByName("entity")
 	year := ps.ByName("year")
 
+	isNew := u.Status == "NEW"
+	action := db.ActionUpdate
+	if isNew {
+		action = db.ActionCreate
+	}
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Save concept hour %s", u.Name),
+		Message: db.FormatCommitMsg(entity, action, db.ResourceHour, u.Name),
 	}
 
-	isNew := u.Status == "NEW"
-
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		u.Status = "CONCEPT"
 		return t.Save(db.ConceptHourPath(entity, year, u.Name), isNew, u)
 	})
@@ -91,9 +94,9 @@ func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("id")
 
 	change := db.Commit{
-		Name:    r.Header.Get("X-User-Name"),
-		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Bill hours from %s", name),
+		Name:  r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
+		// Message set inside transaction after invoice is created
 	}
 
 	invoiceID := ""
@@ -102,7 +105,7 @@ func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	bucketTo := fmt.Sprintf("Q%d", utils.YearQuarter(time.Now()))
 	pathTo := db.HourPath(entity, year, bucketTo, name)
 
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		// Move from concept to finalized quarter
 		if e := t.Open(path, u); e != nil {
 			return fmt.Errorf("open: %w", e)
@@ -120,6 +123,9 @@ func Bill(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if err != nil {
 			return fmt.Errorf("hour to invoice: %w", err)
 		}
+
+		// Set commit message now that we have the invoice concept ID
+		change.Message = db.FormatCommitMsg(entity, db.ActionBill, db.ResourceHour, name, "->", invoiceID)
 		return nil
 	})
 	if e != nil {

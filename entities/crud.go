@@ -110,13 +110,33 @@ func DebtorSave(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	var action db.CommitAction
+	e := db.View(func(t *db.Txn) error {
+		var debtorList map[string]Debtor
+		if err := t.Open(db.DebtorsPath(entity), &debtorList); err != nil {
+			// File doesn't exist yet, so this is a create operation
+			action = db.ActionCreate
+			return nil //nolint:nilerr // intentionally ignoring "file not found" error
+		}
+		if _, exists := debtorList[item.Key]; exists {
+			action = db.ActionUpdate
+		} else {
+			action = db.ActionCreate
+		}
+		return nil
+	})
+	if e != nil {
+		httputil.InternalError(w, "entities.DebtorSave check", e)
+		return
+	}
+
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Save debtor %s", item.Key),
+		Message: db.FormatCommitMsg(entity, action, db.ResourceDebtor, item.Key),
 	}
 
-	e := db.Update(change, func(t *db.Txn) error {
+	e = db.Update(&change, func(t *db.Txn) error {
 		var debtorList map[string]Debtor
 		if err := t.Open(db.DebtorsPath(entity), &debtorList); err != nil {
 			// File might not exist yet
@@ -149,10 +169,10 @@ func DebtorDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Delete debtor %s", key),
+		Message: db.FormatCommitMsg(entity, db.ActionDelete, db.ResourceDebtor, key),
 	}
 
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		var debtorList map[string]Debtor
 		if err := t.Open(db.DebtorsPath(entity), &debtorList); err != nil {
 			return err
@@ -247,13 +267,33 @@ func ProjectSave(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	var action db.CommitAction
+	e := db.View(func(t *db.Txn) error {
+		var projectList map[string]Project
+		if err := t.Open(db.ProjectsPath(entity), &projectList); err != nil {
+			// File doesn't exist yet, so this is a create operation
+			action = db.ActionCreate
+			return nil //nolint:nilerr // intentionally ignoring "file not found" error
+		}
+		if _, exists := projectList[item.Key]; exists {
+			action = db.ActionUpdate
+		} else {
+			action = db.ActionCreate
+		}
+		return nil
+	})
+	if e != nil {
+		httputil.InternalError(w, "entities.ProjectSave check", e)
+		return
+	}
+
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Save project %s", item.Key),
+		Message: db.FormatCommitMsg(entity, action, db.ResourceProject, item.Key),
 	}
 
-	e := db.Update(change, func(t *db.Txn) error {
+	e = db.Update(&change, func(t *db.Txn) error {
 		var projectList map[string]Project
 		if err := t.Open(db.ProjectsPath(entity), &projectList); err != nil {
 			// File might not exist yet
@@ -286,10 +326,10 @@ func ProjectDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Delete project %s", key),
+		Message: db.FormatCommitMsg(entity, db.ActionDelete, db.ResourceProject, key),
 	}
 
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		var projectList map[string]Project
 		if err := t.Open(db.ProjectsPath(entity), &projectList); err != nil {
 			return err

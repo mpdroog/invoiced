@@ -218,7 +218,9 @@ func revert() error {
 }
 
 // Update executes a write transaction with automatic commit.
-func Update(change Commit, fn Fn) error {
+// The Commit pointer allows the Message to be set/modified inside the transaction
+// function, which is useful when the final message depends on computed values.
+func Update(change *Commit, fn Fn) error {
 	lock.Lock()
 	defer lock.Unlock()
 

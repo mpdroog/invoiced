@@ -60,9 +60,9 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Delete concept invoice %s", name),
+		Message: db.FormatCommitMsg(entity, db.ActionDelete, db.ResourceInvoice, name, "concept"),
 	}
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		path := db.ConceptInvoicePath(entity, year, name)
 		u := new(Invoice)
 		if e := t.Open(path, u); e != nil {
@@ -108,11 +108,11 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var u *Invoice
 	bucketTo := ""
 	change := db.Commit{
-		Name:    r.Header.Get("X-User-Name"),
-		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Finalize concept invoice %s", name),
+		Name:  r.Header.Get("X-User-Name"),
+		Email: r.Header.Get("X-User-Email"),
+		// Message set inside transaction after invoice ID is assigned
 	}
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		from := db.ConceptInvoicePath(entity, year, name)
 		u = new(Invoice)
 		if e := t.Open(from, u); e != nil {
@@ -133,6 +133,9 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			if config.Verbose {
 				log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
 			}
+
+			// Set commit message now that we have the invoice ID
+			change.Message = db.FormatCommitMsg(entity, db.ActionFinalize, db.ResourceInvoice, name, "->", u.Meta.Invoiceid)
 
 			if u.Customer.Tax != "" {
 				// If outside NL we add a special comment above the invoice so it gets administrated correctly
@@ -156,6 +159,9 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 					u.Notes += EUTaxComment
 				}
 			}
+		} else {
+			// Re-finalize: invoice already has an ID
+			change.Message = db.FormatCommitMsg(entity, db.ActionFinalize, db.ResourceInvoice, name, "->", u.Meta.Invoiceid)
 		}
 
 		now, e := time.Parse("2006-01-02", u.Meta.Issuedate)
@@ -200,9 +206,9 @@ func Reset(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: "Reset invoice to concept",
+		Message: db.FormatCommitMsg(entity, db.ActionUnpay, db.ResourceInvoice, name, "reset to concept"),
 	}
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		if e := t.Open(from, u); e != nil {
 			return fmt.Errorf("open: %w", e)
 		}
@@ -244,9 +250,9 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Mark invoice %s as paid", name),
+		Message: db.FormatCommitMsg(entity, db.ActionPay, db.ResourceInvoice, name),
 	}
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		if e := t.Open(from, u); e != nil {
 			return fmt.Errorf("open: %w", e)
 		}
@@ -311,12 +317,16 @@ func Save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 	u.Meta.Status = "CONCEPT"
 
+	action := db.ActionUpdate
+	if isNew {
+		action = db.ActionCreate
+	}
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Update invoice %s", u.Meta.Conceptid),
+		Message: db.FormatCommitMsg(entity, action, db.ResourceInvoice, u.Meta.Conceptid),
 	}
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		path := db.ConceptInvoicePath(entity, year, u.Meta.Conceptid)
 		return t.Save(path, isNew, u)
 	})

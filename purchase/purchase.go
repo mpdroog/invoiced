@@ -144,10 +144,10 @@ func Upload(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Upload purchase invoice %s from %s", inv.ID, inv.Supplier.Name),
+		Message: db.FormatCommitMsg(entity, db.ActionCreate, db.ResourcePurchaseInvoice, inv.ID, "from", inv.Supplier.Name),
 	}
 
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		basePath := fmt.Sprintf("%s/%s/%s/purchase-invoices-unpaid", entity, year, quarter)
 
 		// Save TOML
@@ -195,10 +195,10 @@ func Paid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Mark purchase invoice %s as paid", name),
+		Message: db.FormatCommitMsg(entity, db.ActionPay, db.ResourcePurchaseInvoice, name),
 	}
 
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		if e := t.Open(from, u); e != nil {
 			return fmt.Errorf("open: %w", e)
 		}
@@ -295,10 +295,10 @@ func Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	change := db.Commit{
 		Name:    r.Header.Get("X-User-Name"),
 		Email:   r.Header.Get("X-User-Email"),
-		Message: fmt.Sprintf("Delete purchase invoice %s", name),
+		Message: db.FormatCommitMsg(entity, db.ActionDelete, db.ResourcePurchaseInvoice, name),
 	}
 
-	e := db.Update(change, func(t *db.Txn) error {
+	e := db.Update(&change, func(t *db.Txn) error {
 		// Try both paid and unpaid locations
 		paths := []string{
 			db.PurchasePath(entity, year, bucket, name, true),
