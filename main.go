@@ -13,6 +13,7 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/julienschmidt/httprouter"
 	"github.com/kardianos/osext"
+	"github.com/mpdroog/invoiced/api"
 	"github.com/mpdroog/invoiced/config"
 	"github.com/mpdroog/invoiced/db"
 	"github.com/mpdroog/invoiced/entities"
@@ -167,69 +168,86 @@ func main() {
 	router.POST("/", Login)
 	router.POST("/logout", Logout)
 
-	router.GET("/api/v1/entities", entities.List)
-	router.GET("/api/v1/entities/:entity/logo", entities.Logo)
-	router.GET("/api/v1/entities/:entity/details", entities.Details)
-	router.GET("/api/v1/entities/:entity/open/:year", entities.Open)
+	// API route registry (self-documenting)
+	reg := api.NewRegistry()
 
-	router.GET("/api/v1/debtors/:entity/search", entities.Search)
-	router.GET("/api/v1/projects/:entity/search", entities.ProjectSearch)
+	// Entities
+	reg.GET("/api/v1/entities", "Entities", "List all entities/companies", entities.List)
+	reg.GET("/api/v1/entities/:entity/logo", "Entities", "Get entity logo", entities.Logo)
+	reg.GET("/api/v1/entities/:entity/details", "Entities", "Get entity details", entities.Details)
+	reg.GET("/api/v1/entities/:entity/open/:year", "Entities", "Open entity for year", entities.Open)
 
-	router.GET("/api/v1/debtors/:entity", entities.DebtorList)
-	router.GET("/api/v1/debtor/:entity/:id", entities.DebtorLoad)
-	router.POST("/api/v1/debtor/:entity/:id", entities.DebtorSave)
-	router.POST("/api/v1/debtor/:entity", entities.DebtorSave)
-	router.DELETE("/api/v1/debtor/:entity/:id", entities.DebtorDelete)
+	// Debtors
+	reg.GET("/api/v1/debtors/:entity/search", "Debtors", "Search debtors by name", entities.Search)
+	reg.GET("/api/v1/debtors/:entity", "Debtors", "List all debtors", entities.DebtorList)
+	reg.GET("/api/v1/debtor/:entity/:id", "Debtors", "Get debtor by ID", entities.DebtorLoad)
+	reg.POST("/api/v1/debtor/:entity/:id", "Debtors", "Update debtor", entities.DebtorSave)
+	reg.POST("/api/v1/debtor/:entity", "Debtors", "Create debtor", entities.DebtorSave)
+	reg.DELETE("/api/v1/debtor/:entity/:id", "Debtors", "Delete debtor", entities.DebtorDelete)
 
-	router.GET("/api/v1/projects/:entity", entities.ProjectList)
-	router.GET("/api/v1/project/:entity/:id", entities.ProjectLoad)
-	router.POST("/api/v1/project/:entity/:id", entities.ProjectSave)
-	router.POST("/api/v1/project/:entity", entities.ProjectSave)
-	router.DELETE("/api/v1/project/:entity/:id", entities.ProjectDelete)
+	// Projects
+	reg.GET("/api/v1/projects/:entity/search", "Projects", "Search projects by name", entities.ProjectSearch)
+	reg.GET("/api/v1/projects/:entity", "Projects", "List all projects", entities.ProjectList)
+	reg.GET("/api/v1/project/:entity/:id", "Projects", "Get project by ID", entities.ProjectLoad)
+	reg.POST("/api/v1/project/:entity/:id", "Projects", "Update project", entities.ProjectSave)
+	reg.POST("/api/v1/project/:entity", "Projects", "Create project", entities.ProjectSave)
+	reg.DELETE("/api/v1/project/:entity/:id", "Projects", "Delete project", entities.ProjectDelete)
 
-	router.GET("/api/v1/search/:entity", search.Search)
+	// Search
+	reg.GET("/api/v1/search/:entity", "Search", "Full-text search invoices/hours", search.Search)
 
-	router.GET("/api/v1/metrics/:entity/:year", metrics.Dashboard)
-	router.GET("/api/v1/dashboard/:entity/:year", metrics.DashboardFull)
+	// Metrics
+	reg.GET("/api/v1/metrics/:entity/:year", "Metrics", "Get simple metrics", metrics.Dashboard)
+	reg.GET("/api/v1/dashboard/:entity/:year", "Metrics", "Get full dashboard data", metrics.DashboardFull)
 
-	router.GET("/api/v1/invoices/:entity/:year", invoice.List)
-	router.POST("/api/v1/invoice/:entity/:year", invoice.Save)
-	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id", invoice.Load)
-	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/finalize", invoice.Finalize)
-	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/reset", invoice.Reset)
-	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/pdf", invoice.Pdf)
-	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/text", invoice.Text)
-	router.GET("/api/v1/invoice/:entity/:year/:bucket/:id/xml", invoice.XML)
-	// router.GET("/api/v1/invoice/:id/credit", invoice.Credit)
-	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/paid", invoice.Paid)
-	router.POST("/api/v1/invoice/:entity/:year/:bucket/:id/email", invoice.Email)
-	router.POST("/api/v1/invoice-balance/:entity/:year", invoice.Balance)
-	router.DELETE("/api/v1/invoice/:entity/:year/:bucket/:id", invoice.Delete)
+	// Invoices
+	reg.GET("/api/v1/invoices/:entity/:year", "Invoices", "List invoices for year", invoice.List)
+	reg.POST("/api/v1/invoice/:entity/:year", "Invoices", "Create invoice", invoice.Save)
+	reg.GET("/api/v1/invoice/:entity/:year/:bucket/:id", "Invoices", "Get invoice by ID", invoice.Load)
+	reg.POST("/api/v1/invoice/:entity/:year/:bucket/:id/finalize", "Invoices", "Finalize invoice (concept -> final)", invoice.Finalize)
+	reg.POST("/api/v1/invoice/:entity/:year/:bucket/:id/reset", "Invoices", "Reset invoice to concept", invoice.Reset)
+	reg.GET("/api/v1/invoice/:entity/:year/:bucket/:id/pdf", "Invoices", "Download invoice PDF", invoice.Pdf)
+	reg.GET("/api/v1/invoice/:entity/:year/:bucket/:id/text", "Invoices", "Get invoice as plain text", invoice.Text)
+	reg.GET("/api/v1/invoice/:entity/:year/:bucket/:id/xml", "Invoices", "Get invoice as UBL XML", invoice.XML)
+	reg.POST("/api/v1/invoice/:entity/:year/:bucket/:id/paid", "Invoices", "Mark invoice as paid", invoice.Paid)
+	reg.POST("/api/v1/invoice/:entity/:year/:bucket/:id/email", "Invoices", "Email invoice to customer", invoice.Email)
+	reg.POST("/api/v1/invoice-balance/:entity/:year", "Invoices", "Import bank statement (CAMT053)", invoice.Balance)
+	reg.DELETE("/api/v1/invoice/:entity/:year/:bucket/:id", "Invoices", "Delete invoice", invoice.Delete)
 
-	router.GET("/api/v1/purchases/:entity/:year", purchase.List)
-	router.POST("/api/v1/purchase/:entity/:year", purchase.Upload)
-	router.GET("/api/v1/purchase/:entity/:year/:bucket/:id", purchase.Load)
-	router.GET("/api/v1/purchase/:entity/:year/:bucket/:id/pdf", purchase.PDF)
-	router.POST("/api/v1/purchase/:entity/:year/:bucket/:id/paid", purchase.Paid)
-	router.DELETE("/api/v1/purchase/:entity/:year/:bucket/:id", purchase.Delete)
+	// Purchases
+	reg.GET("/api/v1/purchases/:entity/:year", "Purchases", "List purchase invoices", purchase.List)
+	reg.POST("/api/v1/purchase/:entity/:year", "Purchases", "Upload purchase invoice (UBL)", purchase.Upload)
+	reg.GET("/api/v1/purchase/:entity/:year/:bucket/:id", "Purchases", "Get purchase invoice", purchase.Load)
+	reg.GET("/api/v1/purchase/:entity/:year/:bucket/:id/pdf", "Purchases", "Download purchase PDF", purchase.PDF)
+	reg.POST("/api/v1/purchase/:entity/:year/:bucket/:id/paid", "Purchases", "Mark purchase as paid", purchase.Paid)
+	reg.DELETE("/api/v1/purchase/:entity/:year/:bucket/:id", "Purchases", "Delete purchase invoice", purchase.Delete)
 
-	router.GET("/api/v1/hours/:entity/:year", hour.List)
-	router.POST("/api/v1/hour/:entity/:year/:bucket", hour.Save)
-	router.GET("/api/v1/hour/:entity/:year/:bucket/:id", hour.Load)
-	router.POST("/api/v1/hour/:entity/:year/:bucket/:id/bill", hour.Bill)
-	router.DELETE("/api/v1/hour/:entity/:year/:bucket/:id", hour.Delete)
+	// Hours
+	reg.GET("/api/v1/hours/:entity/:year", "Hours", "List hour registrations", hour.List)
+	reg.POST("/api/v1/hour/:entity/:year/:bucket", "Hours", "Create/update hours", hour.Save)
+	reg.GET("/api/v1/hour/:entity/:year/:bucket/:id", "Hours", "Get hour registration", hour.Load)
+	reg.POST("/api/v1/hour/:entity/:year/:bucket/:id/bill", "Hours", "Convert hours to invoice", hour.Bill)
+	reg.DELETE("/api/v1/hour/:entity/:year/:bucket/:id", "Hours", "Delete hour registration", hour.Delete)
 
-	router.GET("/api/v1/summary/:entity/:year", taxes.Summary)
-	router.POST("/api/v1/taxes/:entity/:year/:quarter", taxes.Tax)
+	// Taxes
+	reg.GET("/api/v1/summary/:entity/:year", "Taxes", "Get tax summary (Excel export with ?excel=1)", taxes.Summary)
+	reg.POST("/api/v1/taxes/:entity/:year/:quarter", "Taxes", "Get quarterly tax calculation", taxes.Tax)
 
-	router.GET("/api/v1/git/:entity/status", gitpkg.Status)
-	router.GET("/api/v1/git/:entity/history", gitpkg.History)
-	router.GET("/api/v1/git/:entity/diff/:hash", gitpkg.Diff)
-	router.POST("/api/v1/git/:entity/push", gitpkg.Push)
-	router.POST("/api/v1/git/:entity/pull", gitpkg.Pull)
-	router.POST("/api/v1/git/:entity/discard", gitpkg.DiscardAll)
-	router.POST("/api/v1/git/:entity/reset/:hash", gitpkg.ResetTo)
-	router.POST("/api/v1/reindex", gitpkg.RebuildIndex)
+	// Git
+	reg.GET("/api/v1/git/:entity/status", "Git", "Get git status", gitpkg.Status)
+	reg.GET("/api/v1/git/:entity/history", "Git", "Get commit history", gitpkg.History)
+	reg.GET("/api/v1/git/:entity/diff/:hash", "Git", "Get diff for commit", gitpkg.Diff)
+	reg.POST("/api/v1/git/:entity/push", "Git", "Push to remote", gitpkg.Push)
+	reg.POST("/api/v1/git/:entity/pull", "Git", "Pull from remote", gitpkg.Pull)
+	reg.POST("/api/v1/git/:entity/discard", "Git", "Discard all local changes", gitpkg.DiscardAll)
+	reg.POST("/api/v1/git/:entity/reset/:hash", "Git", "Reset to specific commit", gitpkg.ResetTo)
+	reg.POST("/api/v1/reindex", "Git", "Rebuild SQLite search index", gitpkg.RebuildIndex)
+
+	// Register all API routes
+	reg.Register(router)
+
+	// API documentation endpoint
+	router.GET("/api/v1", reg.DocsHandler())
 
 	router.ServeFiles("/static/*filepath", http.Dir(config.CurDir+"/static"))
 
