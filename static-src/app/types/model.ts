@@ -128,6 +128,7 @@ export interface AccountingInvoice {
   TotalTax: number /* float64 */;
   TotalInc: number /* float64 */;
   AccountingCode: string; // From debtor record
+  Paydate: string; // Payment date (for bank reconciliation)
 }
 /**
  * AccountingCompany contains company totals for accounting export
@@ -140,10 +141,28 @@ export interface AccountingCompany {
   AccountingCode: string;
 }
 /**
+ * AccountingPurchase contains purchase invoice data for accounting export
+ */
+export interface AccountingPurchase {
+  InvoiceID: string;
+  Issuedate: string;
+  SupplierName: string;
+  SupplierVAT: string;
+  Status: string; // PAID, UNPAID
+  Quarter: number /* int */;
+  TotalEx: number /* float64 */;
+  TotalTax: number /* float64 */;
+  TotalInc: number /* float64 */;
+  Paydate: string;
+  PaymentRef: string;
+  IBAN: string;
+}
+/**
  * AccountingExport contains all data for the accounting Excel export
  */
 export interface AccountingExport {
   Invoices: AccountingInvoice[];
+  Purchases: AccountingPurchase[];
   Companies: AccountingCompany[];
   TotalRevenue: number /* float64 */;
   TotalEx: number /* float64 */;

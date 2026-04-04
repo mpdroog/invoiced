@@ -110,6 +110,7 @@ type AccountingInvoice struct {
 	TotalTax       float64
 	TotalInc       float64
 	AccountingCode string // From debtor record
+	Paydate        string // Payment date (for bank reconciliation)
 }
 
 // AccountingCompany contains company totals for accounting export
@@ -121,9 +122,26 @@ type AccountingCompany struct {
 	AccountingCode string
 }
 
+// AccountingPurchase contains purchase invoice data for accounting export
+type AccountingPurchase struct {
+	InvoiceID    string
+	Issuedate    string
+	SupplierName string
+	SupplierVAT  string
+	Status       string // PAID, UNPAID
+	Quarter      int
+	TotalEx      float64
+	TotalTax     float64
+	TotalInc     float64
+	Paydate      string
+	PaymentRef   string
+	IBAN         string
+}
+
 // AccountingExport contains all data for the accounting Excel export
 type AccountingExport struct {
 	Invoices     []AccountingInvoice
+	Purchases    []AccountingPurchase
 	Companies    []AccountingCompany
 	TotalRevenue float64
 	TotalEx      float64

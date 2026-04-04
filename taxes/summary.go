@@ -229,6 +229,20 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 
 	f := excelize.NewFile()
 
+	// Create styles
+	headerStyle, _ := f.NewStyle(&excelize.Style{
+		Font:      &excelize.Font{Bold: true},
+		Alignment: &excelize.Alignment{Horizontal: "center"},
+		Fill:      excelize.Fill{Type: "pattern", Color: []string{"E0E0E0"}, Pattern: 1},
+	})
+	totalStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Bold: true},
+		Fill: excelize.Fill{Type: "pattern", Color: []string{"FFFACD"}, Pattern: 1},
+	})
+	moneyStyle, _ := f.NewStyle(&excelize.Style{
+		NumFmt: 4, // #,##0.00
+	})
+
 	// Sheet 1: Overview
 	{
 		sheet := "Overview"
@@ -240,6 +254,7 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 		setCellValue(f, sheet, "B1", "Revenue (excl. tax)")
 		setCellValue(f, sheet, "C1", "Tax")
 		setCellValue(f, sheet, "D1", "Hours")
+		setRowStyle(f, sheet, 1, headerStyle)
 
 		setCellFloat(f, sheet, "A2", export.TotalRevenue)
 		setCellFloat(f, sheet, "B2", export.TotalEx)
@@ -249,6 +264,8 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 		if quarter > 0 {
 			setCellValue(f, sheet, "A4", fmt.Sprintf("Filtered: Q%d only", quarter))
 		}
+
+		setColWidths(f, sheet, map[string]float64{"A": 20, "B": 20, "C": 15, "D": 10})
 	}
 
 	// Sheet 2: Companies (sorted, with Type column)
@@ -261,13 +278,14 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 		setCellValue(f, sheet, "C1", "Type")
 		setCellValue(f, sheet, "D1", "Revenue")
 		setCellValue(f, sheet, "E1", "AccountingCode")
+		setRowStyle(f, sheet, 1, headerStyle)
+		freezeRow(f, sheet)
 
 		// Sort companies by name
 		sort.Slice(export.Companies, func(i, j int) bool {
 			return export.Companies[i].Name < export.Companies[j].Name
 		})
 
-		var totalRevenue float64
 		pos := 1
 		for _, c := range export.Companies {
 			pos++
@@ -276,16 +294,19 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 			setCellValue(f, sheet, fmt.Sprintf("C%d", pos), c.TaxCategory)
 			setCellFloat(f, sheet, fmt.Sprintf("D%d", pos), c.TotalRevenue)
 			setCellValue(f, sheet, fmt.Sprintf("E%d", pos), c.AccountingCode)
-			totalRevenue += c.TotalRevenue
 		}
 
-		// Totals row
+		// Totals row with SUM formula
 		pos++
 		setCellValue(f, sheet, fmt.Sprintf("A%d", pos), "TOTAL")
-		setCellFloat(f, sheet, fmt.Sprintf("D%d", pos), totalRevenue)
+		setCellFormula(f, sheet, fmt.Sprintf("D%d", pos), fmt.Sprintf("SUM(D2:D%d)", pos-1))
+		setRowStyle(f, sheet, pos, totalStyle)
+		setColStyle(f, sheet, "D", moneyStyle)
+
+		setColWidths(f, sheet, map[string]float64{"A": 30, "B": 20, "C": 10, "D": 15, "E": 15})
 	}
 
-	// Sheet 3: Invoices (sorted by date, with Status and Type)
+	// Sheet 3: Invoices (sorted by date, with Status, Type, and Paydate)
 	{
 		sheet := "Invoices"
 		newSheet(f, sheet)
@@ -299,13 +320,14 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 		setCellValue(f, sheet, "G1", "Ex")
 		setCellValue(f, sheet, "H1", "Tax")
 		setCellValue(f, sheet, "I1", "Total")
-		setCellValue(f, sheet, "J1", "AccountingCode")
+		setCellValue(f, sheet, "J1", "AcctCode")
+		setCellValue(f, sheet, "K1", "PayDate")
+		setRowStyle(f, sheet, 1, headerStyle)
+		freezeRow(f, sheet)
 
-		var totalEx, totalTax, totalInc float64
 		pos := 1
 		for _, inv := range export.Invoices {
 			pos++
-			// Extract accounting ID from invoice ID (e.g., "2024Q1-0152" -> "20240152")
 			acctID := fmt.Sprintf("%d%s", year, extractInvoiceNum(inv.InvoiceID))
 
 			setCellValue(f, sheet, fmt.Sprintf("A%d", pos), inv.Issuedate)
@@ -318,18 +340,24 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 			setCellFloat(f, sheet, fmt.Sprintf("H%d", pos), inv.TotalTax)
 			setCellFloat(f, sheet, fmt.Sprintf("I%d", pos), inv.TotalInc)
 			setCellValue(f, sheet, fmt.Sprintf("J%d", pos), inv.AccountingCode)
-
-			totalEx += inv.TotalEx
-			totalTax += inv.TotalTax
-			totalInc += inv.TotalInc
+			setCellValue(f, sheet, fmt.Sprintf("K%d", pos), inv.Paydate)
 		}
 
-		// Totals row
+		// Totals row with SUM formulas
 		pos++
 		setCellValue(f, sheet, fmt.Sprintf("A%d", pos), "TOTAL")
-		setCellFloat(f, sheet, fmt.Sprintf("G%d", pos), totalEx)
-		setCellFloat(f, sheet, fmt.Sprintf("H%d", pos), totalTax)
-		setCellFloat(f, sheet, fmt.Sprintf("I%d", pos), totalInc)
+		setCellFormula(f, sheet, fmt.Sprintf("G%d", pos), fmt.Sprintf("SUM(G2:G%d)", pos-1))
+		setCellFormula(f, sheet, fmt.Sprintf("H%d", pos), fmt.Sprintf("SUM(H2:H%d)", pos-1))
+		setCellFormula(f, sheet, fmt.Sprintf("I%d", pos), fmt.Sprintf("SUM(I2:I%d)", pos-1))
+		setRowStyle(f, sheet, pos, totalStyle)
+
+		for _, col := range []string{"G", "H", "I"} {
+			setColStyle(f, sheet, col, moneyStyle)
+		}
+		setColWidths(f, sheet, map[string]float64{
+			"A": 12, "B": 15, "C": 12, "D": 25, "E": 8,
+			"F": 8, "G": 12, "H": 12, "I": 12, "J": 10, "K": 12,
+		})
 	}
 
 	// Sheet 4: EU Companies (ICP report - only EU0)
@@ -340,8 +368,9 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 		setCellValue(f, sheet, "A1", "Company")
 		setCellValue(f, sheet, "B1", "VAT Number")
 		setCellValue(f, sheet, "C1", "Revenue")
+		setRowStyle(f, sheet, 1, headerStyle)
+		freezeRow(f, sheet)
 
-		var totalEU float64
 		pos := 1
 		for _, c := range export.Companies {
 			if c.TaxCategory != "EU0" {
@@ -351,15 +380,18 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 			setCellValue(f, sheet, fmt.Sprintf("A%d", pos), c.Name)
 			setCellValue(f, sheet, fmt.Sprintf("B%d", pos), c.VAT)
 			setCellFloat(f, sheet, fmt.Sprintf("C%d", pos), c.TotalRevenue)
-			totalEU += c.TotalRevenue
 		}
 
-		// Totals row
+		// Totals row with SUM formula
 		if pos > 1 {
 			pos++
 			setCellValue(f, sheet, fmt.Sprintf("A%d", pos), "TOTAL")
-			setCellFloat(f, sheet, fmt.Sprintf("C%d", pos), totalEU)
+			setCellFormula(f, sheet, fmt.Sprintf("C%d", pos), fmt.Sprintf("SUM(C2:C%d)", pos-1))
+			setRowStyle(f, sheet, pos, totalStyle)
 		}
+
+		setColStyle(f, sheet, "C", moneyStyle)
+		setColWidths(f, sheet, map[string]float64{"A": 30, "B": 20, "C": 15})
 	}
 
 	// Sheet 5: AccountingSales (for import into accounting software)
@@ -380,15 +412,14 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 		setCellValue(f, sheet, "K1", "Relatiecode")
 		setCellValue(f, sheet, "L1", "Factuurnummer")
 		setCellValue(f, sheet, "M1", "Kostenplaatsnummer")
+		setRowStyle(f, sheet, 1, headerStyle)
+		freezeRow(f, sheet)
 
 		pos := 1
 		for _, inv := range export.Invoices {
 			acctID := fmt.Sprintf("%d%s", year, extractInvoiceNum(inv.InvoiceID))
 
 			// Determine ledgers based on tax category
-			// 1300 = Debtors (debet = total incl)
-			// 1671 = VAT payable (credit = tax) - only for NL invoices
-			// 8000 = Revenue (credit = ex)
 			ledgers := []string{"1300", "8000"}
 			if inv.TaxCategory == "NL" && inv.TotalTax > 0 {
 				ledgers = []string{"1300", "1671", "8000"}
@@ -402,14 +433,12 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 				setCellValue(f, sheet, fmt.Sprintf("C%d", pos), inv.Issuedate)
 				setCellValue(f, sheet, fmt.Sprintf("D%d", pos), ledger)
 
-				// Debet: only for ledger 1300 (receivables)
 				if ledger == "1300" {
 					setCellFloat(f, sheet, fmt.Sprintf("E%d", pos), inv.TotalInc)
 				} else {
 					setCellValue(f, sheet, fmt.Sprintf("E%d", pos), "")
 				}
 
-				// Credit: tax for 1671, ex for 8000
 				switch ledger {
 				case "1671":
 					setCellFloat(f, sheet, fmt.Sprintf("F%d", pos), inv.TotalTax)
@@ -424,18 +453,74 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 				setCellValue(f, sheet, fmt.Sprintf("I%d", pos), acctID)
 				setCellValue(f, sheet, fmt.Sprintf("J%d", pos), inv.CustomerName)
 
-				// Relation code from debtor
 				acctCode := inv.AccountingCode
 				if acctCode == "" {
 					acctCode = "0"
 					log.Printf("WARN: Missing AccountingCode for customer %s", inv.CustomerName)
 				}
 				setCellValue(f, sheet, fmt.Sprintf("K%d", pos), acctCode)
-
 				setCellValue(f, sheet, fmt.Sprintf("L%d", pos), inv.InvoiceID)
 				setCellValue(f, sheet, fmt.Sprintf("M%d", pos), "")
 			}
 		}
+
+		for _, col := range []string{"E", "F"} {
+			setColStyle(f, sheet, col, moneyStyle)
+		}
+	}
+
+	// Sheet 6: AccountingPurchases (Voorbelasting / purchase invoices)
+	{
+		sheet := "AccountingPurchases"
+		newSheet(f, sheet)
+
+		setCellValue(f, sheet, "A1", "Date")
+		setCellValue(f, sheet, "B1", "InvoiceID")
+		setCellValue(f, sheet, "C1", "Supplier")
+		setCellValue(f, sheet, "D1", "VAT Number")
+		setCellValue(f, sheet, "E1", "Status")
+		setCellValue(f, sheet, "F1", "Ex")
+		setCellValue(f, sheet, "G1", "Tax")
+		setCellValue(f, sheet, "H1", "Total")
+		setCellValue(f, sheet, "I1", "PayDate")
+		setCellValue(f, sheet, "J1", "PaymentRef")
+		setCellValue(f, sheet, "K1", "IBAN")
+		setRowStyle(f, sheet, 1, headerStyle)
+		freezeRow(f, sheet)
+
+		pos := 1
+		for _, p := range export.Purchases {
+			pos++
+			setCellValue(f, sheet, fmt.Sprintf("A%d", pos), p.Issuedate)
+			setCellValue(f, sheet, fmt.Sprintf("B%d", pos), p.InvoiceID)
+			setCellValue(f, sheet, fmt.Sprintf("C%d", pos), p.SupplierName)
+			setCellValue(f, sheet, fmt.Sprintf("D%d", pos), p.SupplierVAT)
+			setCellValue(f, sheet, fmt.Sprintf("E%d", pos), p.Status)
+			setCellFloat(f, sheet, fmt.Sprintf("F%d", pos), p.TotalEx)
+			setCellFloat(f, sheet, fmt.Sprintf("G%d", pos), p.TotalTax)
+			setCellFloat(f, sheet, fmt.Sprintf("H%d", pos), p.TotalInc)
+			setCellValue(f, sheet, fmt.Sprintf("I%d", pos), p.Paydate)
+			setCellValue(f, sheet, fmt.Sprintf("J%d", pos), p.PaymentRef)
+			setCellValue(f, sheet, fmt.Sprintf("K%d", pos), p.IBAN)
+		}
+
+		// Totals row with SUM formulas
+		if pos > 1 {
+			pos++
+			setCellValue(f, sheet, fmt.Sprintf("A%d", pos), "TOTAL")
+			setCellFormula(f, sheet, fmt.Sprintf("F%d", pos), fmt.Sprintf("SUM(F2:F%d)", pos-1))
+			setCellFormula(f, sheet, fmt.Sprintf("G%d", pos), fmt.Sprintf("SUM(G2:G%d)", pos-1))
+			setCellFormula(f, sheet, fmt.Sprintf("H%d", pos), fmt.Sprintf("SUM(H2:H%d)", pos-1))
+			setRowStyle(f, sheet, pos, totalStyle)
+		}
+
+		for _, col := range []string{"F", "G", "H"} {
+			setColStyle(f, sheet, col, moneyStyle)
+		}
+		setColWidths(f, sheet, map[string]float64{
+			"A": 12, "B": 20, "C": 25, "D": 18, "E": 8,
+			"F": 12, "G": 12, "H": 12, "I": 12, "J": 20, "K": 25,
+		})
 	}
 
 	// Generate filename
@@ -449,6 +534,50 @@ func writeAccountingExcel(w http.ResponseWriter, entity string, year, quarter in
 	w.Header().Set("Content-Disposition", "attachment; filename="+fname)
 	if _, e := f.WriteTo(w); e != nil {
 		httputil.LogErr("taxes.Summary excel.WriteTo", e)
+	}
+}
+
+// setCellFormula sets a cell formula
+func setCellFormula(f *excelize.File, sheet, cell, formula string) {
+	if err := f.SetCellFormula(sheet, cell, formula); err != nil {
+		log.Printf("taxes.Summary SetCellFormula %s:%s: %s", sheet, cell, err)
+	}
+}
+
+// setRowStyle applies a style to an entire row
+func setRowStyle(f *excelize.File, sheet string, row, styleID int) {
+	if err := f.SetRowStyle(sheet, row, row, styleID); err != nil {
+		log.Printf("taxes.Summary SetRowStyle %s:%d: %s", sheet, row, err)
+	}
+}
+
+// setColStyle applies a style to an entire column
+func setColStyle(f *excelize.File, sheet, col string, styleID int) {
+	if err := f.SetColStyle(sheet, col, styleID); err != nil {
+		log.Printf("taxes.Summary SetColStyle %s:%s: %s", sheet, col, err)
+	}
+}
+
+// setColWidths sets column widths from a map
+func setColWidths(f *excelize.File, sheet string, widths map[string]float64) {
+	for col, width := range widths {
+		if err := f.SetColWidth(sheet, col, col, width); err != nil {
+			log.Printf("taxes.Summary SetColWidth %s:%s: %s", sheet, col, err)
+		}
+	}
+}
+
+// freezeRow freezes the first row (header) for scrolling
+func freezeRow(f *excelize.File, sheet string) {
+	if err := f.SetPanes(sheet, &excelize.Panes{
+		Freeze:      true,
+		Split:       false,
+		XSplit:      0,
+		YSplit:      1,
+		TopLeftCell: "A2",
+		ActivePane:  "bottomLeft",
+	}); err != nil {
+		log.Printf("taxes.Summary SetPanes %s: %s", sheet, err)
 	}
 }
 

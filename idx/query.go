@@ -451,6 +451,7 @@ func GetAccountingExport(entity string, year int, quarter int) (*model.Accountin
 
 	export := &model.AccountingExport{
 		Invoices:  []model.AccountingInvoice{},
+		Purchases: []model.AccountingPurchase{},
 		Companies: []model.AccountingCompany{},
 	}
 
@@ -485,10 +486,10 @@ func GetAccountingExport(entity string, year int, quarter int) (*model.Accountin
 		quarterFilter = " AND quarter = ?"
 	}
 
-	// Get all invoices sorted by issuedate
+	// Get all invoices sorted by issuedate (include paydate for bank reconciliation)
 	query := `
 		SELECT invoiceid, issuedate, customer_name, customer_vat, tax_category, status, quarter,
-		       CAST(total_ex AS REAL), CAST(total_tax AS REAL), CAST(total_inc AS REAL)
+		       CAST(total_ex AS REAL), CAST(total_tax AS REAL), CAST(total_inc AS REAL), paydate
 		FROM invoices
 		WHERE entity = ? AND year = ? AND status IN ('PAID', 'UNPAID')` + quarterFilter + `
 		ORDER BY issuedate, invoiceid`
@@ -513,16 +514,19 @@ func GetAccountingExport(entity string, year int, quarter int) (*model.Accountin
 
 	for rows.Next() {
 		var inv model.AccountingInvoice
-		var customerVat sql.NullString
+		var customerVat, paydate sql.NullString
 
 		if err := rows.Scan(&inv.InvoiceID, &inv.Issuedate, &inv.CustomerName, &customerVat,
 			&inv.TaxCategory, &inv.Status, &inv.Quarter,
-			&inv.TotalEx, &inv.TotalTax, &inv.TotalInc); err != nil {
+			&inv.TotalEx, &inv.TotalTax, &inv.TotalInc, &paydate); err != nil {
 			return nil, err
 		}
 
 		if customerVat.Valid {
 			inv.CustomerVAT = customerVat.String
+		}
+		if paydate.Valid {
+			inv.Paydate = paydate.String
 		}
 
 		// Look up accounting code
@@ -555,6 +559,60 @@ func GetAccountingExport(entity string, year int, quarter int) (*model.Accountin
 	// Convert company map to slice (sorted by name)
 	for _, c := range companyTotals {
 		export.Companies = append(export.Companies, *c)
+	}
+
+	// Get purchase invoices
+	purchaseQuery := `
+		SELECT invoiceid, issuedate, supplier_name, supplier_vat, status, quarter,
+		       CAST(total_ex AS REAL), CAST(total_tax AS REAL), CAST(total_inc AS REAL),
+		       paydate, payment_ref, iban
+		FROM purchase_invoices
+		WHERE entity = ? AND year = ? AND status IN ('PAID', 'UNPAID')` + quarterFilter + `
+		ORDER BY issuedate, invoiceid`
+
+	var purchaseRows *sql.Rows
+	if quarter > 0 {
+		purchaseRows, err = DB.QueryContext(ctx(), purchaseQuery, entity, year, quarter)
+	} else {
+		purchaseRows, err = DB.QueryContext(ctx(), purchaseQuery, entity, year)
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := purchaseRows.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
+
+	for purchaseRows.Next() {
+		var p model.AccountingPurchase
+		var supplierVat, paydate, paymentRef, iban sql.NullString
+
+		if err := purchaseRows.Scan(&p.InvoiceID, &p.Issuedate, &p.SupplierName, &supplierVat,
+			&p.Status, &p.Quarter, &p.TotalEx, &p.TotalTax, &p.TotalInc,
+			&paydate, &paymentRef, &iban); err != nil {
+			return nil, err
+		}
+
+		if supplierVat.Valid {
+			p.SupplierVAT = supplierVat.String
+		}
+		if paydate.Valid {
+			p.Paydate = paydate.String
+		}
+		if paymentRef.Valid {
+			p.PaymentRef = paymentRef.String
+		}
+		if iban.Valid {
+			p.IBAN = iban.String
+		}
+
+		export.Purchases = append(export.Purchases, p)
+	}
+
+	if err := purchaseRows.Err(); err != nil {
+		return nil, err
 	}
 
 	// Get total hours
