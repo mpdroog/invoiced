@@ -224,6 +224,7 @@ func main() {
 
 	router.GET("/api/v1/git/:entity/status", gitpkg.Status)
 	router.GET("/api/v1/git/:entity/history", gitpkg.History)
+	router.GET("/api/v1/git/:entity/diff/:hash", gitpkg.Diff)
 	router.POST("/api/v1/git/:entity/push", gitpkg.Push)
 	router.POST("/api/v1/git/:entity/pull", gitpkg.Pull)
 	router.POST("/api/v1/git/:entity/discard", gitpkg.DiscardAll)

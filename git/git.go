@@ -12,6 +12,7 @@ import (
 	"github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/config"
 	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/object"
 	"github.com/go-git/go-git/v6/plumbing/transport"
 	githttp "github.com/go-git/go-git/v6/plumbing/transport/http"
 	"github.com/go-git/go-git/v6/plumbing/transport/ssh"
@@ -49,6 +50,23 @@ type HistoryResponse struct {
 type PullPushResponse struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+}
+
+// FileDiff contains diff information for a single file.
+type FileDiff struct {
+	Name      string `json:"name"`
+	Additions int    `json:"additions"`
+	Deletions int    `json:"deletions"`
+	Patch     string `json:"patch"`
+}
+
+// DiffResponse contains the diff for a specific commit.
+type DiffResponse struct {
+	Hash    string     `json:"hash"`
+	Message string     `json:"message"`
+	Author  string     `json:"author"`
+	Date    string     `json:"date"`
+	Files   []FileDiff `json:"files"`
 }
 
 // getAuth returns the appropriate auth method based on remote URL and config
@@ -467,5 +485,122 @@ func RebuildIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		Message: "Index rebuilt successfully",
 	}); err != nil {
 		log.Printf("git.RebuildIndex encode: %s", strconv.Quote(err.Error()))
+	}
+}
+
+// Diff returns the diff for a specific commit
+func Diff(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	hash := ps.ByName("hash")
+	if hash == "" {
+		http.Error(w, "Missing commit hash", http.StatusBadRequest)
+		return
+	}
+
+	// Get the commit
+	commitHash := plumbing.NewHash(hash)
+	commit, err := db.Repo.CommitObject(commitHash)
+	if err != nil {
+		log.Printf("git.Diff commit: %s", strconv.Quote(err.Error()))
+		http.Error(w, "Commit not found", http.StatusNotFound)
+		return
+	}
+
+	resp := DiffResponse{
+		Hash:    commit.Hash.String(),
+		Message: strings.TrimSpace(commit.Message),
+		Author:  commit.Author.Name,
+		Date:    commit.Author.When.Format("2006-01-02 15:04"),
+		Files:   []FileDiff{},
+	}
+
+	// Get parent commit for diff (handle initial commit with no parent)
+	var patch *object.Patch
+	if commit.NumParents() > 0 {
+		parent, err := commit.Parent(0)
+		if err != nil {
+			log.Printf("git.Diff parent: %s", strconv.Quote(err.Error()))
+			http.Error(w, "Failed to get parent commit", http.StatusInternalServerError)
+			return
+		}
+		patch, err = parent.Patch(commit)
+		if err != nil {
+			log.Printf("git.Diff patch: %s", strconv.Quote(err.Error()))
+			http.Error(w, "Failed to generate diff", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		// Initial commit - diff against empty tree
+		commitTree, err := commit.Tree()
+		if err != nil {
+			log.Printf("git.Diff tree: %s", strconv.Quote(err.Error()))
+			http.Error(w, "Failed to get commit tree", http.StatusInternalServerError)
+			return
+		}
+		patch, err = (&object.Tree{}).Patch(commitTree)
+		if err != nil {
+			log.Printf("git.Diff initial patch: %s", strconv.Quote(err.Error()))
+			http.Error(w, "Failed to generate diff", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Extract file patches
+	for _, filePatch := range patch.FilePatches() {
+		from, to := filePatch.Files()
+
+		// Determine file name
+		name := ""
+		if to != nil {
+			name = to.Path()
+		} else if from != nil {
+			name = from.Path() + " (deleted)"
+		}
+
+		// Check if binary
+		if filePatch.IsBinary() {
+			resp.Files = append(resp.Files, FileDiff{
+				Name:      name,
+				Additions: 0,
+				Deletions: 0,
+				Patch:     "Binary file changed",
+			})
+			continue
+		}
+
+		// Count additions and deletions, build patch string
+		var patchBuilder strings.Builder
+		additions := 0
+		deletions := 0
+
+		for _, chunk := range filePatch.Chunks() {
+			content := chunk.Content()
+			switch chunk.Type() {
+			case 1: // Add
+				additions += strings.Count(content, "\n")
+				for _, line := range strings.Split(strings.TrimSuffix(content, "\n"), "\n") {
+					patchBuilder.WriteString("+" + line + "\n")
+				}
+			case 2: // Delete
+				deletions += strings.Count(content, "\n")
+				for _, line := range strings.Split(strings.TrimSuffix(content, "\n"), "\n") {
+					patchBuilder.WriteString("-" + line + "\n")
+				}
+			default: // Context
+				for _, line := range strings.Split(strings.TrimSuffix(content, "\n"), "\n") {
+					patchBuilder.WriteString(" " + line + "\n")
+				}
+			}
+		}
+
+		resp.Files = append(resp.Files, FileDiff{
+			Name:      name,
+			Additions: additions,
+			Deletions: deletions,
+			Patch:     patchBuilder.String(),
+		})
+	}
+
+	if err := writer.Encode(w, r, resp); err != nil {
+		log.Printf("git.Diff encode: %s", strconv.Quote(err.Error()))
 	}
 }

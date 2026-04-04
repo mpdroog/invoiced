@@ -1,7 +1,8 @@
 import * as React from "react";
 import Axios from "axios";
 import { ActionButton } from "../../shared/ActionButton";
-import type { StatusResponse, HistoryResponse, PullPushResponse } from "../../types/git";
+import type { StatusResponse, HistoryResponse, PullPushResponse, DiffResponse } from "../../types/git";
+import "./git.css";
 
 interface GitState {
   loading: boolean;
@@ -9,6 +10,8 @@ interface GitState {
   actionResult: string | null;
   status: StatusResponse | null;
   history: HistoryResponse | null;
+  diff: DiffResponse | null;
+  diffLoading: boolean;
 }
 
 interface GitPageProps {
@@ -25,6 +28,8 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
       actionResult: null,
       status: null,
       history: null,
+      diff: null,
+      diffLoading: false,
     };
   }
 
@@ -42,6 +47,16 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
   private async loadHistory(page: number): Promise<void> {
     const res = await Axios.get<HistoryResponse>("/api/v1/git/" + this.props.entity + "/history", { params: { page } });
     this.setState({ history: res.data });
+  }
+
+  private async loadDiff(hash: string): Promise<void> {
+    this.setState({ diffLoading: true });
+    const res = await Axios.get<DiffResponse>("/api/v1/git/" + this.props.entity + "/diff/" + hash);
+    this.setState({ diff: res.data, diffLoading: false });
+  }
+
+  private closeDiff(): void {
+    this.setState({ diff: null });
   }
 
   private async doPush(): Promise<void> {
@@ -92,6 +107,93 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
     }
   }
 
+  private renderDiffLine(line: string, idx: number): React.JSX.Element {
+    let colorClass = "text-muted";
+    if (line.startsWith("+")) {
+      colorClass = "text-success";
+    } else if (line.startsWith("-")) {
+      colorClass = "text-danger";
+    }
+    return (
+      <div key={idx} className={`diff-line ${colorClass}`}>
+        {line}
+      </div>
+    );
+  }
+
+  private renderDiffModal(): React.JSX.Element | null {
+    const { diff, diffLoading } = this.state;
+
+    if (!diff && !diffLoading) {
+      return null;
+    }
+
+    return (
+      <div className="modal show d-block diff-modal-backdrop" onClick={() => this.closeDiff()}>
+        <div className="modal-dialog modal-xl modal-dialog-scrollable" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">
+                {diffLoading ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i> Loading diff...
+                  </>
+                ) : (
+                  <>
+                    <code>{diff?.hash.slice(0, 7)}</code> {diff?.message}
+                  </>
+                )}
+              </h5>
+              <button type="button" className="btn-close" onClick={() => this.closeDiff()}></button>
+            </div>
+            <div className="modal-body">
+              {diffLoading ? (
+                <p className="text-center">
+                  <i className="fas fa-spinner fa-spin"></i>
+                </p>
+              ) : diff ? (
+                <>
+                  <p className="text-muted mb-3">
+                    <strong>Author:</strong> {diff.author} | <strong>Date:</strong> {diff.date}
+                  </p>
+                  {diff.files.length === 0 ? (
+                    <p className="text-muted">No changes in this commit.</p>
+                  ) : (
+                    diff.files.map((file, i) => (
+                      <div key={i} className="card mb-3">
+                        <div className="card-header d-flex justify-content-between align-items-center py-2">
+                          <strong>{file.name}</strong>
+                          <span>
+                            <span className="text-success">+{file.additions}</span>{" "}
+                            <span className="text-danger">-{file.deletions}</span>
+                          </span>
+                        </div>
+                        <div className="card-body p-2 diff-file-content">
+                          {file.patch === "Binary file changed" ? (
+                            <p className="text-muted mb-0">
+                              <em>Binary file changed</em>
+                            </p>
+                          ) : (
+                            file.patch.split("\n").map((line, idx) => this.renderDiffLine(line, idx))
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </>
+              ) : null}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={() => this.closeDiff()}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   render(): React.JSX.Element {
     let content = null;
 
@@ -123,7 +225,16 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
               {status.commits.map((c, i) => (
                 <tr key={i}>
                   <td>
-                    <code>{c.hash.slice(0, 7)}</code>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        void this.loadDiff(c.hash);
+                      }}
+                      title="View diff"
+                    >
+                      <code>{c.hash.slice(0, 7)}</code>
+                    </a>
                   </td>
                   <td>{c.message}</td>
                   <td>{c.author}</td>
@@ -206,7 +317,16 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
                 {hist.commits.map((c, i) => (
                   <tr key={i}>
                     <td>
-                      <code>{c.hash.slice(0, 7)}</code>
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          void this.loadDiff(c.hash);
+                        }}
+                        title="View diff"
+                      >
+                        <code>{c.hash.slice(0, 7)}</code>
+                      </a>
                     </td>
                     <td>{c.message}</td>
                     <td>{c.author}</td>
@@ -251,6 +371,7 @@ export default class GitPage extends React.Component<GitPageProps, GitState> {
           <div className="card-body">{content}</div>
         </div>
         {historyPanel}
+        {this.renderDiffModal()}
       </div>
     );
   }

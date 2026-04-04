@@ -1,0 +1,28 @@
+.diff-modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.diff-line {
+  font-family: monospace;
+  font-size: 12px;
+  white-space: pre;
+}
+
+.diff-file-content {
+  max-height: 400px;
+  overflow: auto;
+  background-color: var(--bs-tertiary-bg);
+}
+
+/* Dark mode adjustments */
+[data-bs-theme="dark"] .diff-line.text-success {
+  color: #75b798 !important;
+}
+
+[data-bs-theme="dark"] .diff-line.text-danger {
+  color: #ea868f !important;
+}
+
+[data-bs-theme="dark"] .diff-line.text-muted {
+  color: var(--bs-secondary-color) !important;
+}

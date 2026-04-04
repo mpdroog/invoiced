@@ -38,3 +38,22 @@ export interface PullPushResponse {
   success: boolean;
   message: string;
 }
+/**
+ * FileDiff contains diff information for a single file.
+ */
+export interface FileDiff {
+  name: string;
+  additions: number /* int */;
+  deletions: number /* int */;
+  patch: string;
+}
+/**
+ * DiffResponse contains the diff for a specific commit.
+ */
+export interface DiffResponse {
+  hash: string;
+  message: string;
+  author: string;
+  date: string;
+  files: FileDiff[];
+}
