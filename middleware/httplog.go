@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"errors"
+	"fmt"
 	"html"
 	"log"
 	"net/http"
@@ -42,11 +44,12 @@ func isStateChangingMethod(method string) bool {
 	return method == "POST" || method == "PUT" || method == "DELETE" || method == "PATCH"
 }
 
-// validateReferer checks Referer header for state-changing requests (CSRF protection)
-func validateReferer(r *http.Request) bool {
+// validateReferer checks Referer header for state-changing requests (CSRF protection).
+// Returns nil if valid, or an error explaining the failure.
+func validateReferer(r *http.Request) error {
 	// Only check state-changing methods
 	if !isStateChangingMethod(r.Method) {
-		return true
+		return nil
 	}
 
 	referer := r.Header.Get("Referer")
@@ -54,7 +57,7 @@ func validateReferer(r *http.Request) bool {
 
 	// At least one of Referer or Origin should be present for state-changing requests
 	if referer == "" && origin == "" {
-		return false
+		return errors.New("missing both Origin and Referer headers")
 	}
 
 	// Get expected host from request
@@ -70,20 +73,26 @@ func validateReferer(r *http.Request) bool {
 	// Check Origin header if present
 	if origin != "" {
 		originURL, err := url.Parse(origin)
-		if err != nil || originURL.Host != expectedHost {
-			return false
+		if err != nil {
+			return fmt.Errorf("invalid Origin header %q: %w", origin, err)
+		}
+		if originURL.Host != expectedHost {
+			return fmt.Errorf("origin host mismatch: got %q, expected %q", originURL.Host, expectedHost)
 		}
 	}
 
 	// Check Referer header if present
 	if referer != "" {
 		refererURL, err := url.Parse(referer)
-		if err != nil || refererURL.Host != expectedHost {
-			return false
+		if err != nil {
+			return fmt.Errorf("invalid Referer header %q: %w", referer, err)
+		}
+		if refererURL.Host != expectedHost {
+			return fmt.Errorf("referer host mismatch: got %q, expected %q", refererURL.Host, expectedHost)
 		}
 	}
 
-	return true
+	return nil
 }
 
 // HTTPAuth is middleware that validates session or API key authentication.
@@ -157,8 +166,8 @@ func HTTPAuth(next http.Handler) http.Handler {
 
 		if requireAuth {
 			// Validate Referer/Origin for state-changing requests (CSRF protection)
-			if !validateReferer(r) {
-				log.Printf("HTTPAuth CSRF check failed for %s %s", strconv.Quote(r.Method), strconv.Quote(r.URL.Path))
+			if err := validateReferer(r); err != nil {
+				log.Printf("HTTPAuth CSRF check failed for %s %s: %s", strconv.Quote(r.Method), strconv.Quote(r.URL.Path), err)
 				w.WriteHeader(http.StatusForbidden)
 				if _, err := w.Write([]byte("CSRF validation failed")); err != nil {
 					log.Printf("HTTPAuth write: %s", err)
