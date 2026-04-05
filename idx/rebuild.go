@@ -114,5 +114,12 @@ func Rebuild(dbPath string) error {
 	}
 
 	log.Printf("idx: rebuilt index with %d invoices, %d hours, %d purchases, %d debtor files, %d project files", invoiceCount, hourCount, purchaseCount, debtorCount, projectCount)
+
+	// Update stored HEAD to prevent re-triggering watcher
+	if err := updateLastHead(); err != nil {
+		log.Printf("idx: warning: failed to update HEAD tracking: %v", err)
+		// Non-fatal - watcher will handle it on next check
+	}
+
 	return nil
 }

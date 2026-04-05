@@ -56,6 +56,11 @@ func IsEmpty() bool {
 
 func createTables() error {
 	schema := `
+	CREATE TABLE IF NOT EXISTS metadata (
+		key   TEXT PRIMARY KEY,
+		value TEXT
+	);
+
 	CREATE TABLE IF NOT EXISTS invoices (
 		id            TEXT PRIMARY KEY,  -- conceptid (filename without .toml)
 		entity        TEXT NOT NULL,

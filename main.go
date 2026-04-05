@@ -146,6 +146,12 @@ func main() {
 		}
 	}
 
+	// Start background watcher for external git changes (e.g., manual git pull)
+	if err := idx.StartWatcher(config.DbPath); err != nil {
+		log.Printf("Warning: failed to start HEAD watcher: %v", err)
+		// Non-fatal - app still works, just won't auto-detect external git changes
+	}
+
 	if e := middleware.Init(); e != nil {
 		panic(e)
 	}
