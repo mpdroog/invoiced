@@ -58,7 +58,11 @@ func validateReferer(r *http.Request) bool {
 	}
 
 	// Get expected host from request
-	expectedHost := r.Host
+	// Check X-Forwarded-Host first (set by reverse proxies)
+	expectedHost := r.Header.Get("X-Forwarded-Host")
+	if expectedHost == "" {
+		expectedHost = r.Host
+	}
 	if expectedHost == "" {
 		expectedHost = r.URL.Host
 	}
