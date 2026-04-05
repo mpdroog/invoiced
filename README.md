@@ -33,6 +33,14 @@ make lint                          # Lint Go code (requires golangci-lint)
 make check                         # Run all checks (lint + test + build)
 ```
 
+### Cross-compile for Linux
+
+```bash
+make build-linux                   # Build for Linux (amd64)
+make build-linux-arm64             # Build for Linux (arm64)
+make build-all                     # Build for all platforms
+```
+
 ### Setup
 
 ```bash

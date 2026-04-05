@@ -1,8 +1,19 @@
-.PHONY: build test lint lint-fix tygo frontend install-hooks clean
+.PHONY: build build-linux build-linux-arm64 build-all test lint lint-fix tygo frontend install-hooks clean
 
 # Build the invoiced binary
 build:
 	go build -o invoiced .
+
+# Cross-compile for Linux (amd64)
+build-linux:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o invoiced-linux-amd64 .
+
+# Cross-compile for Linux (arm64)
+build-linux-arm64:
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o invoiced-linux-arm64 .
+
+# Build for all platforms
+build-all: build build-linux build-linux-arm64
 
 # Run all tests
 test:
@@ -32,7 +43,7 @@ install-hooks:
 
 # Clean build artifacts
 clean:
-	rm -f invoiced
+	rm -f invoiced invoiced-linux-amd64 invoiced-linux-arm64
 	rm -f contrib/desktop/desktop
 	rm -f contrib/gen/gen
 	rm -f contrib/reindex/reindex
