@@ -160,7 +160,7 @@ func Login(email, pass string) (string, error) {
 	return "", ErrUserNotFound
 }
 
-// Companies returns the companies a user has access to.
+// Companies returns the companies a user has access to (session-based).
 func Companies(sessCipher string) (map[string]Entity, error) {
 	var sess Sess
 	if e := decryptSession(sessCipher, &sess); e != nil {
@@ -172,9 +172,14 @@ func Companies(sessCipher string) (map[string]Entity, error) {
 		return nil, ErrSessionExpired
 	}
 
+	return CompaniesByEmail(sess.Email), nil
+}
+
+// CompaniesByEmail returns the companies a user has access to by email.
+func CompaniesByEmail(email string) map[string]Entity {
 	out := make(map[string]Entity)
 	for _, user := range entities.User {
-		if user.Email == sess.Email {
+		if user.Email == email {
 			// Found user
 			for _, entityName := range user.Company {
 				entity := entities.Company[entityName]
@@ -183,10 +188,10 @@ func Companies(sessCipher string) (map[string]Entity, error) {
 				}
 				out[entityName] = entity
 			}
-			return out, nil
+			return out
 		}
 	}
-	return nil, nil
+	return out
 }
 
 // UserByEmail finds a user by their email address.

@@ -21,22 +21,15 @@ type DetailRes struct {
 
 // List returns companies the user can administrate.
 func List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	c, e := r.Cookie("sess")
-	if e != nil {
-		panic("Should not get here?")
-	}
-	res, e := middleware.Companies(c.Value)
-	if e != nil {
-		httputil.InternalError(w, "entities.List", e)
-		return
-	}
+	email := r.Header.Get("X-User-Email")
+	res := middleware.CompaniesByEmail(email)
 
 	// Collect years we have
 	for entity, v := range res {
 		base := db.Path + entity
 		years := []string{}
 
-		e = db.View(func(t *db.Txn) error {
+		e := db.View(func(t *db.Txn) error {
 			files, e := t.RawList(base)
 			if e != nil {
 				return e
