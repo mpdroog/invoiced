@@ -36,6 +36,12 @@ func YearQuarter(now time.Time) int {
 	panic(fmt.Sprintf("Invalid month: %d", now.Month()))
 }
 
+// QuarterEnd returns the last day of quarter q (1-4) in year.
+func QuarterEnd(year, q int) time.Time {
+	nextQuarter := time.Date(year, time.Month(3*q+1), 1, 0, 0, 0, 0, time.UTC)
+	return nextQuarter.AddDate(0, 0, -1)
+}
+
 // CreateInvoiceID creates an invoice ID with YYYY-QN-XXXX pattern.
 // For example, 2016Q1-0001 is Invoice 1 in the first Quarter of 2016.
 func CreateInvoiceID(now time.Time, idx uint64) string {

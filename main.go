@@ -241,6 +241,7 @@ func main() {
 	// Taxes
 	reg.GET("/api/v1/summary/:entity/:year", "Taxes", "Get tax summary (Excel export with ?excel=1)", taxes.Summary)
 	reg.POST("/api/v1/taxes/:entity/:year/:quarter", "Taxes", "Get quarterly tax calculation", taxes.Tax)
+	reg.GET("/api/v1/taxes/:entity/:year/status", "Taxes", "Get VAT-return status per quarter", taxes.Status)
 
 	// Git
 	reg.GET("/api/v1/git/:entity/status", "Git", "Get git status", gitpkg.Status)

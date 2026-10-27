@@ -34,3 +34,17 @@ func TestCreateInvoiceID(t *testing.T) {
 		t.Errorf("Invoicepattern mismatch: %s expected, received=%s", expect, res)
 	}
 }
+
+func TestQuarterEnd(t *testing.T) {
+	tests := map[int]string{
+		1: "2024-03-31",
+		2: "2024-06-30",
+		3: "2024-09-30",
+		4: "2024-12-31",
+	}
+	for q, expect := range tests {
+		if res := QuarterEnd(2024, q).Format("2006-01-02"); res != expect {
+			t.Errorf("Q%d expected %s, received=%s", q, expect, res)
+		}
+	}
+}

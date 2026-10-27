@@ -1,7 +1,8 @@
 import * as React from "react";
 import Axios from "axios";
 import { ActionButton } from "../../shared/ActionButton";
-import type { TaxSummary } from "../../types/model";
+import type { TaxSummary, QuarterStatus } from "../../types/model";
+import { loadTaxStatus, TaxStatusTable } from "./status";
 
 interface TaxesPageProps {
   entity: string;
@@ -11,16 +12,23 @@ interface TaxesPageProps {
 interface TaxesPageState {
   quarter: string;
   data: TaxSummary | null;
+  status: QuarterStatus[] | null;
 }
 
 export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPageState> {
   constructor(props: TaxesPageProps) {
     super(props);
-    this.state = { quarter: "Q1", data: null };
+    this.state = { quarter: "Q1", data: null, status: null };
   }
 
   componentDidMount(): void {
-    //this.ajax();
+    loadTaxStatus(this.props.entity, this.props.year)
+      .then((status) => {
+        this.setState({ status: status });
+      })
+      .catch((err) => {
+        handleErr(err);
+      });
   }
 
   private async ajax(): Promise<void> {
@@ -155,7 +163,7 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
           </div>
           <div className="card-body">
             <div className="row">
-              <div className="col-md-8">
+              <div className="col-md-6">
                 <div className="row g-2 align-items-center">
                   <div className="col-auto">
                     <label className="col-form-label">Quarter</label>
@@ -175,51 +183,13 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
                   </div>
                 </div>
               </div>
-              <div className="col-md-4">
+              <div className="col-md-6">
                 <div className="card">
                   <div className="card-header">
-                    <i className="fas fa-calendar"></i> Quarter Reference
+                    <i className="fas fa-calendar"></i> VAT returns {this.props.year}
                   </div>
                   <div className="card-body">
-                    <table className="table table-bordered table-striped">
-                      <thead>
-                        <tr>
-                          <th>Quarter</th>
-                          <th>Months</th>
-                          <th>Deadline</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr className={this.state.quarter === "Q1" ? "active" : ""}>
-                          <td>
-                            <strong>Q1</strong>
-                          </td>
-                          <td>Jan - Mar</td>
-                          <td>30 April</td>
-                        </tr>
-                        <tr className={this.state.quarter === "Q2" ? "active" : ""}>
-                          <td>
-                            <strong>Q2</strong>
-                          </td>
-                          <td>Apr - Jun</td>
-                          <td>31 July</td>
-                        </tr>
-                        <tr className={this.state.quarter === "Q3" ? "active" : ""}>
-                          <td>
-                            <strong>Q3</strong>
-                          </td>
-                          <td>Jul - Sep</td>
-                          <td>31 October</td>
-                        </tr>
-                        <tr className={this.state.quarter === "Q4" ? "active" : ""}>
-                          <td>
-                            <strong>Q4</strong>
-                          </td>
-                          <td>Oct - Dec</td>
-                          <td>31 January</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                    {this.state.status ? <TaxStatusTable data={this.state.status} /> : "Loading..."}
                   </div>
                 </div>
               </div>

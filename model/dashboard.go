@@ -15,6 +15,18 @@ type TaxSummary struct {
 	PreTaxForeign []string // Purchase invoices in PreTax not in EUR (summed as-is, check manually)
 }
 
+// QuarterStatus contains the VAT-return (btw-aangifte) status of a quarter
+type QuarterStatus struct {
+	Quarter   string
+	Active    bool   // Quarter has data (folder exists), else no return expected
+	PeriodEnd string // Last day of quarter (YYYY-MM-DD)
+	Deadline  string // Last day to file+pay (YYYY-MM-DD)
+	DaysLeft  int    // Days until deadline (negative = overdue)
+	Filed     string // Filename of VAT-return
+	ICP       string // Filename of ICP-return
+	Paid      string // Filename of payment receipt
+}
+
 // InvoiceAuditLine contains info for audit logging
 type InvoiceAuditLine struct {
 	InvoiceID   string

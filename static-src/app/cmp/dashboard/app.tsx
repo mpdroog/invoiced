@@ -7,6 +7,8 @@ import "./dashboard.css";
 // Types generated from Go structs (run: ~/go/bin/tygo generate)
 import type { DashboardResponse } from "../../types/model";
 import type { CommitInfo, HistoryResponse } from "../../types/git";
+import type { QuarterStatus } from "../../types/model";
+import { loadTaxStatus, taxState, formatDeadline, daysText } from "../taxes/status";
 
 // Parse string to number, returning 0 for invalid/NaN values
 function safeParseFloat(val: string | undefined | null): number {
@@ -23,10 +25,15 @@ const CHART_COLORS = {
   previous: previousColorCss !== "" ? previousColorCss : "#3498db",
 };
 
+interface TaxQuarter extends QuarterStatus {
+  Year: number;
+}
+
 interface IState {
   data: DashboardResponse | null;
   commits: CommitInfo[];
   loading: boolean;
+  taxes: TaxQuarter[];
 }
 
 // Format number with space as thousands separator: 51868.65 -> 51 868,65
@@ -49,6 +56,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
       data: null,
       commits: [],
       loading: true,
+      taxes: [],
     };
   }
 
@@ -98,6 +106,7 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
 
     return (
       <div className="">
+        {this.renderTaxHint()}
         {/* Quick Stats Row */}
         <div className="row mb-4">
           <div className="col-md-3">
@@ -414,8 +423,66 @@ export default class Dashboard extends React.Component<DashboardProps, IState> {
     );
   }
 
+  // Hint about VAT-returns to file, based on today (not the selected year)
+  private renderTaxHint(): React.JSX.Element | null {
+    const entity = this.props.entity;
+    const open = this.state.taxes.filter((s) => taxState(s).open);
+    const first = open[0];
+    if (first) {
+      const cls = open.some((s) => s.DaysLeft <= 7) ? "alert-danger" : "alert-warning";
+      return (
+        <div className={"alert " + cls}>
+          <i className="fas fa-exclamation-triangle"></i>{" "}
+          <a href={"#" + entity + "/" + String(first.Year) + "/taxes"}>VAT return to file</a>
+          <ul className="mb-0">
+            {open.map((s) => (
+              <li key={String(s.Year) + s.Quarter}>
+                <strong>
+                  {s.Year} {s.Quarter}
+                </strong>{" "}
+                deadline {formatDeadline(s.Deadline)}: <strong>{daysText(s.DaysLeft)}</strong>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    const next = this.state.taxes.find((s) => s.Active && s.Filed === "");
+    if (next) {
+      return (
+        <div className="alert alert-success">
+          <i className="fas fa-check"></i> All VAT returns filed. Next:{" "}
+          <a href={"#" + entity + "/" + String(next.Year) + "/taxes"}>
+            {next.Year} {next.Quarter}
+          </a>
+          , deadline {formatDeadline(next.Deadline)} ({daysText(next.DaysLeft)})
+        </div>
+      );
+    }
+    return null;
+  }
+
   componentDidMount(): void {
     this.ajax();
+    this.ajaxTaxes();
+  }
+
+  private ajaxTaxes(): void {
+    const entity = this.props.entity;
+    const year = new Date().getFullYear();
+    // Previous year included for Q4 (deadline end of January)
+    Promise.all([loadTaxStatus(entity, year - 1), loadTaxStatus(entity, year)])
+      .then(([prev, cur]) => {
+        const taxes: TaxQuarter[] = [
+          ...prev.map((s) => ({ ...s, Year: year - 1 })),
+          ...cur.map((s) => ({ ...s, Year: year })),
+        ];
+        this.setState({ taxes: taxes });
+      })
+      .catch((_err) => {
+        // Silently ignore - hint is optional
+      });
   }
 
   private ajax(): void {
