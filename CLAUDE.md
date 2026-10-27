@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Common Commands
 ```bash
+make                               # Build everything (frontend + binary)
 make build                         # Build the invoiced binary
 make frontend                      # Build frontend (runs tygo first)
 make test                          # Run all Go tests

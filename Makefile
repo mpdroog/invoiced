@@ -1,4 +1,10 @@
-.PHONY: build build-linux build-linux-arm64 build-all test lint lint-fix tygo frontend install-hooks clean
+.PHONY: all build build-linux build-linux-arm64 build-all test lint lint-fix tygo frontend install-hooks clean
+
+# Use yarn when installed, else run the version from yarn.lock via npx
+YARN := $(shell command -v yarn 2>/dev/null || echo npx --yes yarn@1.22.22)
+
+# Build everything (default target)
+all: frontend build
 
 # Build the invoiced binary
 build:
@@ -33,7 +39,7 @@ tygo:
 
 # Build frontend (runs tygo first to ensure types are up-to-date)
 frontend: tygo
-	cd static-src && yarn build
+	cd static-src && $(YARN) install --frozen-lockfile && $(YARN) build
 
 # Install git hooks
 install-hooks:
