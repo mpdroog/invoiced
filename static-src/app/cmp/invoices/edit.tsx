@@ -19,6 +19,7 @@ interface InvoiceEditState extends Invoice {
   State: {
     email: boolean;
     currentBucket: string;
+    currentYear: string;
   };
 }
 
@@ -81,6 +82,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       State: {
         email: false,
         currentBucket: props.bucket ?? "concepts",
+        currentYear: props.year,
       },
       Mail: {
         From: "",
@@ -137,11 +139,12 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       });
   }
 
-  private parseInput(data: Invoice, newbucket?: string): void {
+  private parseInput(data: Invoice, newbucket?: string, newyear?: string): void {
     const meta = data.Meta;
 
     const bucket = newbucket ?? this.props.bucket ?? "concepts";
-    const url = `#${this.props.entity}/${this.props.year}/invoices/edit/${bucket}/${meta.Conceptid}`;
+    const year = newyear ?? this.state.State.currentYear;
+    const url = `#${this.props.entity}/${year}/invoices/edit/${bucket}/${meta.Conceptid}`;
     if (window.location.hash !== url) {
       // Update URL so refresh will keep the invoice open
       history.replaceState({}, "", url);
@@ -154,7 +157,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     // Add local State to server response data
     this.setState({
       ...data,
-      State: { ...this.state.State, currentBucket: bucket },
+      State: { ...this.state.State, currentBucket: bucket, currentYear: year },
     });
   }
 
@@ -264,14 +267,17 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
     const req = structuredClone(this.state);
     console.log(req);
 
-    const res = await Axios.post<Invoice>("/api/v1/invoice/" + this.props.entity + "/" + this.props.year, req);
+    const res = await Axios.post<Invoice>(
+      "/api/v1/invoice/" + this.props.entity + "/" + this.state.State.currentYear,
+      req
+    );
     this.parseInput.call(this, res.data);
   }
 
   private async reset(): Promise<void> {
     const meta = this.state.Meta;
     const res = await Axios.post<Invoice>(
-      `/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/reset`,
+      `/api/v1/invoice/${this.props.entity}/${this.state.State.currentYear}/${this.state.State.currentBucket}/${meta.Conceptid}/reset`,
       {}
     );
     // Reset always moves to concepts bucket
@@ -281,13 +287,15 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
   private async finalize(): Promise<void> {
     const meta = this.state.Meta;
     const res = await Axios.post<Invoice>(
-      `/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${meta.Conceptid}/finalize`,
+      `/api/v1/invoice/${this.props.entity}/${this.state.State.currentYear}/${this.state.State.currentBucket}/${meta.Conceptid}/finalize`,
       {}
     );
     // Axios headers type returns any for custom headers - validated via typeof
     const bucketHeader: unknown = res.headers["x-bucket-change"];
     const bucket = typeof bucketHeader === "string" ? bucketHeader : undefined;
-    this.parseInput(res.data, bucket);
+    const yearHeader: unknown = res.headers["x-year-change"];
+    const year = typeof yearHeader === "string" ? yearHeader : undefined;
+    this.parseInput(res.data, bucket, year);
   }
 
   private pdf(): void {
@@ -296,7 +304,7 @@ export default class InvoiceEdit extends React.Component<InvoiceEditProps, Invoi
       console.log("PDF only available in finalized invoices");
       return;
     }
-    const url = `/api/v1/invoice/${this.props.entity}/${this.props.year}/${this.props.bucket}/${this.props.id}/pdf`;
+    const url = `/api/v1/invoice/${this.props.entity}/${this.state.State.currentYear}/${this.state.State.currentBucket}/${meta.Conceptid}/pdf`;
     console.log(`Open PDF ${url}`);
     location.assign(url);
   }

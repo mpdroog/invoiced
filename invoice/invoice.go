@@ -107,6 +107,7 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	var u *Invoice
 	bucketTo := ""
+	yearTo := ""
 	change := db.Commit{
 		Name:  r.Header.Get("X-User-Name"),
 		Email: r.Header.Get("X-User-Email"),
@@ -118,17 +119,20 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		if e := t.Open(from, u); e != nil {
 			return fmt.Errorf("open: %w", e)
 		}
-		if len(u.Meta.Issuedate) == 0 {
-			u.Meta.Issuedate = time.Now().Format("2006-01-02")
-		}
 		u.Meta.Status = "FINAL"
 
+		var now time.Time
 		if u.Meta.Invoiceid == "" {
+			// Factuurdatum is the moment of finalizing, a date set on the concept is only a draft
+			// (Duedate is left untouched on purpose)
+			now = time.Now()
+			u.Meta.Issuedate = now.Format("2006-01-02")
+
 			idx, e := NextInvoiceID(entity, t)
 			if e != nil {
 				return fmt.Errorf("next invoice id: %w", e)
 			}
-			u.Meta.Invoiceid = utils.CreateInvoiceID(time.Now(), idx)
+			u.Meta.Invoiceid = utils.CreateInvoiceID(now, idx)
 			u.Mail.Subject += " #" + u.Meta.Invoiceid
 			if config.Verbose {
 				log.Printf("invoice.Finalize create conceptId=%s invoiceId=%s", u.Meta.Conceptid, u.Meta.Invoiceid)
@@ -160,16 +164,20 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 				}
 			}
 		} else {
-			// Re-finalize: invoice already has an ID
+			// Re-finalize: invoice already has an ID, keep the Issuedate as set by the user
 			change.Message = db.FormatCommitMsg(entity, db.ActionFinalize, db.ResourceInvoice, name, "->", u.Meta.Invoiceid)
+
+			var e error
+			now, e = time.Parse("2006-01-02", u.Meta.Issuedate)
+			if e != nil {
+				return fmt.Errorf("parse issue date: %w", e)
+			}
 		}
 
-		now, e := time.Parse("2006-01-02", u.Meta.Issuedate)
-		if e != nil {
-			return fmt.Errorf("parse issue date: %w", e)
-		}
+		// Year can differ from the concept's year (i.e. concept from December finalized in January)
+		yearTo = strconv.Itoa(now.Year())
 		bucketTo = fmt.Sprintf("Q%d", utils.YearQuarter(now))
-		to := db.InvoicePath(entity, year, bucketTo, name, false)
+		to := db.InvoicePath(entity, yearTo, bucketTo, name, false)
 		if e := t.Save(to, true, u); e != nil {
 			return fmt.Errorf("save: %w", e)
 		}
@@ -184,6 +192,7 @@ func Finalize(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	w.Header().Set("X-Bucket-Change", bucketTo)
+	w.Header().Set("X-Year-Change", yearTo)
 	if e := writer.Encode(w, r, u); e != nil {
 		httputil.LogErr("invoice.Finalize", e)
 	}

@@ -14,6 +14,7 @@ interface InvoiceMailParent {
     Meta?: InvoiceMeta;
     State: {
       currentBucket: string;
+      currentYear: string;
     };
   };
   setState: (state: { Mail: InvoiceMailType }) => void;
@@ -106,7 +107,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, InvoiceMailSt
       "/api/v1/invoice/" +
         parent.props.entity +
         "/" +
-        parent.props.year +
+        parent.state.State.currentYear +
         "/" +
         parent.state.State.currentBucket +
         "/" +
@@ -200,7 +201,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, InvoiceMailSt
                       "/api/v1/invoice/" +
                       parent.props.entity +
                       "/" +
-                      parent.props.year +
+                      parent.state.State.currentYear +
                       "/" +
                       bucket +
                       "/" +
@@ -219,7 +220,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, InvoiceMailSt
                       "/api/v1/invoice/" +
                       parent.props.entity +
                       "/" +
-                      parent.props.year +
+                      parent.state.State.currentYear +
                       "/" +
                       bucket +
                       "/" +
@@ -239,7 +240,7 @@ export class InvoiceMail extends React.Component<InvoiceMailProps, InvoiceMailSt
                         "/api/v1/invoice/" +
                         parent.props.entity +
                         "/" +
-                        parent.props.year +
+                        parent.state.State.currentYear +
                         "/" +
                         bucket +
                         "/" +
