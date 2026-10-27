@@ -25,6 +25,10 @@ type Sum struct {
 
 	ExWorld   string // Sum revenue of world invoices
 	ExRevenue string // Sum revenue of everything
+
+	PreTax        string   // 5b. Voorbelasting (VAT on purchase invoices)
+	TaxTotal      string   // 5c. Tax minus PreTax (amount to pay)
+	PreTaxForeign []string // Purchase invoices in PreTax not in EUR (summed as-is, check manually)
 }
 
 func addValue(sum, add string, dec int) (string, error) {
@@ -42,6 +46,18 @@ func addValue(sum, add string, dec int) (string, error) {
 		return sum, e
 	}
 	return s.Add(a).StringFixed(int32(dec)), nil //nolint:gosec // G115: dec is 0-4, no overflow risk
+}
+
+func subValue(sum, sub string, dec int) (string, error) {
+	s, e := decimal.NewFromString(sum)
+	if e != nil {
+		return sum, e
+	}
+	b, e := decimal.NewFromString(sub)
+	if e != nil {
+		return sum, e
+	}
+	return s.Sub(b).StringFixed(int32(dec)), nil //nolint:gosec // G115: dec is 0-4, no overflow risk
 }
 
 // Tax returns aggregated tax data for a quarter.
@@ -72,6 +88,12 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	preTax, preTaxForeign, err := idx.GetQuarterPreTax(entity, yearInt, quarterInt)
+	if err != nil {
+		httputil.InternalError(w, "taxes.Tax query purchases", err)
+		return
+	}
+
 	sum := &Sum{
 		Ex:        idxSum.Ex,
 		Tax:       idxSum.Tax,
@@ -79,6 +101,9 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		EUCompany: idxSum.EUCompany,
 		ExWorld:   idxSum.ExWorld,
 		ExRevenue: idxSum.ExRevenue,
+
+		PreTax:        preTax,
+		PreTaxForeign: preTaxForeign,
 	}
 
 	if config.Verbose {
@@ -87,6 +112,10 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			auditStr += fmt.Sprintf("Invoice(%s) %s ex=%s tax=%s\n",
 				a.InvoiceID, a.TaxCategory, a.TotalEx, a.TotalTax)
 		}
+		for _, f := range preTaxForeign {
+			auditStr += fmt.Sprintf("PurchaseInvoice(%s) not EUR\n", f)
+		}
+		auditStr += fmt.Sprintf("PreTax=%s\n", preTax)
 		log.Printf("TAX audit:\n%s", auditStr)
 	}
 
@@ -105,6 +134,16 @@ func Tax(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	sum.Tax, e = addValue(sum.Tax, "0", 0)
 	if e != nil {
 		httputil.InternalError(w, "taxes.Tax Tax rounding", e)
+		return
+	}
+	sum.PreTax, e = addValue(sum.PreTax, "0", 0)
+	if e != nil {
+		httputil.InternalError(w, "taxes.Tax PreTax rounding", e)
+		return
+	}
+	sum.TaxTotal, e = subValue(sum.Tax, sum.PreTax, 0)
+	if e != nil {
+		httputil.InternalError(w, "taxes.Tax TaxTotal", e)
 		return
 	}
 	for k, v := range sum.EUCompany {

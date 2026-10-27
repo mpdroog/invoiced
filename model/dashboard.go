@@ -9,6 +9,10 @@ type TaxSummary struct {
 	EUCompany map[string]string // Revenue per EU company VAT number (for ICP)
 	ExWorld   string            // Sum revenue of world invoices
 	ExRevenue string            // Sum revenue of everything
+
+	PreTax        string   // 5b. Voorbelasting (VAT on purchase invoices)
+	TaxTotal      string   // 5c. Tax minus PreTax (amount to pay)
+	PreTaxForeign []string // Purchase invoices in PreTax not in EUR (summed as-is, check manually)
 }
 
 // InvoiceAuditLine contains info for audit logging

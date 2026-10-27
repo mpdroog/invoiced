@@ -79,8 +79,38 @@ export default class TaxesPage extends React.Component<TaxesPageProps, TaxesPage
                     <td className="text-end">&euro; {this.state.data.EUEx}</td>
                     <td></td>
                   </tr>
+                  <tr>
+                    <td>5a. Verschuldigde omzetbelasting</td>
+                    <td></td>
+                    <td className="text-end">&euro; {this.state.data.Tax}</td>
+                  </tr>
+                  <tr>
+                    <td>5b. Voorbelasting</td>
+                    <td></td>
+                    <td className="text-end">&euro; {this.state.data.PreTax}</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>5c. Subtotaal (5a min 5b)</strong>
+                    </td>
+                    <td></td>
+                    <td className="text-end">
+                      <strong>&euro; {this.state.data.TaxTotal}</strong>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
+              {this.state.data.PreTaxForeign.length > 0 && (
+                <div className="alert alert-warning">
+                  <i className="fas fa-exclamation-triangle"></i> Purchase invoices not in EUR, counted as-is in 5b
+                  (convert to EUR and check):
+                  <ul>
+                    {this.state.data.PreTaxForeign.map((f) => (
+                      <li key={f}>{f}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
 

@@ -138,9 +138,9 @@ func main() {
 		}
 	}
 
-	// Rebuild index if empty
-	if idx.IsEmpty() {
-		log.Printf("Index empty, rebuilding...")
+	// Rebuild index if empty or schema changed
+	if idx.NeedsRebuild() {
+		log.Printf("Index empty or outdated, rebuilding...")
 		if err := idx.Rebuild(config.DbPath); err != nil {
 			log.Fatal(err)
 		}

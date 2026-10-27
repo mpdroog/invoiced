@@ -23,6 +23,7 @@ export interface PurchaseInvoice {
   XMLFilename: string; // Original XML filename
   Status: string; // UNPAID, PAID
   Paydate: string;
+  ExcludeFromTax: boolean; // VAT not deductible as voorbelasting (i.e. business meals)
 }
 /**
  * Supplier contains information about the invoice supplier.

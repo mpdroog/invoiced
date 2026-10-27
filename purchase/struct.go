@@ -18,6 +18,8 @@ type PurchaseInvoice struct { //nolint:revive // maintaining public API
 	XMLFilename string // Original XML filename
 	Status      string // UNPAID, PAID
 	Paydate     string
+
+	ExcludeFromTax bool // VAT not deductible as voorbelasting (i.e. business meals)
 }
 
 // Supplier contains information about the invoice supplier.

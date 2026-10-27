@@ -389,13 +389,13 @@ func syncPurchase(p *PathParts) error {
 		INSERT OR REPLACE INTO purchase_invoices
 		(id, entity, year, quarter, status, supplier_name, supplier_vat, invoiceid,
 		 issuedate, duedate, paydate, total_ex, total_tax, total_inc, currency,
-		 payment_ref, iban, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		 exclude_from_tax, payment_ref, iban, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		p.ID, p.Entity, p.Year, p.Quarter, p.Status,
 		inv.Supplier.Name, inv.Supplier.VAT, inv.ID,
 		inv.Issuedate, inv.Duedate, inv.Paydate,
 		inv.TotalEx, inv.TotalTax, inv.TotalInc, inv.Currency,
-		inv.PaymentRef, inv.IBAN, time.Now().Format(time.RFC3339),
+		inv.ExcludeFromTax, inv.PaymentRef, inv.IBAN, time.Now().Format(time.RFC3339),
 	)
 
 	if config.Verbose && err == nil {

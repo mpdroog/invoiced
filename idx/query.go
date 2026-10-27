@@ -123,6 +123,57 @@ func GetQuarterTaxSummary(entity string, year int, quarter int) (*model.TaxSumma
 	return sum, audit, nil
 }
 
+// GetQuarterPreTax returns the deductible VAT (voorbelasting) of purchase invoices in a quarter.
+// Invoices in another currency than EUR are summed as-is and returned in foreign so they can be checked.
+func GetQuarterPreTax(entity string, year int, quarter int) (preTax string, foreign []string, err error) {
+	foreign = []string{}
+	if DB == nil {
+		return zeroDecimal, foreign, nil
+	}
+
+	rows, err := DB.QueryContext(ctx(), `
+		SELECT supplier_name, invoiceid, total_tax, currency
+		FROM purchase_invoices
+		WHERE entity = ? AND year = ? AND quarter = ?
+		  AND status IN ('UNPAID', 'PAID')
+		  AND exclude_from_tax = 0
+		ORDER BY invoiceid`,
+		entity, year, quarter,
+	)
+	if err != nil {
+		return "", nil, err
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
+
+	sum := decimal.Zero
+	for rows.Next() {
+		var supplier, invoiceid, totalTax, currency sql.NullString
+		if err := rows.Scan(&supplier, &invoiceid, &totalTax, &currency); err != nil {
+			return "", nil, err
+		}
+
+		tax, err := decimal.NewFromString(totalTax.String)
+		if err != nil {
+			log.Printf("idx.GetQuarterPreTax: invalid decimal %q for %s %s: %v", totalTax.String, supplier.String, invoiceid.String, err)
+			tax = decimal.Zero
+		}
+		sum = sum.Add(tax)
+
+		if currency.String != "" && currency.String != "EUR" {
+			foreign = append(foreign, supplier.String+" "+invoiceid.String+" ("+currency.String+" "+totalTax.String+")")
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return "", nil, err
+	}
+
+	return sum.StringFixed(2), foreign, nil
+}
+
 // GetYearlyCustomerTotals returns revenue totals grouped by customer for a year
 func GetYearlyCustomerTotals(entity string, year int, paidOnly bool) ([]model.CustomerTotal, error) {
 	if DB == nil {

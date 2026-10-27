@@ -138,6 +138,7 @@ func createTables() error {
 		total_tax     TEXT,
 		total_inc     TEXT,
 		currency      TEXT,
+		exclude_from_tax INTEGER NOT NULL DEFAULT 0, -- VAT not deductible (voorbelasting)
 
 		-- Payment info
 		payment_ref   TEXT,
@@ -188,11 +189,61 @@ func createTables() error {
 	if err != nil {
 		return err
 	}
+	if err := migrate(); err != nil {
+		return err
+	}
 
 	if config.Verbose {
 		log.Printf("idx: tables created/verified")
 	}
 	return nil
+}
+
+// schemaChanged is set when a migration added columns, existing rows then lack data
+var schemaChanged bool
+
+// migrate adds columns to tables created by older versions
+func migrate() error {
+	has, err := hasColumn("purchase_invoices", "exclude_from_tax")
+	if err != nil {
+		return err
+	}
+	if !has {
+		if _, err := DB.ExecContext(context.Background(),
+			"ALTER TABLE purchase_invoices ADD COLUMN exclude_from_tax INTEGER NOT NULL DEFAULT 0"); err != nil {
+			return err
+		}
+		log.Printf("idx: added purchase_invoices.exclude_from_tax")
+		schemaChanged = true
+	}
+	return nil
+}
+
+func hasColumn(table, column string) (bool, error) {
+	rows, err := DB.QueryContext(context.Background(), "SELECT name FROM pragma_table_info(?)", table)
+	if err != nil {
+		return false, err
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("close: %s", err)
+		}
+	}()
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return false, err
+		}
+		if name == column {
+			return true, nil
+		}
+	}
+	return false, rows.Err()
+}
+
+// NeedsRebuild returns true if the index is empty or a migration changed the schema
+func NeedsRebuild() bool {
+	return schemaChanged || IsEmpty()
 }
 
 // DeleteIndex removes the index.db file (for full rebuild)
